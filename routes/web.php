@@ -23,6 +23,8 @@ Route::get('/contact', function () {
     return view('contact');
 });
 
-Route::get('/applications/dashboard', function () {
-    return view('admin.applications.dashboard');
-});
+//Route::get('/applications/dashboard', function () {
+//    return view('admin.applications.dashboard');
+//});
+
+Route::resource('/applications', \App\Http\Controllers\ApplicationController::class);
