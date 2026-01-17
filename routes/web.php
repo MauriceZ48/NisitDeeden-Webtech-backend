@@ -22,3 +22,7 @@ require __DIR__.'/auth.php';
 Route::get('/contact', function () {
     return view('contact');
 });
+
+Route::get('/applications/dashboard', function () {
+    return view('admin.applications.dashboard');
+});

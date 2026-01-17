@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option determines the default session driver that is utilized for
-    | incoming requests. Laravel supports a variety of storage options to
+    | incoming applications. Laravel supports a variety of storage options to
     | persist session data. Database storage is a great default choice.
     |
     | Supported: "file", "cookie", "database", "memcached",
@@ -95,7 +95,7 @@ return [
     |
     | When using one of the framework's cache driven session backends, you may
     | define the cache store which should be used to store the session data
-    | between requests. This must match one of your defined cache stores.
+    | between applications. This must match one of your defined cache stores.
     |
     | Affects: "dynamodb", "memcached", "redis"
     |
@@ -189,9 +189,9 @@ return [
     | Same-Site Cookies
     |--------------------------------------------------------------------------
     |
-    | This option determines how your cookies behave when cross-site requests
+    | This option determines how your cookies behave when cross-site applications
     | take place, and can be used to mitigate CSRF attacks. By default, we
-    | will set this value to "lax" to permit secure cross-site requests.
+    | will set this value to "lax" to permit secure cross-site applications.
     |
     | See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#samesitesamesite-value
     |
