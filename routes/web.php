@@ -26,3 +26,8 @@ Route::get('/contact', function () {
 Route::get('/applications/dashboard', function () {
     return view('applications.dashboard');
 });
+//Route::get('/applications/dashboard', function () {
+//    return view('admin.applications.dashboard');
+//});
+
+Route::resource('/applications', \App\Http\Controllers\ApplicationController::class);

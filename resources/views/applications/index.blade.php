@@ -2,9 +2,23 @@
 
 @section('content')
     <section class="container mx-auto w-[80%]">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-gray-500 text-sm font-medium tracking-wide">Total Applications</h3>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span class="text-3xl font-bold text-gray-900">{{ count($applications) }}</span>
+                    </div>
+                    <p class="text-gray-400 text-xs mt-1">From ___ academic year</p>
+                </div>
+                <div class="bg-blue-50 p-2 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4zM3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg>
+                </div>
+            </div>
+        </div>
         <h1>Applications</h1>
         <div class="my-2">
-            <a href="{{ route('applications.form') }}" class="px-4 py-2 border bg-blue-200">
+            <a href="{{ route('applications.create') }}" class="px-4 py-2 border bg-blue-200">
                 + Application
             </a>
         </div>
@@ -35,7 +49,7 @@
                         #{{ $application->user->name }}
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-600">
-                    <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-bold uppercase">
+                    <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-bold ">
                         {{ ucfirst(strtolower($application->category->value))}}
                     </span>
                     </td>

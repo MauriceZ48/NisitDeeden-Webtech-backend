@@ -3,9 +3,9 @@
 @section('content')
     @php
         // Check if we are editing or creating
-        $isEdit = $artist->exists;
+        $isEdit = $application->exists;
         $title = $isEdit ? 'Edit Application' : 'Add New Application';
-        $route = $isEdit ? route('applications.update', $artist) : route('applications.store');
+        $route = $isEdit ? route('applications.update', $application) : route('applications.store');
     @endphp
 
         <h1 class="text-2xl font-bold mb-6">{{ $title }}</h1>
