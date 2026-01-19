@@ -24,5 +24,5 @@ Route::get('/contact', function () {
 });
 
 Route::get('/applications/dashboard', function () {
-    return view('admin.applications.dashboard');
+    return view('applications.dashboard');
 });
