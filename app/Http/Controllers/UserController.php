@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Enum;
 
 class UserController extends Controller
@@ -103,9 +104,23 @@ class UserController extends Controller
             'faculty' => 'nullable|string|max:255',
             'department' => 'nullable|string|max:255',
             'university_id' => 'required|string|unique:users,university_id,' . $user->id,
+            'photo' => 'nullable|image|max:2048',
         ]);
 
-        $user->update($validated);
+        if ($request->hasFile('photo')) {
+            // Delete old photo if it exists
+            if ($user->profile_path) {
+                Storage::disk('public')->delete($user->profile_path);
+            }
+
+            // Store new photo
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            $user->profile_path = $path;
+        }
+
+        $user->fill($validated);
+
+        $user->save();
 
         return redirect()->route('users.show', $user)
             ->with('success', 'User updated successfully!');

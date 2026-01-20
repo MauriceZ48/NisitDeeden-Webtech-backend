@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'profile_path',
         'name',
         'email',
         'password',
@@ -61,4 +63,15 @@ class User extends Authenticatable
             'department' => Department::class,
         ];
     }
+
+    public function getProfileUrlAttribute(): string
+    {
+        if ($this->profile_path) {
+            return Storage::url($this->profile_path);
+        }
+
+        // Return a default UI-Avatar
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+    }
+
 }
