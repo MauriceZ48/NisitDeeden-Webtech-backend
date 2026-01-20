@@ -56,43 +56,49 @@
                             <form method="GET" action="{{ route('users.index') }}"
                                   class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
-                                <div class="flex flex-col md:flex-row gap-2 items-stretch w-full md:w-auto">
-                                    <div class="relative w-full md:w-[360px]">
-                                        <input
-                                            name="q"
-                                            value="{{ $q ?? '' }}"
-                                            type="text"
-                                            placeholder="Search name or ID..."
-                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary/20"
-                                        />
+                                <div class="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between">
+
+                                    {{-- LEFT: Filters --}}
+                                    <div class="flex flex-col md:flex-row gap-2 items-stretch w-full md:w-auto">
+
+                                        <div class="relative w-full md:w-[360px]">
+                                            <input
+                                                name="q"
+                                                value="{{ $q ?? '' }}"
+                                                type="text"
+                                                placeholder="Search name or ID..."
+                                                onkeydown="if(event.key === 'Enter'){ this.form.submit(); }"
+                                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary/20"
+                                            />
+                                        </div>
+
+                                        <select name="role"
+                                                onchange="this.form.submit()"
+                                                class="w-full md:w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary focus:ring-primary/20">
+                                            <option value="">All Roles</option>
+                                            @foreach($roles as $r)
+                                                <option value="{{ $r->value }}" @selected(($role ?? '') === $r->value)>
+                                                    {{ $r->label() }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
 
-                                    <select name="faculty"
-                                            class="w-full md:w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary focus:ring-primary/20">
-                                        <option value="">All Faculties</option>
-                                        @foreach($faculties as $f)
-                                            <option value="{{ $f }}" @selected(($faculty ?? '') === $f)>{{ $f }}</option>
-                                        @endforeach
-                                    </select>
+                                    {{-- RIGHT: Actions --}}
+                                    <div class="flex gap-2 justify-end">
+                                        <button type="submit"
+                                                class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                            Apply
+                                        </button>
 
-                                    <select name="department"
-                                            class="w-full md:w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary focus:ring-primary/20">
-                                        <option value="">All Departments</option>
-                                        @foreach($departments as $d)
-                                            <option value="{{ $d }}" @selected(($department ?? '') === $d)>{{ $d }}</option>
-                                        @endforeach
-                                    </select>
+                                        <a href="{{ route('users.index') }}"
+                                           class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                            Reset
+                                        </a>
+                                    </div>
 
-                                    <button type="submit"
-                                            class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/30">
-                                        Apply
-                                    </button>
-
-                                    <a href="{{ route('users.index') }}"
-                                       class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                                        Reset
-                                    </a>
                                 </div>
+
 
                             </form>
                         </div>
@@ -106,7 +112,8 @@
                                     <th class="px-4 py-3">University ID</th>
                                     <th class="px-4 py-3">Department</th>
                                     <th class="px-4 py-3">Faculty</th>
-                                    <th class="px-4 py-3 text-right">Actions</th>
+                                    <th class="px-4 py-3">Role</th>
+{{--                                    <th class="px-4 py-3 text-right">Actions</th>--}}
                                 </tr>
                                 </thead>
 
@@ -129,9 +136,11 @@
                                                href="{{ route('users.index', array_merge(request()->query(), ['selected' => $u->id])) }}">
                                                 <div class="flex items-center gap-3">
                                                     @if($pic)
-                                                        <img src="{{ $pic }}" alt="Profile" class="h-9 w-9 rounded-full object-cover border border-slate-200">
+                                                        <img src="{{ $pic }}" alt="Profile"
+                                                             class="h-9 w-9 rounded-full object-cover border border-slate-200">
                                                     @else
-                                                        <div class="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                                                        <div
+                                                            class="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
                                                             {{ $initials ?: 'U' }}
                                                         </div>
                                                     @endif
@@ -150,25 +159,50 @@
 
                                         <td class="px-4 py-4 text-sm text-slate-700">{{ $u->department }}</td>
                                         <td class="px-4 py-4 text-sm text-slate-700">{{ $u->faculty }}</td>
+                                        <td class="px-4 py-4">
+                                            @php
+                                                $role = $u->role;
+//                                                {{ dump($u->role); }}
+                                                $roleValue = $role?->value;
 
-                                        <td class="px-4 py-4 text-right">
-                                            <div class="inline-flex items-center gap-2">
-                                                <a href="{{ route('users.edit', $u) }}"
-                                                   class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                                                    Edit
-                                                </a>
+                                                $roleStyles = match($roleValue) {
+                                                    'ADMIN' => 'bg-red-100 text-red-700 border border-red-200',
+                                                    'USER' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
+                                                    default => 'bg-slate-100 text-slate-700 border border-slate-200', // USER
+                                                };
 
-                                                <form method="POST" action="{{ route('users.destroy', $u) }}"
-                                                      onsubmit="return confirm('Delete this user?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                            class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50">
-                                                        Delete
-                                                    </button>
-                                                </form>
-                                            </div>
+                                                $roleLabel = match($roleValue) {
+                                                    'ADMIN' => 'Admin',
+                                                    'USER' => 'User',
+                                                    default => 'what',
+                                                };
+                                            @endphp
+
+                                            <span
+                                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $roleStyles }}">
+                                                {{ $roleLabel }}
+                                            </span>
                                         </td>
+
+
+{{--                                        <td class="px-4 py-4 text-right">--}}
+{{--                                            <div class="inline-flex items-center gap-2">--}}
+{{--                                                <a href="{{ route('users.edit', $u) }}"--}}
+{{--                                                   class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">--}}
+{{--                                                    Edit--}}
+{{--                                                </a>--}}
+
+{{--                                                <form method="POST" action="{{ route('users.destroy', $u) }}"--}}
+{{--                                                      onsubmit="return confirm('Delete this user?');">--}}
+{{--                                                    @csrf--}}
+{{--                                                    @method('DELETE')--}}
+{{--                                                    <button type="submit"--}}
+{{--                                                            class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50">--}}
+{{--                                                        Delete--}}
+{{--                                                    </button>--}}
+{{--                                                </form>--}}
+{{--                                            </div>--}}
+{{--                                        </td>--}}
                                     </tr>
                                 @endforeach
                                 </tbody>
@@ -176,7 +210,8 @@
                         </div>
 
                         {{-- Footer --}}
-                        <div class="p-4 border-t border-slate-200 flex items-center justify-between text-sm text-slate-500">
+                        <div
+                            class="p-4 border-t border-slate-200 flex items-center justify-between text-sm text-slate-500">
                         <span>
                             Showing {{ $users->firstItem() ?? 0 }} to {{ $users->lastItem() ?? 0 }} of {{ $users->total() }} users
                         </span>
@@ -194,14 +229,16 @@
                         <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
 
                             <div class="p-5 border-b border-slate-200">
-                                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-500">User Details</h2>
+                                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-500">User
+                                    Details</h2>
                             </div>
 
                             <div class="p-5">
                                 @if(!$selectedUser)
                                     <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center">
                                         <p class="text-sm font-semibold text-slate-900">No user selected</p>
-                                        <p class="mt-1 text-sm text-slate-500">Select a user from the list to view details.</p>
+                                        <p class="mt-1 text-sm text-slate-500">Select a user from the list to view
+                                            details.</p>
                                     </div>
                                 @else
                                     @php
@@ -213,36 +250,76 @@
                                             ->join('');
                                     @endphp
 
-                                    <div class="flex items-center gap-4">
-                                        @if($pic)
-                                            <img src="{{ $pic }}" alt="Profile"
-                                                 class="h-14 w-14 rounded-2xl object-cover border border-slate-200">
-                                        @else
-                                            <div class="h-14 w-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-extrabold text-slate-600">
-                                                {{ $initials ?: 'U' }}
-                                            </div>
-                                        @endif
+                                    <div class="flex items-center justify-between gap-4">
+                                        {{-- LEFT: avatar + name --}}
+                                        <div class="flex items-center gap-4">
+                                            @if($pic)
+                                                <img src="{{ $pic }}" alt="Profile"
+                                                     class="h-14 w-14 rounded-2xl object-cover border border-slate-200">
+                                            @else
+                                                <div
+                                                    class="h-14 w-14 rounded-2xl bg-slate-100 border border-slate-200
+                       flex items-center justify-center text-sm font-extrabold text-slate-600">
+                                                    {{ $initials ?: 'U' }}
+                                                </div>
+                                            @endif
 
-                                        <div>
-                                            <div class="text-lg font-extrabold text-slate-900">{{ $selectedUser->name }}</div>
-                                            <div class="text-sm text-slate-500">
-                                                ID: <span class="font-semibold text-slate-700">{{ $selectedUser->university_id }}</span>
+                                            <div>
+                                                <div class="text-lg font-extrabold text-slate-900">
+                                                    {{ $selectedUser->name }}
+                                                </div>
+
+                                                <div class="text-sm text-slate-500">
+                                                    ID:
+                                                    <span class="font-semibold text-slate-700">
+                                                        {{ $selectedUser->university_id }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {{-- RIGHT: role badge --}}
+                                        @php
+                                            $roleValue = $selectedUser->role?->value ?? $selectedUser->role;
+
+                                            $roleStyles = match($roleValue) {
+                                                'ADMIN' => 'bg-red-100 text-red-700 border border-red-200',
+                                                'USER'  => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
+                                                'STAFF' => 'bg-amber-100 text-amber-700 border border-amber-200',
+                                                default => 'bg-slate-100 text-slate-700 border border-slate-200',
+                                            };
+
+                                            $roleLabel = match($roleValue) {
+                                                'ADMIN' => 'Admin',
+                                                'USER'  => 'User',
+                                                'STAFF' => 'Staff',
+                                                default => 'Unknown',
+                                            };
+                                        @endphp
+
+                                        <span
+                                            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $roleStyles }}">
+                                            {{ $roleLabel }}
+                                        </span>
                                     </div>
+
+
 
                                     <div class="mt-5 space-y-3">
                                         <div class="rounded-xl border border-slate-200 p-4">
-                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Email</p>
+                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                Email</p>
                                             <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedUser->email }}</p>
                                         </div>
                                         <div class="rounded-xl border border-slate-200 p-4">
-                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Department</p>
+                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                Department</p>
                                             <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedUser->department }}</p>
                                         </div>
 
                                         <div class="rounded-xl border border-slate-200 p-4">
-                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Faculty</p>
+                                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                Faculty</p>
                                             <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedUser->faculty }}</p>
                                         </div>
                                     </div>
@@ -258,7 +335,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="w-full inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
+                                                    class="w-full inline-flex items-center justify-center rounded-lg border border-slate-200 bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">
                                                 Delete User
                                             </button>
                                         </form>
