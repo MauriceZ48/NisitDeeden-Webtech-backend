@@ -120,7 +120,7 @@
                                 <tbody class="divide-y divide-slate-200">
                                 @foreach($users as $u)
                                     @php
-                                        $pic = $u->profile_picture ?? null;
+                                        $pic = $u->profile_url ?? null;
                                         $initials = collect(explode(' ', trim($u->name ?? 'User')))
                                             ->filter()
                                             ->take(2)
