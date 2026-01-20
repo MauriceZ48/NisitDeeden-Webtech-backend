@@ -25,8 +25,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $q          = $request->string('q')->toString();
-        $faculty    = $request->string('faculty')->toString();
-        $department = $request->string('department')->toString();
+        $role       = $request->string('role')->toString();
         $selectedId = $request->integer('selected');
 
         $query = User::query();
@@ -38,12 +37,8 @@ class UserController extends Controller
             });
         }
 
-        if ($faculty !== '') {
-            $query->where('faculty', $faculty);
-        }
-
-        if ($department !== '') {
-            $query->where('department', $department);
+        if ($role !== '') {
+            $query->where('role', $role); // <-- change column name if yours is different
         }
 
         $users = $query->orderBy('name')->paginate(10)->appends($request->query());
@@ -51,20 +46,27 @@ class UserController extends Controller
 
         $selectedUser = $selectedId ? User::find($selectedId) : null;
 
-        $faculties = User::query()->whereNotNull('faculty')->distinct()->orderBy('faculty')->pluck('faculty');
-        $departments = User::query()->whereNotNull('department')->distinct()->orderBy('department')->pluck('department');
+        $userCount  = $this->userRepository->countByRole('USER');
+        $adminCount = $this->userRepository->countByRole('ADMIN');
+
+        $roles = User::query()
+            ->whereNotNull('role')
+            ->distinct()
+            ->orderBy('role')
+            ->pluck('role');
 
         return view('users.index', [
             'users'        => $users,
             'count'        => $count,
             'selectedUser' => $selectedUser,
             'q'            => $q,
-            'faculty'      => $faculty,
-            'department'   => $department,
-            'faculties'    => $faculties,
-            'departments'  => $departments,
+            'role'         => $role,
+            'roles'        => $roles,
+            'userCount'    => $userCount,
+            'adminCount'   => $adminCount,
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
