@@ -114,6 +114,7 @@
                         </thead>
 
                         <tbody class="divide-y divide-slate-100 bg-white">
+
                         @forelse($applications as $application)
                             <tr class="hover:bg-slate-50/70 transition-colors">
                                 <td class="px-6 py-4 text-sm text-slate-500">
@@ -183,7 +184,7 @@
                 <div class="flex items-center justify-between border-t border-slate-200 px-6 py-4 text-sm text-slate-500">
                     <span>Total: <span class="font-semibold text-slate-900">{{ $applications->count() }}</span></span>
                     {{-- If you later use pagination, replace with {{ $applications->links() }} --}}
-                    <span class="text-xs">Tip: add pagination for large lists</span>
+                    <span class="text-xs">{{ $applications->links() }}</span>
                 </div>
             </div>
 
