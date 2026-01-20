@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Department;
+use App\Enums\Faculty;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class UserController extends Controller
@@ -64,11 +68,63 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
+        $faculties = Faculty::cases();
+        $departments = [];
+
+        if ($request->filled('faculty')) {
+            $faculty = Faculty::from($request->faculty);
+
+            $departments = array_filter(
+                Department::cases(),
+                fn (Department $d) => $d->faculty() === $faculty
+            );
+        }
+
         return view('users.form', [
+            'user' => new User(),
+            'faculties' => $faculties,
+            'departments' => $departments,
+            'selectedFaculty' => $request->faculty,
         ]);
     }
+
+
+    public function store(Request $request)
+    {
+        $data = $this->validated($request);
+
+        // handle upload
+        if ($request->hasFile('profile_picture')) {
+            $data['profile_picture_path'] = $request->file('profile_picture')
+                ->store('profile_pictures', 'public');
+        }
+        $data['password'] = Hash::make('12345678');
+
+        $user = User::create($data);
+
+        return redirect()->route('users.index')->with('success', 'User created.');
+    }
+
+    private function validated(Request $request, ?int $userId = null): array
+    {
+        return $request->validate([
+            'name' => ['required','string','max:255'],
+            'email' => [
+                'required','email','max:255',
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'student_staff_id' => ['nullable','string','max:50'],
+//            'role' => ['required', Rule::in(['student','staff','admin'])],
+            'faculty' => ['nullable','string','max:255'],
+            'department' => ['nullable','string','max:255'],
+
+            'profile_picture' => ['nullable','image','max:2048'], // 2MB
+            'remove_profile_picture' => ['nullable','boolean'],
+        ]);
+    }
+
 
     /**
      * Display the specified resource.
@@ -126,4 +182,27 @@ class UserController extends Controller
         return redirect()->route('users.index')
             ->with('success', 'User deleted.');
     }
+
+    public function departmentsByFaculty(Request $request)
+    {
+        $request->validate([
+            'faculty' => ['required', new \Illuminate\Validation\Rules\Enum(Faculty::class)],
+        ]);
+
+        $faculty = Faculty::from($request->faculty);
+
+        $departments = array_values(array_map(
+            fn (Department $d) => [
+                'value' => $d->value,
+                'label' => $d->value,
+            ],
+            array_filter(
+                Department::cases(),
+                fn (Department $d) => $d->faculty() === $faculty
+            )
+        ));
+
+        return response()->json($departments);
+    }
+
 }
