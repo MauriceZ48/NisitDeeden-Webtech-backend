@@ -31,3 +31,12 @@ Route::get('/applications/dashboard', function () {
 //});
 
 Route::resource('/applications', \App\Http\Controllers\ApplicationController::class);
+
+Route::get('/user', function () {
+    return view('users.index');
+});
+
+Route::get('/user/create', function () {
+    return view('users.form');
+});
+
