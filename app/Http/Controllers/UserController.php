@@ -115,15 +115,22 @@ class UserController extends Controller
                 'required','email','max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'student_staff_id' => ['nullable','string','max:50'],
-//            'role' => ['required', Rule::in(['student','staff','admin'])],
-            'faculty' => ['nullable','string','max:255'],
-            'department' => ['nullable','string','max:255'],
+            'university_id' => [
+                'required','string','max:50',
+                Rule::unique('users', 'university_id')->ignore($userId),
+            ],
 
-            'profile_picture' => ['nullable','image','max:2048'], // 2MB
-            'remove_profile_picture' => ['nullable','boolean'],
+            // ✅ role validation (match your enum values)
+            'role' => ['required', new Enum(UserRole::class)],
+
+            'faculty' => ['nullable', new Enum(Faculty::class)],
+            'department' => ['nullable', new Enum(Department::class)],
+
+//            'profile_picture' => ['nullable','image','max:2048'],
+//            'remove_profile_picture' => ['nullable','boolean'],
         ]);
     }
+
 
 
     /**
@@ -142,30 +149,45 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('users.edit', [
+        $faculties = Faculty::cases();
+
+        return view('users.form', [
             'user' => $user,
-            'roles' => UserRole::cases() // Pass Enum cases to the view for a dropdown
+            'faculties' => $faculties,
+            'departments' => [], // JS will load based on faculty
         ]);
     }
+
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'role' => ['required', new Enum(UserRole::class)],
-            'faculty' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'university_id' => 'required|string|unique:users,university_id,' . $user->id,
-        ]);
+        $data = $this->validated($request, $user->id);
 
-        $user->update($validated);
+        // remove checkbox
+        if ($request->boolean('remove_profile_picture')) {
+            if ($user->profile_picture_path) {
+                \Storage::disk('public')->delete($user->profile_picture_path);
+            }
+            $data['profile_picture_path'] = null;
+        }
 
-        return redirect()->route('users.show', $user)
-            ->with('success', 'User updated successfully!');
+        // new upload replaces old
+        if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture_path) {
+                \Storage::disk('public')->delete($user->profile_picture_path);
+            }
+            $data['profile_picture_path'] = $request->file('profile_picture')
+                ->store('profile_pictures', 'public');
+        }
+
+        $user->update($data);
+
+        return redirect()->route('users.index')->with('success', 'User updated.');
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -204,5 +226,7 @@ class UserController extends Controller
 
         return response()->json($departments);
     }
+
+
 
 }
