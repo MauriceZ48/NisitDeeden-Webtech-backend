@@ -71,9 +71,10 @@
                             </div>
                         </div>
 
-                        {{-- Search + Table --}}
-                        <div class="mt-6">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        {{-- Search + Table (Create mode only) --}}
+                        <div class="mt-6" x-show="!isEdit">
+
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                 <div class="text-sm text-slate-500">
                                     Find and select a student from the list.
                                 </div>
