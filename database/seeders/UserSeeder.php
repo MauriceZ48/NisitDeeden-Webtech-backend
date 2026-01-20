@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Department;
+use App\Enums\Faculty;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -18,6 +20,8 @@ class UserSeeder extends Seeder
             'name' => 'System Admin',
             'email' => 'admin@example.com',
             'role' => UserRole::ADMIN,
+            'faculty' => Faculty::SCIENCE,
+            'department' => Department::COMPUTER,
         ]);
 
         User::factory()->count(49)->create();

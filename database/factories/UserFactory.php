@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\Faculty;
+use App\Enums\Department;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -24,6 +26,11 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+
+        $department = fake()->randomElement(Department::cases());
+
+        $faculty = $department->faculty();
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
@@ -31,8 +38,8 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'university_id' => fake()->unique()->bothify('ID-#####'),
-            'faculty' => fake()->randomElement(['Engineering', 'Science', 'Arts', 'Business']),
-            'department' => fake()->word() . ' Department',
+            'department' => $department,
+            'faculty' => $faculty,
             'role' => UserRole::USER,
         ];
     }
