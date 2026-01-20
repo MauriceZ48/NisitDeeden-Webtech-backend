@@ -62,6 +62,15 @@ class UserController extends Controller
     }
 
     /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('users.form', [
+        ]);
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(User $user)
