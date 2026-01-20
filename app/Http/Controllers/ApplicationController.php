@@ -134,14 +134,32 @@ class ApplicationController extends Controller
         $request->validate([
             'user_id' => ['required','exists:users,id'],
             'category' => ['required', new \Illuminate\Validation\Rules\Enum(ApplicationCategory::class)],
+            'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
             'attachments.*' => ['nullable','file','max:5120'],
         ]);
 
 
         $application->category = $request->category;
-        $application->status = $request->status;
+
+        if ($request->has('status')) {
+            $application->status = $request->status;
+        }
 
         $application->save();
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('applications/attachments', 'public');
+
+                $attachment = new Attachment();
+                $attachment->application_id = $application->id;
+                $attachment->file_path = $path;
+                $attachment->file_name = $file->getClientOriginalName();
+                $attachment->mime_type = $file->getMimeType();
+                $attachment->file_size = $file->getSize();
+                $attachment->save();
+            }
+        }
 
         return redirect()->route('applications.show', ['application' => $application])
             ->with('success', 'Application updated successfully!');
