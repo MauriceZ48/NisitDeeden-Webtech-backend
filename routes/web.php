@@ -44,3 +44,6 @@ Route::resource('users', UserController::class);
 //    return view('users.form');
 //});
 
+Route::get('/api/departments', [UserController::class, 'departmentsByFaculty'])
+    ->name('api.departments');
+

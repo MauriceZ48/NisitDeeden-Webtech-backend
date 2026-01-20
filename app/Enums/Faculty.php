@@ -5,7 +5,6 @@ namespace App\Enums;
 
 enum Faculty: string
 {
-    case ENGINEERING = 'ENGINEERING';
-    case SCIENCE = 'SCIENCE';
-    case ARTS = 'ARTS';
+    case ENGINEERING = 'Engineering';
+    case SCIENCE = 'Science';
 }
