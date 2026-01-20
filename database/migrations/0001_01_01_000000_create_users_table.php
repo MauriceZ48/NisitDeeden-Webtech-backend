@@ -22,8 +22,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('university_id')->unique()->nullable();
-            $table->string('faculty')->default(Faculty::SCIENCE->value)->nullable();
-            $table->string('department')->default(Department::COMPUTER->value)->nullable();
+            $table->string('faculty')->nullable();
+            $table->string('department')->nullable();
             $table->string('role')->default(UserRole::USER->value);
             $table->rememberToken();
             $table->timestamps();

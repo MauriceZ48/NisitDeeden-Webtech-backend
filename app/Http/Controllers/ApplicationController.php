@@ -56,7 +56,7 @@ class ApplicationController extends Controller
             ->appends($request->query());
 
         // summary counts (จะนับแบบเดียวกับผลลัพธ์หลัง search ก็ได้)
-        $totalCount = $query->toBase()->count(); // หรือ count ทั้งหมดจริงก็แยก query อีกชุด
+        $totalCount = $this->applicationRepository->count(); // หรือ count ทั้งหมดจริงก็แยก query อีกชุด
         $pendingCount = Application::where('status', \App\Enums\ApplicationStatus::PENDING)->count();
         $approvedCount = Application::where('status', \App\Enums\ApplicationStatus::APPROVED)->count();
 
@@ -206,8 +206,10 @@ class ApplicationController extends Controller
             }
         }
 
-        return redirect()->route('applications.show', $application)
-            ->with('success', 'Application updated successfully!');
+        return redirect()
+            ->route('applications.index')
+            ->with('success', 'Application and attachments added!');
+
     }
 
     /**

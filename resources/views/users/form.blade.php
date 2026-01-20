@@ -58,7 +58,7 @@ $roles = [
                     <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-center gap-5">
                             <div class="relative">
-                                <div class="h-20 w-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
+                                <div  id="photoPreviewBox" class="h-20 w-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
                                     {{-- FIXED: Logic to show current photo or placeholder --}}
                                     @if($isEdit && $user->profile_path)
                                         <img src="{{ $user->profile_url }}" class="h-full w-full object-cover" alt="Profile">
@@ -252,44 +252,34 @@ $roles = [
             const photoInput = document.getElementById('photo');
             const removeBtn = document.getElementById('remove-photo-btn');
             const deleteInput = document.getElementById('delete_photo_input');
-            const container = document.querySelector('.relative .overflow-hidden');
+            const container = document.getElementById('photoPreviewBox'); // ✅ ชัวร์
 
-// The default SVG placeholder to show when no photo is present
             const placeholderSvg = `
     <svg class="h-8 w-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
     </svg>`;
 
-            if (photoInput) {
-                photoInput.addEventListener('change', function(e) {
-                    const file = this.files[0];
-                    if (!file) return;
+            photoInput?.addEventListener('change', function () {
+                const file = this.files?.[0];
+                if (!file) return;
 
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        container.innerHTML = `<img src="${e.target.result}" class="h-full w-full object-cover">`;
-                        removeBtn.style.display = 'inline-flex'; // Show remove button
-                        deleteInput.value = "0"; // Reset deletion flag because we have a new file
-                    }
-                    reader.readAsDataURL(file);
-                });
-            }
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    container.innerHTML = `<img src="${ev.target.result}" class="h-full w-full object-cover" alt="Preview">`;
+                    if (removeBtn) removeBtn.style.display = 'inline-flex';
+                    if (deleteInput) deleteInput.value = "0";
+                };
+                reader.readAsDataURL(file);
+            });
 
-            if (removeBtn) {
-                removeBtn.addEventListener('click', function() {
-                    // 1. Clear the file input
-                    photoInput.value = "";
-
-                    // 2. Revert preview to placeholder
-                    container.innerHTML = placeholderSvg;
-
-                    // 3. Hide this button
-                    removeBtn.style.display = 'none';
-
-                    // 4. Set hidden input to 1 so the Controller knows to delete the file
-                    deleteInput.value = "1";
-                });
-            }
+            removeBtn?.addEventListener('click', function () {
+                photoInput.value = "";
+                container.innerHTML = placeholderSvg;
+                removeBtn.style.display = 'none';
+                if (deleteInput) deleteInput.value = "1";
+            });
         });
     </script>
 @endsection

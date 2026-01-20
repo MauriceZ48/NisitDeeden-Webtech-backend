@@ -14,17 +14,27 @@
                 </div>
             </a>
 
+            @php
+                use App\Enums\UserRole;
+
+                $role = auth()->check() ? auth()->user()->role : null; // enum or null
+                $isAdmin = $role === UserRole::ADMIN;
+            @endphp
+
             {{-- Center links --}}
             <nav class="hidden md:flex items-center gap-1">
-                <a href="{{ route('applications.index') }}"
-                   class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-                    Applications
-                </a>
-                <a href="{{ route('users.index') }}"
-                   class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-                    Users
-                </a>
+                @if($isAdmin)
+                    <a href="{{ route('applications.index') }}"
+                       class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                        Applications
+                    </a>
+                    <a href="{{ route('users.index') }}"
+                       class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                        Users
+                    </a>
+                @endif
             </nav>
+
 
             {{-- Right actions --}}
             <div class="flex items-center gap-2">
