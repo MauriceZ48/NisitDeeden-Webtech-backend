@@ -148,15 +148,24 @@ class ApplicationController extends Controller
     public function edit(Application $application)
     {
         Gate::authorize('update', $application);
+
         $application->load(['user']);
+
+        $users = User::query()
+            ->where('role', UserRole::USER)
+            ->select(['id','name','email','university_id','faculty','department','profile_path'])
+            ->orderBy('name')
+            ->get()
+            ->append('profile_url');
 
         return view('applications.form', [
             'application' => $application,
-            'users'       => collect([$application->user])->filter(), // only selected user
+            'users'       => $users,
             'categories'  => ApplicationCategory::cases(),
             'statuses'    => ApplicationStatus::cases(),
         ]);
     }
+
 
 
     /**
