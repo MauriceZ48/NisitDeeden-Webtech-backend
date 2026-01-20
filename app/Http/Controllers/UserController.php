@@ -15,10 +15,10 @@ use Illuminate\Validation\Rules\Enum;
 
 class UserController extends Controller
 {
-
     public function __construct(
         private UserRepository $userRepository
     ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -34,7 +34,7 @@ class UserController extends Controller
         if ($q !== '') {
             $query->where(function ($qq) use ($q) {
                 $qq->where('name', 'like', "%{$q}%")
-                    ->orWhere('university_id', 'like', "%{$q}%"); // or student_staff_id if that's your column
+                    ->orWhere('university_id', 'like', "%{$q}%");
             });
         }
 
@@ -91,50 +91,49 @@ class UserController extends Controller
         ]);
     }
 
-
     public function store(Request $request)
     {
         $data = $this->validated($request);
 
-        // handle upload
-//        if ($request->hasFile('profile_picture')) {
-//            $data['profile_picture_path'] = $request->file('profile_picture')
-//                ->store('profile_pictures', 'public');
-//        }
+        // Logic for profile_path during creation
+        if ($request->hasFile('photo')) {
+            $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
+        }
+
         $data['password'] = Hash::make('12345678');
 
-        $user = User::create($data);
+        User::create($data);
 
         return redirect()->route('users.index')->with('success', 'User created.');
     }
 
+    /**
+     * Centralized validation logic
+     */
     private function validated(Request $request, ?int $userId = null): array
     {
         return $request->validate([
-            'name' => ['required','string','max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required','email','max:255',
+                'required', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
             'university_id' => [
-                'required','string','max:50',
+                'required', 'string', 'max:50',
                 Rule::unique('users', 'university_id')->ignore($userId),
             ],
             'role' => ['required', new Enum(UserRole::class)],
             'faculty' => ['nullable', new Enum(Faculty::class)],
             'department' => ['nullable', new Enum(Department::class)],
+            'photo' => ['nullable', 'image', 'max:2048'], // Added photo validation
         ]);
     }
-
-
-
 
     /**
      * Display the specified resource.
      */
     public function show(User $user)
     {
-        // We load the 'applications' relationship you just added to the User model
         return view('users.show', [
             'user' => $user->load('applications')
         ]);
@@ -154,20 +153,13 @@ class UserController extends Controller
         ]);
     }
 
-
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'role' => ['required', new Enum(UserRole::class)],
-            'faculty' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'university_id' => 'required|string|unique:users,university_id,' . $user->id,
-            'photo' => 'nullable|image|max:2048',
-        ]);
+        // Use the centralized validated helper
+        $validated = $this->validated($request, $user->id);
 
         if ($request->hasFile('photo')) {
             // Delete old photo if it exists
@@ -175,28 +167,29 @@ class UserController extends Controller
                 Storage::disk('public')->delete($user->profile_path);
             }
 
-            // Store new photo
-            $path = $request->file('photo')->store('profile-photos', 'public');
-            $user->profile_path = $path;
+            // Store new photo under standardized name profile_path
+            $user->profile_path = $request->file('photo')->store('profile-photos', 'public');
         }
 
         $user->fill($validated);
-
         $user->save();
 
-        return redirect()->route('users.index', $user)
+        return redirect()->route('users.index')
             ->with('success', 'User updated successfully!');
     }
-
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(User $user)
     {
-        // Basic security: Don't let an admin delete themselves!
         if (auth()->id() === $user->id) {
             return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        // Clean up the storage when user is deleted
+        if ($user->profile_path) {
+            Storage::disk('public')->delete($user->profile_path);
         }
 
         $user->delete();
@@ -226,7 +219,4 @@ class UserController extends Controller
 
         return response()->json($departments);
     }
-
-
-
 }
