@@ -43,7 +43,7 @@ class ApplicationController extends Controller
     public function create()
     {
         Gate::authorize('create', Application::class);
-        $userId = $request->query('user_id');
+//        $userId = $request->query('user_id');
 
         $users = User::query()
             ->select(['id','name','email','university_id','faculty','department','profile_path'])
@@ -93,8 +93,9 @@ class ApplicationController extends Controller
             }
         }
 
-        return redirect()->route('users.show', $request->user_id)
+        return redirect($request->input('return_url', url()->previous()))
             ->with('success', 'Application and attachments added!');
+
     }
 
     /**

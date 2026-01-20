@@ -17,7 +17,11 @@
         $isEdit = isset($application) && $application->exists;
 
         $selectedUserId = old('user_id', $application->user_id ?? null);
-        $selectedCategory = old('category', $application->category ?? 'co_curricular');
+       $selectedCategory = old(
+            'category',
+            ($application->category?->value ?? ApplicationCategory::ACTIVITY->value)
+        );
+
 
         $route = $isEdit ? route('applications.update', $application) : route('applications.store');
     @endphp
@@ -43,11 +47,14 @@
                     @if($isEdit)
                         @method('PUT')
                     @endif
+                    <input type="hidden" name="return_url" value="{{ url()->previous() }}">
+
 
                     {{-- ===================== 1) GENERAL INFORMATION (USER TABLE) ===================== --}}
                     <div class="p-6 md:p-8 border-b border-slate-100">
                         <div class="flex items-center gap-3">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                            <span
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
                                 1
                             </span>
                             <div class="flex items-center gap-2">
@@ -113,9 +120,12 @@
                                             >
                                                 <td class="px-4 py-3">
                                                     <div class="flex items-center justify-center">
-                                                        <div class="h-6 w-6 rounded-full border flex items-center justify-center"
-                                                             :class="selectedUserId === u.id ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
-                                                            <svg x-show="selectedUserId === u.id" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                                        <div
+                                                            class="h-6 w-6 rounded-full border flex items-center justify-center"
+                                                            :class="selectedUserId === u.id ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                                            <svg x-show="selectedUserId === u.id"
+                                                                 class="h-4 w-4 text-white" viewBox="0 0 24 24"
+                                                                 fill="currentColor">
                                                                 <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
                                                             </svg>
                                                         </div>
@@ -124,15 +134,18 @@
 
                                                 <td class="px-4 py-3">
                                                     <div class="flex items-center gap-3">
-                                                        <img class="h-9 w-9 rounded-xl object-cover border border-slate-200 bg-white"
-                                                             :src="u.avatar" alt="">
+                                                        <img
+                                                            class="h-9 w-9 rounded-xl object-cover border border-slate-200 bg-white"
+                                                            :src="u.avatar" alt="">
                                                         <div>
-                                                            <div class="font-semibold text-slate-900" x-text="u.name"></div>
+                                                            <div class="font-semibold text-slate-900"
+                                                                 x-text="u.name"></div>
                                                         </div>
                                                     </div>
                                                 </td>
 
-                                                <td class="px-4 py-3 text-slate-700" x-text="u.university_id ?? '-'"></td>
+                                                <td class="px-4 py-3 text-slate-700"
+                                                    x-text="u.university_id ?? '-'"></td>
                                                 <td class="px-4 py-3 text-slate-700" x-text="u.faculty"></td>
                                                 <td class="px-4 py-3 text-slate-700" x-text="u.department"></td>
                                                 <td class="px-4 py-3 text-slate-700" x-text="u.email"></td>
@@ -188,15 +201,18 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
                                     <div class="rounded-xl bg-white border border-slate-200 px-4 py-3">
                                         <p class="text-xs font-semibold text-slate-500">Faculty</p>
-                                        <p class="mt-1 text-sm font-semibold text-slate-900" x-text="selectedUser ? selectedUser.faculty : '-'"></p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900"
+                                           x-text="selectedUser ? selectedUser.faculty : '-'"></p>
                                     </div>
                                     <div class="rounded-xl bg-white border border-slate-200 px-4 py-3">
                                         <p class="text-xs font-semibold text-slate-500">Department</p>
-                                        <p class="mt-1 text-sm font-semibold text-slate-900" x-text="selectedUser ? selectedUser.department : '-'"></p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900"
+                                           x-text="selectedUser ? selectedUser.department : '-'"></p>
                                     </div>
                                     <div class="rounded-xl bg-white border border-slate-200 px-4 py-3">
                                         <p class="text-xs font-semibold text-slate-500">Email</p>
-                                        <p class="mt-1 text-sm font-semibold text-slate-900 truncate" x-text="selectedUser ? selectedUser.email : '-'"></p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900 truncate"
+                                           x-text="selectedUser ? selectedUser.email : '-'"></p>
                                     </div>
                                 </div>
                             </div>
@@ -206,7 +222,8 @@
                     {{-- ===================== 2) NOMINATION CATEGORY (CARDS ONLY) ===================== --}}
                     <div class="p-6 md:p-8 border-b border-slate-100">
                         <div class="flex items-center gap-3">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                            <span
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
                                 2
                             </span>
                             <div>
@@ -223,17 +240,20 @@
                                     @click="category = @js($categoryValue['co'])"
 
                                     class="relative rounded-2xl border p-5 text-left transition"
-                                    :class="category === 'co_curricular' ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
+                                    :class="category === @js($categoryValue['co']) ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
                                 <div class="flex items-center justify-between">
-                                    <div class="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <div
+                                        class="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.95 1.97 3.45V19h6v-2.5C23 14.17 18.33 13 16 13z"/>
+                                            <path
+                                                d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.95 1.97 3.45V19h6v-2.5C23 14.17 18.33 13 16 13z"/>
                                         </svg>
                                     </div>
 
                                     <div class="h-5 w-5 rounded-full border flex items-center justify-center"
-                                         :class="category === 'co_curricular' ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
-                                        <svg x-show="category === 'co_curricular'" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                         :class="category === @js($categoryValue['co']) ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                        <svg x-show="category === @js($categoryValue['co'])" class="h-3 w-3 text-white"
+                                             viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
                                         </svg>
                                     </div>
@@ -249,17 +269,20 @@
                             <button type="button"
                                     @click="category = @js($categoryValue['cre'])"
                                     class="relative rounded-2xl border p-5 text-left transition"
-                                    :class="category === 'creativity' ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
+                                    :class="category === @js($categoryValue['cre']) ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
                                 <div class="flex items-center justify-between">
-                                    <div class="h-11 w-11 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
+                                    <div
+                                        class="h-11 w-11 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
                                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M9 21h6v-1H9v1zm3-20C7.93 1 5 3.93 5 7c0 2.38 1.19 4.47 3 5.74V16c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-3.26c1.81-1.27 3-3.36 3-5.74 0-3.07-2.93-6-7-6z"/>
+                                            <path
+                                                d="M9 21h6v-1H9v1zm3-20C7.93 1 5 3.93 5 7c0 2.38 1.19 4.47 3 5.74V16c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-3.26c1.81-1.27 3-3.36 3-5.74 0-3.07-2.93-6-7-6z"/>
                                         </svg>
                                     </div>
 
                                     <div class="h-5 w-5 rounded-full border flex items-center justify-center"
-                                         :class="category === 'creativity' ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
-                                        <svg x-show="category === 'creativity'" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                         :class="category === @js($categoryValue['cre']) ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                        <svg x-show="category ===@js($categoryValue['cre'])" class="h-3 w-3 text-white"
+                                             viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
                                         </svg>
                                     </div>
@@ -275,17 +298,20 @@
                             <button type="button"
                                     @click="category = @js($categoryValue['good'])"
                                     class="relative rounded-2xl border p-5 text-left transition"
-                                    :class="category === 'good_conduct' ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
+                                    :class="category === @js($categoryValue['good']) ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
                                 <div class="flex items-center justify-between">
-                                    <div class="h-11 w-11 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <div
+                                        class="h-11 w-11 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
                                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3zm-1.1 14.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/>
+                                            <path
+                                                d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3zm-1.1 14.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/>
                                         </svg>
                                     </div>
 
                                     <div class="h-5 w-5 rounded-full border flex items-center justify-center"
-                                         :class="category === 'good_conduct' ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
-                                        <svg x-show="category === 'good_conduct'" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                         :class="category === @js($categoryValue['good']) ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                        <svg x-show="category === @js($categoryValue['good'])" class="h-3 w-3 text-white"
+                                             viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
                                         </svg>
                                     </div>
@@ -302,16 +328,19 @@
                     {{-- ===================== 3) SUPPORTING DOCUMENTS ===================== --}}
                     <div class="p-6 md:p-8">
                         <div class="flex items-center gap-3">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                            <span
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
                                 3
                             </span>
                             <div>
                                 <h2 class="text-lg font-semibold text-slate-900">Supporting Documents</h2>
-                                <p class="text-sm text-slate-500">Upload PDFs or images that support your nomination.</p>
+                                <p class="text-sm text-slate-500">Upload PDFs or images that support your
+                                    nomination.</p>
                             </div>
                         </div>
 
-                        <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 p-10 text-center">
+                        <div
+                            class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 p-10 text-center">
                             <input type="file"
                                    name="attachments[]"
                                    multiple
@@ -320,7 +349,8 @@
                                    x-ref="fileInput"
                                    @change="handleFiles($event)">
 
-                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200">
+                            <div
+                                class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200">
                                 <svg class="h-6 w-6 text-slate-600" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M19 15v4H5v-4H3v6h18v-6h-2zM11 3h2v10h3l-4 4-4-4h3V3z"/>
                                 </svg>
@@ -343,10 +373,13 @@
                         {{-- Selected files list (client-side preview) --}}
                         <div class="mt-5 space-y-2" x-show="files.length > 0">
                             <template x-for="(f, idx) in files" :key="idx">
-                                <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                <div
+                                    class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
                                     <div class="flex items-center gap-3">
-                                        <div class="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
-                                            <span class="text-xs font-bold text-slate-700" x-text="fileBadge(f.name)"></span>
+                                        <div
+                                            class="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                                            <span class="text-xs font-bold text-slate-700"
+                                                  x-text="fileBadge(f.name)"></span>
                                         </div>
                                         <div>
                                             <div class="text-sm font-semibold text-slate-900" x-text="f.name"></div>
@@ -371,10 +404,10 @@
                                 Cancel
                             </a>
 
-{{--                            <button type="submit" name="action" value="draft"--}}
-{{--                                    class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">--}}
-{{--                                Save Draft--}}
-{{--                            </button>--}}
+                            {{--                            <button type="submit" name="action" value="draft"--}}
+                            {{--                                    class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">--}}
+                            {{--                                Save Draft--}}
+                            {{--                            </button>--}}
 
                             <button type="submit" name="action" value="submit"
                                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20">
@@ -416,7 +449,7 @@
                 users: (users || []).map(normalize),
                 q: '',
                 selectedUserId: selectedUserId ? Number(selectedUserId) : null,
-                category: selectedCategory,
+                category: selectedCategory || @js($categoryValue['co']),
 
                 files: [],
 
