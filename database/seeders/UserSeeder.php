@@ -24,7 +24,9 @@ class UserSeeder extends Seeder
             'department' => Department::COMPUTER,
         ]);
 
-        User::factory()->count(49)->create();
+        User::factory()->count(5)->withImage()->create();
+
+        User::factory()->count(44)->create();
 
     }
 }

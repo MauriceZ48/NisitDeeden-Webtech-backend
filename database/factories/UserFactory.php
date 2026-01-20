@@ -45,6 +45,28 @@ class UserFactory extends Factory
         ];
     }
 
+    public function withImage(): static
+    {
+        return $this->state(function (array $attributes) {
+            $name = $attributes['name'] ?? 'user';
+
+            // 1. Generate a filename
+            $filename = 'profile-photos/seed-' . Str::random(10) . '.jpg';
+
+            // 2. Get a random high-quality image from a service like Unsplash
+            // We use @ to suppress errors in case of no internet connection
+            $image = @file_get_contents("https://xsgames.co/randomusers/avatar.php?g=pixel");
+
+            if ($image) {
+                // 3. Save it to your local storage
+                \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $image);
+                return ['profile_path' => $filename];
+            }
+
+            return ['profile_path' => null];
+        });
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */
