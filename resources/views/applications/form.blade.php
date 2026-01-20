@@ -339,70 +339,86 @@
                     {{-- ===================== 3) SUPPORTING DOCUMENTS ===================== --}}
                     <div class="p-6 md:p-8">
                         <div class="flex items-center gap-3">
-                            <span
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
-                                3
-                            </span>
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">3</span>
                             <div>
                                 <h2 class="text-lg font-semibold text-slate-900">Supporting Documents</h2>
-                                <p class="text-sm text-slate-500">Upload PDFs or images that support your
-                                    nomination.</p>
+                                <p class="text-sm text-slate-500">Manage existing files or upload new ones to support your nomination.</p>
                             </div>
                         </div>
 
-                        <div
-                            class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 p-10 text-center">
-                            <input type="file"
-                                   name="attachments[]"
-                                   multiple
-                                   accept=".pdf,.png,.jpg,.jpeg"
-                                   class="hidden"
-                                   x-ref="fileInput"
-                                   @change="handleFiles($event)">
+                        {{-- A. SHOW EXISTING ATTACHMENTS --}}
+                        @if($isEdit && $application->attachments->count() > 0)
+                            <div class="mt-6 space-y-3">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Current Attachments</h3>
 
-                            <div
-                                class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200">
+                                {{-- Hidden input to send deleted IDs to Backend --}}
+                                <template x-for="id in deletedAttachmentIds" :key="id">
+                                    <input type="hidden" name="delete_attachments[]" :value="id">
+                                </template>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    @foreach($application->attachments as $file)
+                                        <div x-show="!isDeleted({{ $file->id }})"
+                                             class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 transition">
+
+                                            <div class="flex items-center gap-3 truncate">
+                                                <div class="h-10 w-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center flex-none">
+                                                    <span class="text-[10px] font-black text-slate-500">{{ strtoupper(pathinfo($file->file_name, PATHINFO_EXTENSION)) }}</span>
+                                                </div>
+                                                <div class="truncate">
+                                                    <p class="text-sm font-semibold text-slate-900 truncate">{{ $file->file_name }}</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-1">
+                                                <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank" class="text-slate-400 hover:text-primary p-2">
+                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-0L10 14" /></svg>
+                                                </a>
+                                                {{-- Delete Button --}}
+                                                <button type="button" @click="removeExistingFile({{ $file->id }})" class="text-slate-400 hover:text-red-600 p-2">
+                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- B. UPLOAD NEW FILES --}}
+                        <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 p-10 text-center">
+                            <input type="file" name="attachments[]" multiple accept=".pdf,.png,.jpg,.jpeg" class="hidden" x-ref="fileInput" @change="handleFiles($event)">
+
+                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200">
                                 <svg class="h-6 w-6 text-slate-600" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M19 15v4H5v-4H3v6h18v-6h-2zM11 3h2v10h3l-4 4-4-4h3V3z"/>
                                 </svg>
                             </div>
 
-                            <p class="mt-4 text-sm text-slate-800 font-semibold">
-                                Click to upload or drag and drop
-                            </p>
-                            <p class="mt-1 text-xs text-slate-500">
-                                PDF, PNG, JPG (Max. 5MB each)
-                            </p>
+                            <p class="mt-4 text-sm text-slate-800 font-semibold">Upload New Documents</p>
+                            <p class="mt-1 text-xs text-slate-500">PDF, PNG, JPG (Max. 5MB each)</p>
 
-                            <button type="button"
-                                    @click="$refs.fileInput.click()"
-                                    class="mt-5 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <button type="button" @click="$refs.fileInput.click()" class="mt-5 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90">
                                 Choose files
                             </button>
                         </div>
 
-                        {{-- Selected files list (client-side preview) --}}
+                        {{-- C. NEWLY SELECTED FILES PREVIEW (Client-side) --}}
                         <div class="mt-5 space-y-2" x-show="files.length > 0">
+                            <p class="text-xs font-bold uppercase tracking-wider text-primary">New files to be uploaded:</p>
                             <template x-for="(f, idx) in files" :key="idx">
-                                <div
-                                    class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                <div class="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
                                     <div class="flex items-center gap-3">
-                                        <div
-                                            class="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
-                                            <span class="text-xs font-bold text-slate-700"
-                                                  x-text="fileBadge(f.name)"></span>
+                                        <div class="h-10 w-10 rounded-xl bg-white border border-primary/20 flex items-center justify-center">
+                                            <span class="text-xs font-bold text-primary" x-text="fileBadge(f.name)"></span>
                                         </div>
                                         <div>
                                             <div class="text-sm font-semibold text-slate-900" x-text="f.name"></div>
                                             <div class="text-xs text-slate-500" x-text="formatBytes(f.size)"></div>
                                         </div>
                                     </div>
-                                    <button type="button"
-                                            class="text-slate-400 hover:text-slate-700"
-                                            @click="removeFile(idx)">
-                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/>
-                                        </svg>
+                                    <button type="button" class="text-slate-400 hover:text-red-500" @click="removeFile(idx)">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
                                     </button>
                                 </div>
                             </template>
@@ -410,22 +426,9 @@
 
                         {{-- Action buttons --}}
                         <div class="mt-10 flex items-center justify-end gap-3">
-                            <a href="{{ url()->previous() }}"
-                               class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                Cancel
-                            </a>
-
-                            {{--                            <button type="submit" name="action" value="draft"--}}
-                            {{--                                    class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">--}}
-                            {{--                                Save Draft--}}
-                            {{--                            </button>--}}
-
-                            <button type="submit" name="action" value="submit"
-                                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20">
-{{--                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">--}}
-{{--                                    <path d="M2 21 23 12 2 3v7l15 2-15 2v7z"/>--}}
-{{--                                </svg>--}}
-                                {{ $isEdit ? 'Update Request' : 'Submit Request' }}
+                            <a href="{{ url()->previous() }}" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">Cancel</a>
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90">
+                                {{ $isEdit ? 'Update Application' : 'Submit Application' }}
                             </button>
                         </div>
                     </div>
@@ -451,6 +454,19 @@
             };
 
             return {
+
+                deletedAttachmentIds: [],
+
+                removeExistingFile(id) {
+                    if (!this.deletedAttachmentIds.includes(id)) {
+                        this.deletedAttachmentIds.push(id);
+                    }
+                },
+
+                isDeleted(id) {
+                    return this.deletedAttachmentIds.includes(id);
+                },
+
                 isEdit: !!isEdit,
                 users: (users || []).map(normalize),
                 q: '',

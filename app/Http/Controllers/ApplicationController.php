@@ -170,32 +170,43 @@ class ApplicationController extends Controller
             'category' => ['required', new \Illuminate\Validation\Rules\Enum(ApplicationCategory::class)],
             'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
             'attachments.*' => ['nullable','file','max:5120'],
+            'delete_attachments.*' => ['nullable', 'exists:attachments,id'], // Validate deletion IDs
         ]);
 
+        // 1. Handle Deletions first
+        if ($request->has('delete_attachments')) {
+            $toDelete = Attachment::whereIn('id', $request->delete_attachments)
+                ->where('application_id', $application->id) // Security check
+                ->get();
 
+            foreach ($toDelete as $file) {
+                Storage::disk('public')->delete($file->file_path); // Remove physical file
+                $file->delete(); // Remove DB record
+            }
+        }
+
+        // 2. Update Application Info
         $application->category = $request->category;
-
         if ($request->has('status')) {
             $application->status = $request->status;
         }
-
         $application->save();
 
+        // 3. Handle New Uploads
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('applications/attachments', 'public');
 
-                $attachment = new Attachment();
-                $attachment->application_id = $application->id;
-                $attachment->file_path = $path;
-                $attachment->file_name = $file->getClientOriginalName();
-                $attachment->mime_type = $file->getMimeType();
-                $attachment->file_size = $file->getSize();
-                $attachment->save();
+                $application->attachments()->create([
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                ]);
             }
         }
 
-        return redirect()->route('applications.show', ['application' => $application])
+        return redirect()->route('applications.show', $application)
             ->with('success', 'Application updated successfully!');
     }
 
