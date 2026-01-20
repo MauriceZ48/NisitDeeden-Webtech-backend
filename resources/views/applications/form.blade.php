@@ -1,225 +1,477 @@
+@php use App\Enums\ApplicationCategory; @endphp
 @extends('layouts.main')
 
 @section('content')
     @php
-        $isEdit = $application->exists;
-        $route  = $isEdit
-            ? route('applications.update', $application)
-            : route('applications.store');
+        // Expect: $users (collection of users)
+        // Optional: $application (edit mode)
 
-        // 2-step flow
-        $steps = [
-            ['title' => 'Select Student'],
-            ['title' => 'Award Category'],
+
+
+        $categoryValue = [
+            'co'   => ApplicationCategory::ACTIVITY->value,
+            'cre'  => ApplicationCategory::CREATIVITY->value,
+            'good' => ApplicationCategory::BEHAVIOR->value,
         ];
-        $currentStep = 1; // set 1 or 2 based on your flow
 
-        // Small class helpers
-        $card = 'bg-white border border-gray-200 rounded-2xl p-6 shadow-sm';
-        $title = 'text-gray-900 font-semibold';
-        $muted = 'text-gray-500';
+        $isEdit = isset($application) && $application->exists;
+
+        $selectedUserId = old('user_id', $application->user_id ?? null);
+        $selectedCategory = old('category', $application->category ?? 'co_curricular');
+
+        $route = $isEdit ? route('applications.update', $application) : route('applications.store');
     @endphp
 
     <section class="bg-background">
-        <div class="container mx-auto w-[80%] py-6">
+        <div class="container mx-auto w-[80%] py-10">
 
-            {{-- Header --}}
-            <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-900">Application Setup</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Select the student candidate and choose the award category to begin.
+            {{-- Page title --}}
+            <div class="mb-8">
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">
+                    {{ $isEdit ? 'Edit Excellence Award Application' : 'Apply for Excellence Award' }}
+                </h1>
+                <p class="mt-2 text-slate-500">
+                    {{ $isEdit ? 'Update your application details and supporting documents.' : 'Self-nomination form for the upcoming academic year awards.' }}
                 </p>
             </div>
 
-            {{-- Stepper (2 steps) --}}
-            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-6">
-                <div class="flex items-center gap-4">
-                    @foreach($steps as $i => $step)
-                        @php
-                            $stepNumber = $i + 1;
-                            $isActive = $stepNumber === $currentStep;
-                            $isDone   = $stepNumber < $currentStep;
+            {{-- Main card --}}
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <form method="POST" action="{{ $route }}" enctype="multipart/form-data"
+                      x-data="applyPage({{ Js::from($users) }}, {{ Js::from($selectedUserId) }}, '{{ $selectedCategory }}', {{ Js::from($isEdit) }})">
+                    @csrf
+                    @if($isEdit)
+                        @method('PUT')
+                    @endif
 
-                            $dotClass = $isDone
-                                ? 'bg-approved text-white'
-                                : ($isActive ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600');
-
-                            $lineClass = $isDone ? 'bg-approved' : 'bg-gray-200';
-                            $labelClass = $isActive ? 'text-gray-900' : 'text-gray-500';
-                        @endphp
-
-                        <div class="flex items-center flex-1 min-w-0">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold {{ $dotClass }}">
-                                    {{ $stepNumber }}
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="text-sm font-semibold {{ $labelClass }}">
-                                        {{ $step['title'] }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            @if($stepNumber !== count($steps))
-                                <div class="flex-1 h-[2px] mx-4 {{ $lineClass }}"></div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Main content --}}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                {{-- Left: Select Student --}}
-                <div class="{{ $card }}">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">1</div>
-                        <h2 class="text-lg {{ $title }}">Select Student</h2>
-                    </div>
-
-                    {{-- Search --}}
-                    <div class="mb-4">
-                        <label class="sr-only" for="student_search">Search</label>
-                        <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                                <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z"
-                                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                        </span>
-
-                            <input
-                                id="student_search"
-                                type="text"
-                                placeholder="Search by student name, ID, or faculty..."
-                                class="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl
-                                   focus:ring-2 focus:ring-primary focus:border-primary"
-                            />
-                        </div>
-                    </div>
-
-                    {{-- Table --}}
-                    <div class="overflow-hidden border border-gray-200 rounded-xl">
-                        <div class="grid grid-cols-12 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500">
-                            <div class="col-span-4">NAME</div>
-                            <div class="col-span-3">STUDENT ID</div>
-                            <div class="col-span-3">FACULTY</div>
-                            <div class="col-span-2 text-right">ACTION</div>
-                        </div>
-
-                        {{-- Row (selected example) --}}
-                        <div class="grid grid-cols-12 px-4 py-3 items-center border-t border-gray-200">
-                            <div class="col-span-4 text-sm font-medium text-gray-900">Marcus Thorne</div>
-                            <div class="col-span-3 text-sm text-gray-600">ST-2023-0892</div>
-                            <div class="col-span-3 text-sm text-gray-600">Science & Tech</div>
-                            <div class="col-span-2 text-right">
-                            <span class="inline-flex items-center gap-2 text-approved text-sm font-semibold">
-                                Selected
-                                <span class="w-5 h-5 rounded-full bg-approved text-white inline-flex items-center justify-center">✓</span>
+                    {{-- ===================== 1) GENERAL INFORMATION (USER TABLE) ===================== --}}
+                    <div class="p-6 md:p-8 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                                1
                             </span>
+                            <div class="flex items-center gap-2">
+                                <div>
+                                    <h2 class="text-lg font-semibold text-slate-900">General Information</h2>
+                                    <p class="text-sm text-slate-500">Select the student profile to apply with.</p>
+                                </div>
+
+                                {{-- Locked badge in edit mode --}}
+                                <span x-show="isEdit"
+                                      class="ml-2 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                                    Locked (cannot change student)
+                                </span>
                             </div>
                         </div>
 
-                        {{-- Row --}}
-                        <div class="grid grid-cols-12 px-4 py-3 items-center border-t border-gray-200">
-                            <div class="col-span-4 text-sm font-medium text-gray-900">Sarah Jenkins</div>
-                            <div class="col-span-3 text-sm text-gray-600">ST-2023-0041</div>
-                            <div class="col-span-3 text-sm text-gray-600">Faculty of Arts</div>
-                            <div class="col-span-2 text-right">
-                                <button
-                                    type="button"
-                                    class="px-3 py-1.5 rounded-lg border border-primary text-primary text-sm font-semibold
-                                       hover:bg-primary/10"
-                                >
-                                    Select
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                        {{-- Search + Table --}}
+                        <div class="mt-6">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div class="text-sm text-slate-500">
+                                    Find and select a student from the list.
+                                </div>
 
-                    <p class="mt-4 text-xs {{ $muted }}">
-                        Tip: You can later replace this table with your real loop and “selected student” state.
-                    </p>
-                </div>
-
-                {{-- Right: Award Category --}}
-                <div class="{{ $card }}">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">2</div>
-                        <h2 class="text-lg {{ $title }}">Award Category</h2>
-                    </div>
-
-                    <form action="{{ $route }}" method="POST" class="space-y-3">
-                        @csrf
-                        @if($isEdit) @method('PUT') @endif
-
-                        @foreach($categories as $category)
-                            @php
-                                $value = $category->value;
-                                $checked = old('category', $application->category?->value ?? $application->category) == $value;
-                            @endphp
-
-                            <label class="block">
-                                <input
-                                    type="radio"
-                                    name="category"
-                                    value="{{ $value }}"
-                                    class="peer sr-only"
-                                    {{ $checked ? 'checked' : '' }}
-                                />
-
-                                <div class="flex items-center justify-between gap-4 border rounded-2xl p-4 bg-white
-                                        border-gray-200
-                                        hover:border-primary/60
-                                        peer-checked:border-primary peer-checked:bg-primary/10">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600
-                                                peer-checked:bg-primary/15 peer-checked:text-primary">
-                                            <span class="text-lg">★</span>
-                                        </div>
-
-                                        <div>
-                                            <div class="text-sm font-semibold text-gray-900">
-                                                {{ ucfirst(strtolower($category->name)) }}
-                                            </div>
-                                            <div class="text-xs text-gray-500">
-                                                Choose this category for the application.
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center
-                                            peer-checked:border-primary peer-checked:bg-primary">
-                                        <span class="text-white text-xs peer-checked:inline hidden">✓</span>
+                                <div class="w-full md:w-[380px]">
+                                    <div class="relative">
+                                        <input type="text"
+                                               x-model="q"
+                                               :disabled="isEdit"
+                                               :class="isEdit ? 'bg-slate-100 cursor-not-allowed' : ''"
+                                               placeholder="Search name / university id / email..."
+                                               class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40">
+                                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400"
+                                             viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M10 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm11 3-6-6 1.5-1.5 6 6z"/>
+                                        </svg>
                                     </div>
                                 </div>
-                            </label>
-                        @endforeach
+                            </div>
 
-                        @error('category')
-                        <p class="text-xs text-rejected">{{ $message }}</p>
+                            <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                                <div class="max-h-[360px] overflow-auto">
+                                    <table class="w-full text-left text-sm">
+                                        <thead class="sticky top-0 bg-slate-50 text-slate-600">
+                                        <tr class="[&>th]:px-4 [&>th]:py-3 [&>th]:font-semibold">
+                                            <th class="w-[80px]">Pick</th>
+                                            <th>Student</th>
+                                            <th class="w-[170px]">University ID</th>
+                                            <th class="w-[180px]">Faculty</th>
+                                            <th class="w-[220px]">Department</th>
+                                            <th class="w-[260px]">Email</th>
+                                        </tr>
+                                        </thead>
+
+                                        <tbody class="divide-y divide-slate-100">
+                                        <template x-for="u in filteredUsers()" :key="u.id">
+                                            <tr
+                                                class="transition"
+                                                :class="[
+                                                    selectedUserId === u.id ? 'bg-primary/5' : 'hover:bg-slate-50/70',
+                                                    isEdit ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'
+                                                ].join(' ')"
+                                                @click="selectUser(u.id)"
+                                            >
+                                                <td class="px-4 py-3">
+                                                    <div class="flex items-center justify-center">
+                                                        <div class="h-6 w-6 rounded-full border flex items-center justify-center"
+                                                             :class="selectedUserId === u.id ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                                            <svg x-show="selectedUserId === u.id" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                                                <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <td class="px-4 py-3">
+                                                    <div class="flex items-center gap-3">
+                                                        <img class="h-9 w-9 rounded-xl object-cover border border-slate-200 bg-white"
+                                                             :src="u.avatar" alt="">
+                                                        <div>
+                                                            <div class="font-semibold text-slate-900" x-text="u.name"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <td class="px-4 py-3 text-slate-700" x-text="u.university_id ?? '-'"></td>
+                                                <td class="px-4 py-3 text-slate-700" x-text="u.faculty"></td>
+                                                <td class="px-4 py-3 text-slate-700" x-text="u.department"></td>
+                                                <td class="px-4 py-3 text-slate-700" x-text="u.email"></td>
+                                            </tr>
+                                        </template>
+
+                                        <tr x-show="filteredUsers().length === 0">
+                                            <td colspan="6" class="px-4 py-10 text-center text-slate-500">
+                                                No results found.
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            @error('user_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- hidden input to submit --}}
+                        <input type="hidden" name="user_id" :value="selectedUserId">
+                        @error('user_id')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
 
-                        {{-- Bottom actions --}}
-                        <div class="flex items-center justify-between pt-4 mt-4 border-t border-gray-100">
-                            <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
-                                ← Back to Dashboard
-                            </a>
 
-                            <button
-                                type="submit"
-                                class="inline-flex items-center gap-2 bg-primary hover:opacity-95 text-white
-                                   px-5 py-2.5 rounded-xl font-semibold shadow-sm"
-                            >
-                                Continue
-                                →
+                        {{-- Selected user preview card --}}
+                        <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50/40 p-5">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <img
+                                        class="h-12 w-12 rounded-2xl object-cover border border-slate-200 bg-white"
+                                        :src="selectedUser?.avatar"
+                                        alt=""
+                                    >
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-sm text-slate-500">Selected Student</p>
+                                            <span x-show="selectedUserId"
+                                                  class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                                                Selected
+                                            </span>
+                                        </div>
+                                        <p class="mt-1 text-lg font-semibold text-slate-900"
+                                           x-text="selectedUser ? selectedUser.name : 'No student selected'"></p>
+                                        <p class="text-sm text-slate-500"
+                                           x-text="selectedUser ? (selectedUser.university_id ?? '-') : ''"></p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
+                                    <div class="rounded-xl bg-white border border-slate-200 px-4 py-3">
+                                        <p class="text-xs font-semibold text-slate-500">Faculty</p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900" x-text="selectedUser ? selectedUser.faculty : '-'"></p>
+                                    </div>
+                                    <div class="rounded-xl bg-white border border-slate-200 px-4 py-3">
+                                        <p class="text-xs font-semibold text-slate-500">Department</p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900" x-text="selectedUser ? selectedUser.department : '-'"></p>
+                                    </div>
+                                    <div class="rounded-xl bg-white border border-slate-200 px-4 py-3">
+                                        <p class="text-xs font-semibold text-slate-500">Email</p>
+                                        <p class="mt-1 text-sm font-semibold text-slate-900 truncate" x-text="selectedUser ? selectedUser.email : '-'"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ===================== 2) NOMINATION CATEGORY (CARDS ONLY) ===================== --}}
+                    <div class="p-6 md:p-8 border-b border-slate-100">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                                2
+                            </span>
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Nomination Category</h2>
+                                <p class="text-sm text-slate-500">Choose one category.</p>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="category" :value="category">
+
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {{-- Co-curricular --}}
+                            <button type="button"
+                                    @click="category = @js($categoryValue['co'])"
+
+                                    class="relative rounded-2xl border p-5 text-left transition"
+                                    :class="category === 'co_curricular' ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
+                                <div class="flex items-center justify-between">
+                                    <div class="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.95 1.97 3.45V19h6v-2.5C23 14.17 18.33 13 16 13z"/>
+                                        </svg>
+                                    </div>
+
+                                    <div class="h-5 w-5 rounded-full border flex items-center justify-center"
+                                         :class="category === 'co_curricular' ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                        <svg x-show="category === 'co_curricular'" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="font-semibold text-slate-900">Co-curricular</div>
+                                    <div class="text-sm text-slate-500">Leadership &amp; Community</div>
+                                </div>
+                            </button>
+
+                            {{-- Creativity --}}
+                            <button type="button"
+                                    @click="category = @js($categoryValue['cre'])"
+                                    class="relative rounded-2xl border p-5 text-left transition"
+                                    :class="category === 'creativity' ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
+                                <div class="flex items-center justify-between">
+                                    <div class="h-11 w-11 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M9 21h6v-1H9v1zm3-20C7.93 1 5 3.93 5 7c0 2.38 1.19 4.47 3 5.74V16c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-3.26c1.81-1.27 3-3.36 3-5.74 0-3.07-2.93-6-7-6z"/>
+                                        </svg>
+                                    </div>
+
+                                    <div class="h-5 w-5 rounded-full border flex items-center justify-center"
+                                         :class="category === 'creativity' ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                        <svg x-show="category === 'creativity'" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="font-semibold text-slate-900">Creativity</div>
+                                    <div class="text-sm text-slate-500">Arts &amp; Innovation</div>
+                                </div>
+                            </button>
+
+                            {{-- Good Conduct --}}
+                            <button type="button"
+                                    @click="category = @js($categoryValue['good'])"
+                                    class="relative rounded-2xl border p-5 text-left transition"
+                                    :class="category === 'good_conduct' ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
+                                <div class="flex items-center justify-between">
+                                    <div class="h-11 w-11 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3zm-1.1 14.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/>
+                                        </svg>
+                                    </div>
+
+                                    <div class="h-5 w-5 rounded-full border flex items-center justify-center"
+                                         :class="category === 'good_conduct' ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
+                                        <svg x-show="category === 'good_conduct'" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="font-semibold text-slate-900">Good Conduct</div>
+                                    <div class="text-sm text-slate-500">Ethics &amp; Discipline</div>
+                                </div>
                             </button>
                         </div>
-                    </form>
-                </div>
+                    </div>
 
+                    {{-- ===================== 3) SUPPORTING DOCUMENTS ===================== --}}
+                    <div class="p-6 md:p-8">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                                3
+                            </span>
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Supporting Documents</h2>
+                                <p class="text-sm text-slate-500">Upload PDFs or images that support your nomination.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 p-10 text-center">
+                            <input type="file"
+                                   name="attachments[]"
+                                   multiple
+                                   accept=".pdf,.png,.jpg,.jpeg"
+                                   class="hidden"
+                                   x-ref="fileInput"
+                                   @change="handleFiles($event)">
+
+                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200">
+                                <svg class="h-6 w-6 text-slate-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 15v4H5v-4H3v6h18v-6h-2zM11 3h2v10h3l-4 4-4-4h3V3z"/>
+                                </svg>
+                            </div>
+
+                            <p class="mt-4 text-sm text-slate-800 font-semibold">
+                                Click to upload or drag and drop
+                            </p>
+                            <p class="mt-1 text-xs text-slate-500">
+                                PDF, PNG, JPG (Max. 5MB each)
+                            </p>
+
+                            <button type="button"
+                                    @click="$refs.fileInput.click()"
+                                    class="mt-5 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                Choose files
+                            </button>
+                        </div>
+
+                        {{-- Selected files list (client-side preview) --}}
+                        <div class="mt-5 space-y-2" x-show="files.length > 0">
+                            <template x-for="(f, idx) in files" :key="idx">
+                                <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                                            <span class="text-xs font-bold text-slate-700" x-text="fileBadge(f.name)"></span>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-slate-900" x-text="f.name"></div>
+                                            <div class="text-xs text-slate-500" x-text="formatBytes(f.size)"></div>
+                                        </div>
+                                    </div>
+                                    <button type="button"
+                                            class="text-slate-400 hover:text-slate-700"
+                                            @click="removeFile(idx)">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        {{-- Action buttons --}}
+                        <div class="mt-10 flex items-center justify-end gap-3">
+                            <a href="{{ url()->previous() }}"
+                               class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                                Cancel
+                            </a>
+
+{{--                            <button type="submit" name="action" value="draft"--}}
+{{--                                    class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">--}}
+{{--                                Save Draft--}}
+{{--                            </button>--}}
+
+                            <button type="submit" name="action" value="submit"
+                                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2 21 23 12 2 3v7l15 2-15 2v7z"/>
+                                </svg>
+                                {{ $isEdit ? 'Update Request' : 'Submit Request' }}
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
             </div>
         </div>
     </section>
+
+    {{-- Alpine helpers --}}
+    <script>
+        function applyPage(users, selectedUserId, selectedCategory, isEdit) {
+            const normalize = (u) => {
+                const avatar = u.profile_path
+                    ? (String(u.profile_path).startsWith('http') ? u.profile_path : u.profile_path)
+                    : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || 'User'));
+
+                return {
+                    id: Number(u.id),
+                    name: u.name ?? '',
+                    email: u.email ?? '',
+                    university_id: u.university_id ?? null,
+                    faculty: u.faculty ?? '',
+                    department: u.department ?? '',
+                    profile_path: u.profile_path ?? null,
+                    avatar
+                };
+            };
+
+            return {
+                isEdit: !!isEdit,
+                users: (users || []).map(normalize),
+                q: '',
+                selectedUserId: selectedUserId ? Number(selectedUserId) : null,
+                category: selectedCategory,
+
+                files: [],
+
+                get selectedUser() {
+                    if (!this.selectedUserId) return null;
+                    return this.users.find(x => x.id === this.selectedUserId) || null;
+                },
+
+                filteredUsers() {
+                    // Edit mode: show only the selected user (and lock changes)
+                    if (this.isEdit) {
+                        return this.selectedUser ? [this.selectedUser] : [];
+                    }
+
+                    const q = (this.q || '').toLowerCase().trim();
+                    if (!q) return this.users;
+
+                    return this.users.filter(u => {
+                        return (u.name || '').toLowerCase().includes(q)
+                            || String(u.university_id || '').toLowerCase().includes(q)
+                            || (u.email || '').toLowerCase().includes(q)
+                            || (u.faculty || '').toLowerCase().includes(q)
+                            || (u.department || '').toLowerCase().includes(q);
+                    });
+                },
+
+                selectUser(id) {
+                    // Block changes in edit mode
+                    if (this.isEdit) return;
+                    this.selectedUserId = Number(id);
+                },
+
+                handleFiles(e) {
+                    this.files = Array.from(e.target.files || []);
+                },
+
+                removeFile(idx) {
+                    this.files.splice(idx, 1);
+                    this.$refs.fileInput.value = '';
+                },
+
+                fileBadge(filename) {
+                    const ext = (filename.split('.').pop() || '').toUpperCase();
+                    return ext.length <= 4 ? ext : 'FILE';
+                },
+
+                formatBytes(bytes) {
+                    if (!bytes && bytes !== 0) return '';
+                    const units = ['B','KB','MB','GB'];
+                    let i = 0;
+                    let n = bytes;
+                    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+                    return `${n.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+                }
+            }
+        }
+    </script>
 @endsection

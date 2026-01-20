@@ -38,25 +38,31 @@ class ApplicationController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request)
-    {
-        $userId = $request->query('user_id');
 
-        $user = User::findOrFail($userId);
+    public function create()
+    {
+
+        $users = User::query()
+            ->select(['id','name','email','university_id','faculty','department','profile_path'])
+            ->orderBy('name')
+            ->get();
 
         return view('applications.form', [
-            'application' => new Application(),
+            'users'      => $users,
             'categories' => ApplicationCategory::cases(),
-            'statuses' => ApplicationStatus::cases(),
-            'user' => $user
+            'statuses'   => ApplicationStatus::cases(), // ถ้าหน้า create ไม่ให้เลือก status ก็ส่งไว้เฉยๆ ได้
         ]);
     }
+
+
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
+//        dd($request->all());
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'category' => 'required',
@@ -103,13 +109,16 @@ class ApplicationController extends Controller
      */
     public function edit(Application $application)
     {
+        $application->load(['user']);
+
         return view('applications.form', [
             'application' => $application,
+            'users'       => collect([$application->user])->filter(), // only selected user
             'categories'  => ApplicationCategory::cases(),
             'statuses'    => ApplicationStatus::cases(),
-            'user'         => $application->user
         ]);
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -117,9 +126,11 @@ class ApplicationController extends Controller
     public function update(Request $request, Application $application)
     {
         $request->validate([
+            'user_id' => ['required','exists:users,id'],
             'category' => ['required', new \Illuminate\Validation\Rules\Enum(ApplicationCategory::class)],
-            'status'   => ['required', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
+            'attachments.*' => ['nullable','file','max:5120'],
         ]);
+
 
         $application->category = $request->category;
         $application->status = $request->status;
@@ -142,4 +153,6 @@ class ApplicationController extends Controller
         $application->delete();
         return redirect()->route('applications.index')->with('success', 'Deleted.');
     }
+
+
 }

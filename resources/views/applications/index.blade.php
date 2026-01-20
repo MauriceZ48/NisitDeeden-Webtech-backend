@@ -211,7 +211,7 @@
                                                 View
                                             </a>
 
-                                            <a href="{{ route('applications.edit', $application) }}"
+                                            <a href="{{ route('applications.edit', $application)  }}"
                                                class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                                                 Edit
                                             </a>
