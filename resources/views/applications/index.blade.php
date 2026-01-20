@@ -137,7 +137,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                         <tr>
-                            <th class="px-6 py-3">#</th>
+{{--                            <th class="px-6 py-3">#</th>--}}
                             <th class="px-6 py-3">ID</th>
                             <th class="px-6 py-3">User</th>
                             <th class="px-6 py-3">Category</th>
@@ -152,9 +152,9 @@
 
                         @forelse($applications as $application)
                             <tr class="hover:bg-slate-50/70 transition-colors">
-                                <td class="px-6 py-4 text-sm text-slate-500">
-                                    #{{ $loop->iteration }}
-                                </td>
+{{--                                <td class="px-6 py-4 text-sm text-slate-500">--}}
+{{--                                    #{{ $loop->iteration }}--}}
+{{--                                </td>--}}
 
                                 <td class="px-6 py-4 text-sm font-semibold text-slate-900">
                                     <a href="{{ route('applications.show', ['application' => $application]) }}"
