@@ -78,7 +78,7 @@
                                             <option value="">All Roles</option>
                                             @foreach($roles as $r)
                                                 <option value="{{ $r->value }}" @selected(($role ?? '') === $r->value)>
-                                                    {{ $r->label() }}
+                                                    {{ ucfirst(strtolower($r->name)) }}
                                                 </option>
                                             @endforeach
                                         </select>
