@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApplicationStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,7 +18,7 @@ return new class extends Migration
             $table->foreignIdFor(\App\Models\User::class)->constrained()->onDelete('cascade');
 
             $table->string('category');
-            $table->string('status')->default('PENDING');
+            $table->string('status')->default(ApplicationStatus::PENDING->value);;
 
             $table->text('rejection_reason')->nullable();
 

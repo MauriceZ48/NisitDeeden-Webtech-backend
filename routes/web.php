@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,20 +25,22 @@ Route::get('/contact', function () {
     return view('contact');
 });
 
-Route::get('/applications/dashboard', function () {
-    return view('applications.dashboard');
-});
+//
+//Route::get('/applications/dashboard', function () {
+//    return view('applications.dashboard');
+//});
 //Route::get('/applications/dashboard', function () {
 //    return view('admin.applications.dashboard');
 //});
 
-Route::resource('/applications', \App\Http\Controllers\ApplicationController::class);
+Route::resource('applications', ApplicationController::class);
+Route::resource('users', UserController::class);
 
-Route::get('/user', function () {
-    return view('users.index');
-});
-
-Route::get('/user/create', function () {
-    return view('users.form');
-});
+//Route::get('/user', function () {
+//    return view('users.index');
+//});
+//
+//Route::get('/user/create', function () {
+//    return view('users.form');
+//});
 
