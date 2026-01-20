@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Application;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,18 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('applications', function (Blueprint $table) {
-
+        Schema::create('attachments', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\User::class)->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Application::class)->constrained()->onDelete('cascade');
 
-            $table->string('category');
-            $table->string('status')->default('PENDING');
-
-            $table->text('rejection_reason')->nullable();
-
+            $table->string('file_path');
+            $table->string('file_name');
+            $table->string('mime_type');
+            $table->unsignedBigInteger('file_size');
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('applications');
+        Schema::dropIfExists('attachments');
     }
 };
