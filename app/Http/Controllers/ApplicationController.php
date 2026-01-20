@@ -43,12 +43,12 @@ class ApplicationController extends Controller
     public function create()
     {
         Gate::authorize('create', Application::class);
-//        $userId = $request->query('user_id');
 
         $users = User::query()
             ->select(['id','name','email','university_id','faculty','department','profile_path'])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->append('profile_url');
 
         return view('applications.form', [
             'users'      => $users,

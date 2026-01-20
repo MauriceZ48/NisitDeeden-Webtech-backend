@@ -428,10 +428,6 @@
     <script>
         function applyPage(users, selectedUserId, selectedCategory, isEdit) {
             const normalize = (u) => {
-                const avatar = u.profile_path
-                    ? (String(u.profile_path).startsWith('http') ? u.profile_path : u.profile_path)
-                    : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || 'User'));
-
                 return {
                     id: Number(u.id),
                     name: u.name ?? '',
@@ -439,8 +435,7 @@
                     university_id: u.university_id ?? null,
                     faculty: u.faculty ?? '',
                     department: u.department ?? '',
-                    profile_path: u.profile_path ?? null,
-                    avatar
+                    avatar: u.profile_url
                 };
             };
 
