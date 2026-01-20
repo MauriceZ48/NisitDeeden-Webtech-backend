@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Department;
+use App\Enums\Faculty;
 use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -18,11 +20,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('university_id')->unique()->nullable(); // e.g., Student/Prof ID
-            $table->string('faculty')->nullable();
-            $table->string('department')->nullable();
-
-            $table->string('role')->default(UserRole::USER->value);            $table->rememberToken();
+            $table->string('university_id')->unique()->nullable();
+            $table->string('faculty')->default(Faculty::SCIENCE->value);
+            $table->string('department')->default(Department::COMPUTER->value);
+            $table->string('role')->default(UserRole::USER->value);
+            $table->rememberToken();
             $table->timestamps();
         });
 
