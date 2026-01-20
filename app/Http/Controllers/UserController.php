@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -96,10 +97,10 @@ class UserController extends Controller
         $data = $this->validated($request);
 
         // handle upload
-        if ($request->hasFile('profile_picture')) {
-            $data['profile_picture_path'] = $request->file('profile_picture')
-                ->store('profile_pictures', 'public');
-        }
+//        if ($request->hasFile('profile_picture')) {
+//            $data['profile_picture_path'] = $request->file('profile_picture')
+//                ->store('profile_pictures', 'public');
+//        }
         $data['password'] = Hash::make('12345678');
 
         $user = User::create($data);
@@ -119,17 +120,12 @@ class UserController extends Controller
                 'required','string','max:50',
                 Rule::unique('users', 'university_id')->ignore($userId),
             ],
-
-            // ✅ role validation (match your enum values)
             'role' => ['required', new Enum(UserRole::class)],
-
             'faculty' => ['nullable', new Enum(Faculty::class)],
             'department' => ['nullable', new Enum(Department::class)],
-
-//            'profile_picture' => ['nullable','image','max:2048'],
-//            'remove_profile_picture' => ['nullable','boolean'],
         ]);
     }
+
 
 
 
@@ -164,28 +160,32 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $data = $this->validated($request, $user->id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'role' => ['required', new Enum(UserRole::class)],
+            'faculty' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
+            'university_id' => 'required|string|unique:users,university_id,' . $user->id,
+            'photo' => 'nullable|image|max:2048',
+        ]);
 
-        // remove checkbox
-        if ($request->boolean('remove_profile_picture')) {
-            if ($user->profile_picture_path) {
-                \Storage::disk('public')->delete($user->profile_picture_path);
+        if ($request->hasFile('photo')) {
+            // Delete old photo if it exists
+            if ($user->profile_path) {
+                Storage::disk('public')->delete($user->profile_path);
             }
-            $data['profile_picture_path'] = null;
+
+            // Store new photo
+            $path = $request->file('photo')->store('profile-photos', 'public');
+            $user->profile_path = $path;
         }
 
-        // new upload replaces old
-        if ($request->hasFile('profile_picture')) {
-            if ($user->profile_picture_path) {
-                \Storage::disk('public')->delete($user->profile_picture_path);
-            }
-            $data['profile_picture_path'] = $request->file('profile_picture')
-                ->store('profile_pictures', 'public');
-        }
+        $user->fill($validated);
 
-        $user->update($data);
+        $user->save();
 
-        return redirect()->route('users.index')->with('success', 'User updated.');
+        return redirect()->route('users.index', $user)
+            ->with('success', 'User updated successfully!');
     }
 
 

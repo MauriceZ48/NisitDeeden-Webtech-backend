@@ -140,10 +140,10 @@
 
                                 <div>
                                     <label class="text-sm font-semibold text-gray-600">Student / Staff ID</label>
-                                    <input name="student_staff_id" type="text" class="{{ $input }} mt-2"
-                                           value="{{ old('student_staff_id', $user->student_staff_id ?? '') }}"
+                                    <input name="university_id" type="text" class="{{ $input }} mt-2"
+                                           value="{{ old('university_id', $user->university_id ?? '') }}"
                                            placeholder="ID-882910">
-                                    @error('student_staff_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
+                                    @error('university_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>

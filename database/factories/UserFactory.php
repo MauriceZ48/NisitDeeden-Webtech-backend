@@ -32,6 +32,7 @@ class UserFactory extends Factory
         $faculty = $department->faculty();
 
         return [
+            'profile_path' => null,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
