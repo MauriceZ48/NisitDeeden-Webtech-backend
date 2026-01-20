@@ -33,6 +33,8 @@ Route::get('/contact', function () {
 //    return view('admin.applications.dashboard');
 //});
 
+Route::redirect('/', '/applications');
+
 Route::resource('applications', ApplicationController::class);
 Route::resource('users', UserController::class);
 

@@ -14,7 +14,7 @@
 
         @include('layouts.navbar')
 
-        <div class="flex-1 overflow-auto p-4">
+        <div class="flex-1 overflow-auto p-4 bg-background">
             @yield('content')
         </div>
     </div>
