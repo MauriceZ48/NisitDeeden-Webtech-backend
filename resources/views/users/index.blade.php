@@ -19,15 +19,15 @@
                 </a>
             </div>
 
-            {{-- Summary --}}
-            @php
-                $usersCollection = $users instanceof \Illuminate\Pagination\AbstractPaginator
-                    ? $users->getCollection()
-                    : collect($users);
+{{--            --}}{{-- Summary --}}
+{{--            @php--}}
+{{--                $usersCollection = $users instanceof \Illuminate\Pagination\AbstractPaginator--}}
+{{--                    ? $users->getCollection()--}}
+{{--                    : collect($users);--}}
 
-                $facultyCount = $usersCollection->pluck('faculty')->filter()->unique()->count();
-                $deptCount    = $usersCollection->pluck('department')->filter()->unique()->count();
-            @endphp
+{{--                $facultyCount = $usersCollection->pluck('faculty')->filter()->unique()->count();--}}
+{{--                $deptCount    = $usersCollection->pluck('department')->filter()->unique()->count();--}}
+{{--            @endphp--}}
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -35,12 +35,12 @@
                     <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $count }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Faculties</p>
-                    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $facultyCount }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Users</p>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $userCount }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Departments</p>
-                    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $deptCount }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Admins</p>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $adminCount }}</p>
                 </div>
             </div>
 

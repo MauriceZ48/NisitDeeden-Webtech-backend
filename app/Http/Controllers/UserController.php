@@ -46,6 +46,9 @@ class UserController extends Controller
 
         $selectedUser = $selectedId ? User::find($selectedId) : null;
 
+        $userCount  = $this->userRepository->countByRole('USER');
+        $adminCount = $this->userRepository->countByRole('ADMIN');
+
         $roles = User::query()
             ->whereNotNull('role')
             ->distinct()
@@ -59,6 +62,8 @@ class UserController extends Controller
             'q'            => $q,
             'role'         => $role,
             'roles'        => $roles,
+            'userCount'    => $userCount,
+            'adminCount'   => $adminCount,
         ]);
     }
 
