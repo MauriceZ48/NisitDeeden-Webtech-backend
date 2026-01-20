@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -73,6 +74,7 @@ class UserController extends Controller
      */
     public function create(Request $request)
     {
+        Gate::authorize('create', User::class);
         $faculties = Faculty::cases();
         $departments = [];
 
@@ -95,6 +97,7 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('create', User::class);
         $data = $this->validated($request);
 
         // Logic for profile_path during creation
@@ -146,6 +149,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        Gate::authorize('update', $user);
         $faculties = Faculty::cases();
 
         return view('users.form', [
@@ -160,7 +164,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // Use the centralized validated helper
+        Gate::authorize('update', $user);
         $validated = $this->validated($request, $user->id);
 
         // Handle the Remove Button
@@ -193,6 +197,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        Gate::authorize('delete', $user);
         if (auth()->id() === $user->id) {
             return back()->with('error', 'You cannot delete your own account.');
         }

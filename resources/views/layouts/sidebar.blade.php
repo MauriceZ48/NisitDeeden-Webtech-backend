@@ -7,8 +7,15 @@
                 <h1 class="text-2xl font-semibold">Sidebar</h1>
                 <ul class="mt-4">
                     <li class="mb-2"><a href=" {{ url('/') }}" class="block hover:text-indigo-400">Home</a></li>
-                    <li class="mb-2"><a href="{{ url('/applications') }}" class="block hover:text-indigo-400">Application</a></li>
-                    <li class="mb-2"><a href="{{ url('/users') }}" class="block hover:text-indigo-400">User </a></li>
+                    {{-- Check for Application access --}}
+                    @can('viewAny', \App\Models\Application::class)
+                        <li class="mb-2"><a href="{{ url('/applications') }}" class="block hover:text-indigo-400">Application</a></li>
+                    @endcan
+
+                    {{-- Check for User access --}}
+                    @can('viewAny', \App\Models\User::class)
+                        <li class="mb-2"><a href="{{ url('/users') }}" class="block hover:text-indigo-400">User</a></li>
+                    @endcan
                     <li class="mb-2"><a href=" {{ url('/contact') }}" class="block hover:text-indigo-400">Contact</a></li>
                 </ul>
             </div>
