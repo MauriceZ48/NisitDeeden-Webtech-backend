@@ -32,16 +32,32 @@
             </label>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+        <div class="flex flex-col space-y-4 mt-6">
+            <div class="flex items-center justify-between">
+                @if (Route::has('password.request'))
+                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md" href="{{ route('password.request') }}">
+                        {{ __('Forgot your password?') }}
+                    </a>
+                @endif
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
+                <x-primary-button class="px-6">
+                    {{ __('Log in') }}
+                </x-primary-button>
+            </div>
+
+            <div class="relative flex items-center py-4">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase tracking-widest">Or</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <div class="text-center">
+                <p class="text-sm text-gray-600 mb-2">New to the program?</p>
+                <a href="{{ route('register') }}"
+                   class="inline-flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    {{ __('Create an Account') }}
+                </a>
+            </div>
         </div>
     </form>
 </x-guest-layout>
