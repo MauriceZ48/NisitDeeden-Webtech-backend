@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Repositories\Traits\SimpleCRUD;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,9 +13,10 @@ class ApplicationRepository
 
     private string $model = Application::class;
 
-    public function filterByStatus(string $name): Collection
+    public function countByStatus(ApplicationStatus $status): int
     {
-        return $this->model::where('status', 'LIKE', "%$status%")->get();
+        return $this->model::where('status', $status->value)->count();
     }
+
 
 }

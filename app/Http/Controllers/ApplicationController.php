@@ -22,9 +22,15 @@ class ApplicationController extends Controller
     public function index()
     {
         $applications = $this->applicationRepository->get();
+        $totalCount = $this->applicationRepository->count();
+        $approvedCount = $this->applicationRepository->countByStatus(ApplicationStatus::APPROVED);
+        $pendingCount = $this->applicationRepository->countByStatus(ApplicationStatus::PENDING);
 
         return view('applications.index', [
-            'applications' => $applications
+            'totalCount' => $totalCount,
+            'applications' => $applications,
+            'approvedCount' => $approvedCount,
+            'pendingCount' => $pendingCount,
         ]);
     }
 
