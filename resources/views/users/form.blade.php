@@ -16,11 +16,18 @@
                   focus:ring-2 focus:ring-primary focus:border-primary';
 
         // FIXED: Roles now use the Enum cases for values
-        $roles = [
-            ['value' => \App\Enums\UserRole::USER->value, 'label' => 'Student', 'desc' => 'Applicant access'],
-            ['value' => \App\Enums\UserRole::USER->value, 'label' => 'Staff',   'desc' => 'Reviewer access'],
-            ['value' => \App\Enums\UserRole::ADMIN->value, 'label' => 'Admin',   'desc' => 'Full system access'],
-        ];
+$roles = [
+        [
+            'value' => \App\Enums\UserRole::USER->value,
+            'label' => 'User',
+            'desc'  => 'Can submit applications and manage own profile.'
+        ],
+        [
+            'value' => \App\Enums\UserRole::ADMIN->value,
+            'label' => 'Admin',
+            'desc'  => 'Full access to manage users and applications.'
+        ],
+    ];
 
         // FIXED: Using the standardized accessor from your Model
         $currentPhoto = $isEdit ? ($user->profile_url ?? null) : null;
@@ -84,17 +91,25 @@
                                         Upload New Image
                                     </label>
 
-                                    @if($isEdit && $user->profile_path)
-                                        <label class="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-200 cursor-pointer">
-                                            <input type="checkbox" name="remove_photo" value="1" class="rounded border-gray-300">
-                                            Remove
-                                        </label>
-                                    @endif
+                                    <button type="button"
+                                            id="remove-photo-btn"
+                                            style="display: {{ ($isEdit && $user->profile_path) ? 'inline-flex' : 'none' }};"
+                                            class="inline-flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 cursor-pointer">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        Remove Photo
+                                    </button>
+
+                                    {{-- Change: Hidden input to track if we should delete the file in the database --}}
+                                    <input type="hidden" name="delete_photo" id="delete_photo_input" value="0">
                                 </div>
 
                                 {{-- FIXED: Error matches name="photo" --}}
                                 @error('photo')
-                                <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                                <div class="mt-2 p-2 bg-red-50 border border-red-100 rounded-lg">
+                                    <p class="text-xs text-red-600 font-medium">
+                                        ⚠️ Validation failed. Please re-select your profile photo.
+                                    </p>
+                                </div>
                                 @enderror
                             </div>
                         </div>
@@ -233,31 +248,46 @@
             const initialDept = @json(old('department', $isEdit ? $user->department?->value : ''));
             if (initialFaculty) loadDepartments(initialFaculty, initialDept);
 
-            // --- Photo Preview Logic ---
+// --- Photo Preview & Remove Logic ---
             const photoInput = document.getElementById('photo');
+            const removeBtn = document.getElementById('remove-photo-btn');
+            const deleteInput = document.getElementById('delete_photo_input');
+            const container = document.querySelector('.relative .overflow-hidden');
 
-            // We only run this if the photo input exists on the page
+// The default SVG placeholder to show when no photo is present
+            const placeholderSvg = `
+    <svg class="h-8 w-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>`;
+
             if (photoInput) {
                 photoInput.addEventListener('change', function(e) {
                     const file = this.files[0];
                     if (!file) return;
 
                     const reader = new FileReader();
-                    // Select the image or the svg inside the relative container
-                    const container = this.closest('.relative').querySelector('.overflow-hidden');
-                    let imgElement = container.querySelector('img') || container.querySelector('svg');
-
                     reader.onload = function(e) {
-                        if (imgElement.tagName.toLowerCase() === 'svg') {
-                            const newImg = document.createElement('img');
-                            newImg.src = e.target.result;
-                            newImg.className = "h-full w-full object-cover";
-                            imgElement.parentNode.replaceChild(newImg, imgElement);
-                        } else {
-                            imgElement.src = e.target.result;
-                        }
+                        container.innerHTML = `<img src="${e.target.result}" class="h-full w-full object-cover">`;
+                        removeBtn.style.display = 'inline-flex'; // Show remove button
+                        deleteInput.value = "0"; // Reset deletion flag because we have a new file
                     }
                     reader.readAsDataURL(file);
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    // 1. Clear the file input
+                    photoInput.value = "";
+
+                    // 2. Revert preview to placeholder
+                    container.innerHTML = placeholderSvg;
+
+                    // 3. Hide this button
+                    removeBtn.style.display = 'none';
+
+                    // 4. Set hidden input to 1 so the Controller knows to delete the file
+                    deleteInput.value = "1";
                 });
             }
         });

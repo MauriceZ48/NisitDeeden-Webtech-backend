@@ -9,6 +9,7 @@ use App\Models\Attachment;
 use App\Models\User;
 use App\Repositories\ApplicationRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
@@ -41,6 +42,8 @@ class ApplicationController extends Controller
 
     public function create()
     {
+        Gate::authorize('create', Application::class);
+        $userId = $request->query('user_id');
 
         $users = User::query()
             ->select(['id','name','email','university_id','faculty','department','profile_path'])
@@ -62,7 +65,7 @@ class ApplicationController extends Controller
      */
     public function store(Request $request)
     {
-//        dd($request->all());
+        Gate::authorize('create', Application::class);
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'category' => 'required',
@@ -109,6 +112,7 @@ class ApplicationController extends Controller
      */
     public function edit(Application $application)
     {
+        Gate::authorize('update', $application);
         $application->load(['user']);
 
         return view('applications.form', [
@@ -125,6 +129,7 @@ class ApplicationController extends Controller
      */
     public function update(Request $request, Application $application)
     {
+        Gate::authorize('update', $application);
         $request->validate([
             'user_id' => ['required','exists:users,id'],
             'category' => ['required', new \Illuminate\Validation\Rules\Enum(ApplicationCategory::class)],
@@ -146,6 +151,7 @@ class ApplicationController extends Controller
      */
     public function destroy(Application $application)
     {
+        Gate::authorize('delete', $application);
         foreach ($application->attachments as $attachment) {
             Storage::disk('public')->delete($attachment->file_path);
         }

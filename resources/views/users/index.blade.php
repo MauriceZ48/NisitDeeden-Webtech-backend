@@ -78,7 +78,7 @@
                                             <option value="">All Roles</option>
                                             @foreach($roles as $r)
                                                 <option value="{{ $r->value }}" @selected(($role ?? '') === $r->value)>
-                                                    {{ $r->label() }}
+                                                    {{ ucfirst(strtolower($r->name)) }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -242,7 +242,7 @@
                                     </div>
                                 @else
                                     @php
-                                        $pic = $selectedUser->profile_picture ?? null;
+                                        $pic = $selectedUser->profile_url ?? null;
                                         $initials = collect(explode(' ', trim($selectedUser->name ?? 'User')))
                                             ->filter()
                                             ->take(2)
