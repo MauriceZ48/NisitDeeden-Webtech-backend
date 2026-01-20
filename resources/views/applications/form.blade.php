@@ -178,11 +178,21 @@
                         <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50/40 p-5">
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div class="flex items-center gap-4">
-                                    <img
-                                        class="h-12 w-12 rounded-2xl object-cover border border-slate-200 bg-white"
-                                        :src="selectedUser?.avatar"
-                                        alt=""
-                                    >
+                                    <template x-if="selectedUser">
+                                        <img
+                                            class="h-12 w-12 rounded-2xl object-cover border border-slate-200 bg-white"
+                                            :src="selectedUser.avatar"
+                                            alt="User avatar"
+                                        >
+                                    </template>
+
+                                    <template x-if="!selectedUser">
+                                        <div
+                                            class="h-12 w-12 rounded-2xl bg-slate-200 border border-slate-300
+                   flex items-center justify-center text-slate-400 text-xs font-semibold">
+                                            N/A
+                                        </div>
+                                    </template>
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <p class="text-sm text-slate-500">Selected Student</p>
@@ -260,7 +270,7 @@
                                 </div>
 
                                 <div class="mt-4">
-                                    <div class="font-semibold text-slate-900">Co-curricular</div>
+                                    <div class="font-semibold text-slate-900">Activity</div>
                                     <div class="text-sm text-slate-500">Leadership &amp; Community</div>
                                 </div>
                             </button>
@@ -318,7 +328,7 @@
                                 </div>
 
                                 <div class="mt-4">
-                                    <div class="font-semibold text-slate-900">Good Conduct</div>
+                                    <div class="font-semibold text-slate-900">Behavior</div>
                                     <div class="text-sm text-slate-500">Ethics &amp; Discipline</div>
                                 </div>
                             </button>
@@ -411,9 +421,9 @@
 
                             <button type="submit" name="action" value="submit"
                                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M2 21 23 12 2 3v7l15 2-15 2v7z"/>
-                                </svg>
+{{--                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">--}}
+{{--                                    <path d="M2 21 23 12 2 3v7l15 2-15 2v7z"/>--}}
+{{--                                </svg>--}}
                                 {{ $isEdit ? 'Update Request' : 'Submit Request' }}
                             </button>
                         </div>

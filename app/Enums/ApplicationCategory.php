@@ -11,9 +11,9 @@ enum ApplicationCategory:string
     public function label(): string
     {
         return match ($this) {
-            self::ACTIVITY => 'Co-curricular',
-            self::CREATIVITY    => 'Creativity',
-            self::BEHAVIOR  => 'Good Conduct',
+            self::ACTIVITY => 'ACTIVITY',
+            self::CREATIVITY    => 'CREATIVITY',
+            self::BEHAVIOR  => 'BEHAVIOR',
         };
     }
 }
