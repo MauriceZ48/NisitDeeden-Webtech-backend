@@ -242,7 +242,7 @@
                                     </div>
                                 @else
                                     @php
-                                        $pic = $selectedUser->profile_picture ?? null;
+                                        $pic = $selectedUser->profile_url ?? null;
                                         $initials = collect(explode(' ', trim($selectedUser->name ?? 'User')))
                                             ->filter()
                                             ->take(2)

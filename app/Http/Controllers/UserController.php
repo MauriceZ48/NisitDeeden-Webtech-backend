@@ -163,6 +163,14 @@ class UserController extends Controller
         // Use the centralized validated helper
         $validated = $this->validated($request, $user->id);
 
+        // Handle the Remove Button
+        if ($request->delete_photo == "1") {
+            if ($user->profile_path) {
+                Storage::disk('public')->delete($user->profile_path);
+                $user->profile_path = null;
+            }
+        }
+
         if ($request->hasFile('photo')) {
             // Delete old photo if it exists
             if ($user->profile_path) {
