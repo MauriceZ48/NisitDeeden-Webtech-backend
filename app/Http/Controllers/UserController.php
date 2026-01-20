@@ -4,29 +4,69 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
 
 class UserController extends Controller
 {
+
+    public function __construct(
+        private UserRepository $userRepository
+    ) {}
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        // Simple search logic: if there is a 'search' query, filter by name or ID
+        $q          = $request->string('q')->toString();
+        $faculty    = $request->string('faculty')->toString();
+        $department = $request->string('department')->toString();
+        $selectedId = $request->integer('selected');
+
         $query = User::query();
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                ->orWhere('university_id', 'like', '%' . $request->search . '%');
+        if ($q !== '') {
+            $query->where(function ($qq) use ($q) {
+                $qq->where('name', 'like', "%{$q}%")
+                    ->orWhere('university_id', 'like', "%{$q}%"); // or student_staff_id if that's your column
+            });
         }
 
-        // We paginate so the page doesn't get too long with your 50 seeded users
-        $users = $query->latest()->paginate(15);
+        if ($faculty !== '') {
+            $query->where('faculty', $faculty);
+        }
+
+        if ($department !== '') {
+            $query->where('department', $department);
+        }
+
+        $users = $query->orderBy('name')->paginate(10)->appends($request->query());
+        $count = $this->userRepository->count();
+
+        $selectedUser = $selectedId ? User::find($selectedId) : null;
+
+        $faculties = User::query()->whereNotNull('faculty')->distinct()->orderBy('faculty')->pluck('faculty');
+        $departments = User::query()->whereNotNull('department')->distinct()->orderBy('department')->pluck('department');
 
         return view('users.index', [
-            'users' => $users
+            'users'        => $users,
+            'count'        => $count,
+            'selectedUser' => $selectedUser,
+            'q'            => $q,
+            'faculty'      => $faculty,
+            'department'   => $department,
+            'faculties'    => $faculties,
+            'departments'  => $departments,
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('users.form', [
         ]);
     }
 

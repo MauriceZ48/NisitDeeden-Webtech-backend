@@ -25,12 +25,22 @@ Route::get('/contact', function () {
     return view('contact');
 });
 
-Route::get('/applications/dashboard', function () {
-    return view('applications.dashboard');
-});
+//
+//Route::get('/applications/dashboard', function () {
+//    return view('applications.dashboard');
+//});
 //Route::get('/applications/dashboard', function () {
 //    return view('admin.applications.dashboard');
 //});
 
 Route::resource('applications', ApplicationController::class);
 Route::resource('users', UserController::class);
+
+//Route::get('/user', function () {
+//    return view('users.index');
+//});
+//
+//Route::get('/user/create', function () {
+//    return view('users.form');
+//});
+
