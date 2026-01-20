@@ -4,24 +4,22 @@ namespace Database\Seeders;
 
 use App\Models\Application;
 use App\Models\Attachment;
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class ApplicationSeeder extends Seeder
+class AttachmentSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $users = User::all();
+        $applications = Application::all();
 
-        foreach ($users as $user) {
-            Application::factory(2)
-                ->for($user)
-                ->has(Attachment::factory(2), 'attachments')
-                ->create();
+        foreach ($applications as $app) {
+            Attachment::factory(rand(1, 3))->create([
+                'application_id' => $app->id
+            ]);
         }
     }
 }

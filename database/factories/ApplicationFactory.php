@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\ApplicationCategory;
+use App\Enums\ApplicationStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,6 +22,7 @@ class ApplicationFactory extends Factory
         return [
             'category' => $this->faker->randomElement(ApplicationCategory::cases()),
             'user_id' => User::factory(),
+            'status' => fake()->randomElement(ApplicationStatus::cases()),
         ];
     }
 }
