@@ -73,40 +73,64 @@
 
             {{-- Table card --}}
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                {{-- Toolbar --}}
-                <div
-                    class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 bg-slate-50/60 p-4">
-                    <div class="w-full lg:w-96">
-                        <label class="relative block">
-                            <span class="sr-only">Search</span>
-                            <span
-                                class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd"
-                                      d="M9 3a6 6 0 104.472 10.03l2.249 2.25a1 1 0 001.414-1.415l-2.25-2.249A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
-                                      clip-rule="evenodd"/>
-                            </svg>
-                        </span>
-                            <input
-                                class="block w-full rounded-lg border-slate-200 bg-white pl-10 pr-3 py-2 text-sm placeholder:text-slate-400 focus:border-primary focus:ring-primary/20"
-                                placeholder="Search (UI only) — add logic later"
-                                type="text"
-                            />
-                        </label>
-                    </div>
 
-                    <div class="flex items-center gap-2 overflow-x-auto">
-                        <button
-                            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                            <span class="inline-block h-2 w-2 rounded-full bg-primary"></span>
-                            Filter
-                        </button>
-                        <button
-                            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                            Export
-                        </button>
-                    </div>
+
+
+                {{-- Toolbar --}}
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-200 bg-slate-50/60 p-4">
+
+                    {{-- ✅ ครอบทั้ง search + buttons --}}
+                    <form method="GET"
+                          action="{{ route('applications.index') }}"
+                          class="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+                        <div class="w-full lg:w-96">
+                            <label class="relative block">
+                                <span class="sr-only">Search</span>
+                                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                              d="M9 3a6 6 0 104.472 10.03l2.249 2.25a1 1 0 001.414-1.415l-2.25-2.249A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                </span>
+
+                                <input
+                                    name="q"
+                                    value="{{ request('q') }}"
+                                    class="block w-full rounded-lg border-slate-200 bg-white pl-10 pr-3 py-2 text-sm placeholder:text-slate-400 focus:border-primary focus:ring-primary/20"
+                                    placeholder="Search by ID, user, email, category, status..."
+                                    type="text"
+                                />
+                            </label>
+
+                            @if(request('q'))
+                                <div class="mt-2">
+                                    <a href="{{ route('applications.index') }}"
+                                       class="text-xs font-semibold text-slate-500 hover:text-slate-700">
+                                        Clear search
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- ✅ อยู่ใน form แล้ว submit ได้ --}}
+                        <div class="flex gap-2 justify-end">
+                            <button type="submit"
+                                    class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                Apply
+                            </button>
+
+                            <a href="{{ route('applications.index') }}"
+                               class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                Reset
+                            </a>
+                        </div>
+
+                    </form>
                 </div>
+
+
 
                 {{-- Table --}}
                 <div class="overflow-x-auto">
@@ -264,7 +288,8 @@
                     class="flex items-center justify-between border-t border-slate-200 px-6 py-4 text-sm text-slate-500">
                     <span>Total: <span class="font-semibold text-slate-900">{{ $totalCount }}</span></span>
                     {{-- If you later use pagination, replace with {{ $applications->links() }} --}}
-                    <span class="text-xs">{{ $applications->links() }}</span>
+                    <span class="text-xs">{{ $applications->appends(request()->query())->links() }}</span>
+
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ApplicationCategory;
 use App\Enums\ApplicationStatus;
+use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\Attachment;
 use App\Models\User;
@@ -20,19 +21,51 @@ class ApplicationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $applications = $this->applicationRepository->get();
-        $totalCount = $this->applicationRepository->count();
-        $approvedCount = $this->applicationRepository->countByStatus(ApplicationStatus::APPROVED);
-        $pendingCount = $this->applicationRepository->countByStatus(ApplicationStatus::PENDING);
+        $q = trim((string) $request->query('q', ''));
 
-        return view('applications.index', [
-            'totalCount' => $totalCount,
-            'applications' => $applications,
-            'approvedCount' => $approvedCount,
-            'pendingCount' => $pendingCount,
-        ]);
+        $query = Application::query()
+            ->with(['user']); // กัน N+1
+
+        if ($q !== '') {
+            $qLower = mb_strtolower($q);
+
+            $query->where(function ($qq) use ($q, $qLower) {
+
+                // ค้นหา ID (ถ้าพิมพ์เป็นตัวเลข)
+                if (ctype_digit($q)) {
+                    $qq->orWhere('id', (int) $q);
+                }
+
+                // ค้นหา category / status (enum string ใน DB)
+                $qq->orWhereRaw('LOWER(category) LIKE ?', ["%{$qLower}%"])
+                    ->orWhereRaw('LOWER(status) LIKE ?', ["%{$qLower}%"]);
+
+                // ค้นหาข้อมูล user
+                $qq->orWhereHas('user', function ($u) use ($qLower) {
+                    $u->whereRaw('LOWER(name) LIKE ?', ["%{$qLower}%"])
+                        ->orWhereRaw('LOWER(email) LIKE ?', ["%{$qLower}%"]);
+                });
+            });
+        }
+
+        $applications = $query
+            ->latest()
+            ->paginate(10)
+            ->appends($request->query());
+
+        // summary counts (จะนับแบบเดียวกับผลลัพธ์หลัง search ก็ได้)
+        $totalCount = $query->toBase()->count(); // หรือ count ทั้งหมดจริงก็แยก query อีกชุด
+        $pendingCount = Application::where('status', \App\Enums\ApplicationStatus::PENDING)->count();
+        $approvedCount = Application::where('status', \App\Enums\ApplicationStatus::APPROVED)->count();
+
+        return view('applications.index', compact(
+            'applications',
+            'totalCount',
+            'pendingCount',
+            'approvedCount'
+        ));
     }
 
 
@@ -45,6 +78,7 @@ class ApplicationController extends Controller
         Gate::authorize('create', Application::class);
 
         $users = User::query()
+            ->where('role', UserRole::USER)
             ->select(['id','name','email','university_id','faculty','department','profile_path'])
             ->orderBy('name')
             ->get()
