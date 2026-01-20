@@ -141,9 +141,10 @@
 
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div
-                                            class="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
-                                            {{ strtoupper(substr($application->user->name ?? 'U', 0, 1)) }}
+                                        <div class="h-9 w-9 rounded-full bg-slate-200 overflow-hidden border border-gray-100">
+                                            <img src="{{ $application->user->profile_url }}"
+                                                 alt="{{ $application->user->name }}"
+                                                 class="h-full w-full object-cover">
                                         </div>
                                         <div>
                                             <p class="text-sm font-semibold text-slate-900">{{ $application->user->name }}</p>
