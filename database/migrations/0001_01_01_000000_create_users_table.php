@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\Department;
+use App\Enums\Faculty;
+use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,11 +15,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
+            $table->string('profile_path')->nullable();
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('university_id')->unique()->nullable();
+            $table->string('faculty')->nullable();
+            $table->string('department')->nullable();
+            $table->string('role')->default(UserRole::USER->value);
             $table->rememberToken();
             $table->timestamps();
         });
