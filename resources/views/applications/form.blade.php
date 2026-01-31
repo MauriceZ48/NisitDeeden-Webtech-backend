@@ -60,6 +60,15 @@
                             <div class="flex items-center gap-2">
                                 <div>
                                     <h2 class="text-lg font-semibold text-slate-900">General Information</h2>
+                                    @if ($errors->any())
+                                        <div class="alert alert-danger">
+                                            <ul>
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
                                     <p class="text-sm text-slate-500">Select the student profile to apply with.</p>
                                 </div>
 

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 class ApplicationRound extends Model
 {
@@ -23,6 +22,7 @@ class ApplicationRound extends Model
     ];
 
     protected $casts = [
+        'academic_year' => 'integer',
         'semester' => Semester::class,
         'status'   => RoundStatus::class,
         'start_time' => 'datetime',
@@ -33,7 +33,6 @@ class ApplicationRound extends Model
     {
         return $this->hasMany(Application::class);
     }
-
 // In ApplicationRound Model
     public function scopeActive($query)
     {

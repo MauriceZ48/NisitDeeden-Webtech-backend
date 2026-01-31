@@ -6,6 +6,7 @@ use App\Enums\ApplicationCategory;
 use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Application;
+use App\Models\ApplicationRound;
 use App\Models\Attachment;
 use App\Models\User;
 use App\Repositories\ApplicationRepository;
@@ -100,10 +101,14 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', Application::class);
+        $currentRound = ApplicationRound::active()->first();
+
+        if(!$currentRound) {
+            return back()->withErrors(['error' => 'There is no active application round at this time.']);
+        }
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'application_round_id' => 'required|exists:application_rounds,id',
             'category' => 'required',
             'attachments.*' => 'nullable|file|max:5120',
         ]);
@@ -116,7 +121,7 @@ class ApplicationController extends Controller
         // Look for existing record
         $application = Application::withTrashed()
             ->where('user_id', $targetUserId)
-            ->where('application_round_id', $request->application_round_id)
+            ->where('application_round_id',$currentRound->id)
             ->first();
 
         if ($application) {
@@ -135,7 +140,7 @@ class ApplicationController extends Controller
             // Create new
             $application = Application::create([
                 'user_id' => $targetUserId,
-                'application_round_id' => $request->application_round_id,
+                'application_round_id' => $currentRound->id,
                 'category' => $request->category,
                 'status' => ApplicationStatus::PENDING,
             ]);
