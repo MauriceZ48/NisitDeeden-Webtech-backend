@@ -16,9 +16,11 @@ return new class extends Migration
 
             $table->id();
             $table->foreignIdFor(\App\Models\User::class)->constrained()->onDelete('cascade');
+            $table->foreignIdFor(\App\Models\ApplicationRound::class)->constrained()->onDelete('cascade');
+            $table->unique(['user_id', 'application_round_id']);
 
             $table->string('category');
-            $table->string('status')->default(ApplicationStatus::PENDING->value);;
+            $table->string('status')->default(ApplicationStatus::PENDING->value);
 
             $table->text('rejection_reason')->nullable();
 

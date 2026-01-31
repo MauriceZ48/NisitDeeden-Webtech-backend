@@ -18,6 +18,7 @@ class Application extends Model
         'category',
         'status',
         'user_id',
+        'application_round_id',
         'rejection_reason',
     ];
     protected $casts = [
@@ -33,5 +34,10 @@ class Application extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);
+    }
+
+    public function applicationRound(): BelongsTo
+    {
+        return $this->belongsTo(ApplicationRound::class);
     }
 }

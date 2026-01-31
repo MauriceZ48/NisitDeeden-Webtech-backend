@@ -100,36 +100,63 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', Application::class);
+
         $request->validate([
             'user_id' => 'required|exists:users,id',
+            'application_round_id' => 'required|exists:application_rounds,id',
             'category' => 'required',
-            'attachments.*' => 'nullable|file|max:5120', //5MB
+            'attachments.*' => 'nullable|file|max:5120',
         ]);
-        // Save in Application table
-        $application = new Application();
-        $application->user_id = $request->user_id;
-        $application->category = $request->category;
-        $application->status = ApplicationStatus::PENDING; // Set default status
-        $application->save();
 
-        // Save in Attachment table
+        // Check if creation from admin or user
+        $targetUserId = auth()->user()->isAdmin()
+            ? $request->user_id
+            : auth()->id();
+
+        // Look for existing record
+        $application = Application::withTrashed()
+            ->where('user_id', $targetUserId)
+            ->where('application_round_id', $request->application_round_id)
+            ->first();
+
+        if ($application) {
+            if ($application->trashed()) {
+                $application->restore();
+                $application->update([
+                    'category' => $request->category,
+                    'status' => ApplicationStatus::PENDING,
+                    'rejection_reason' => null,
+                ]);
+                $message = 'Application restored and updated for the user!';
+            } else {
+                return back()->withErrors(['error' => 'An active application already exists for this user in this round.']);
+            }
+        } else {
+            // Create new
+            $application = Application::create([
+                'user_id' => $targetUserId,
+                'application_round_id' => $request->application_round_id,
+                'category' => $request->category,
+                'status' => ApplicationStatus::PENDING,
+            ]);
+            $message = 'Application created successfully!';
+        }
+
+        // Handle Attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('applications/attachments', 'public');
-
-                $attachment = new Attachment();
-                $attachment->application_id = $application->id;
-                $attachment->file_path = $path;
-                $attachment->file_name = $file->getClientOriginalName();
-                $attachment->mime_type = $file->getMimeType();
-                $attachment->file_size = $file->getSize();
-                $attachment->save();
+                $application->attachments()->create([
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'file_size' => $file->getSize(),
+                ]);
             }
         }
 
         return redirect($request->input('return_url', url()->previous()))
-            ->with('success', 'Application and attachments added!');
-
+            ->with('success', $message);
     }
 
     /**
