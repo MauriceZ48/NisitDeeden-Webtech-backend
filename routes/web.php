@@ -24,7 +24,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('applications', ApplicationController::class);
     Route::resource('users', UserController::class);
-    Route::resource('rounds', ApplicationRoundController::class);
+    Route::resource('rounds', ApplicationRoundController::class)
+        ->parameters(['rounds' => 'applicationRound']);
 });
 
 Route::get('/api/departments', [UserController::class, 'departmentsByFaculty'])

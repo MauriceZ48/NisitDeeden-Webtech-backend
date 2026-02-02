@@ -14,8 +14,8 @@ class ApplicationRoundController extends Controller
      */
     public function index()
     {
-
-        $rounds = ApplicationRound::orderBy('academic_year', 'desc')
+        $rounds = ApplicationRound::withCount('applications')
+            ->orderBy('academic_year', 'desc')
             ->orderBy('semester', 'desc')
             ->get();
 
@@ -40,8 +40,12 @@ class ApplicationRoundController extends Controller
      */
     public function store(ApplicationRoundRequest $request)
     {
+        // Define variables once at the top
+        $startTime = $request->date('start_time');
+        $endTime = $request->date('end_time');
+        $now = now();
 
-        // 1. SEQUENTIAL GUARD: Is this the correct next Year/Semester?
+        // 1. SEQUENTIAL GUARD: Must be the correct next Year/Semester
         $expected = $this->getNextExpectedRound();
         if ($request->academic_year != $expected['year'] ||
             $request->semester != $expected['semester']->value) {
@@ -50,22 +54,26 @@ class ApplicationRoundController extends Controller
             ]);
         }
 
-        // 2. CONCURRENCY GUARD: If opening this new round, is another one already open?
-        if ($request->status === RoundStatus::OPEN->value && $this->anotherRoundIsActive()) {
-            return back()->withErrors([
-                'status' => 'Cannot create an open round while another is already active.'
-            ]);
+        // 2. OPEN-SPECIFIC GUARDS: Only run these if status is OPEN
+        if ($request->status === RoundStatus::OPEN->value) {
+
+            // A. TIME GATE: now() must be within the period
+            if ($now->lt($startTime) || $now->gt($endTime)) {
+                return back()->withErrors([
+                    'status' => "Cannot create an OPEN round: current time must be between the start and end period."
+                ])->withInput();
+            }
+
+            // B. CONCURRENCY: Only one active round allowed
+            if ($this->anotherRoundIsActive()) {
+                return back()->withErrors([
+                    'status' => 'Cannot create an open round while another is already active.'
+                ]);
+            }
         }
 
-        // 3. TIME GUARD: Is the end_time actually in the future?
-        if ($request->status === RoundStatus::OPEN->value && $request->date('end_time')->isPast()) {
-            return back()->withErrors([
-                'end_time' => 'To open this round, the end time must be in the future.'
-            ]);
-        }
-
-        // 4. OVERLAP GUARD: Ensure these dates don't clash with others
-        if ($this->isOverlapping($request->start_time, $request->end_time)) {
+        // 3. OVERLAP GUARD: Always check this for all rounds (including drafts)
+        if ($this->isOverlapping($startTime, $endTime)) {
             return back()->withErrors([
                 'start_time' => 'These dates overlap with an existing application round.'
             ])->withInput();
@@ -88,7 +96,10 @@ class ApplicationRoundController extends Controller
      */
     public function edit(ApplicationRound $applicationRound)
     {
-        //
+        return view('rounds.edit', [
+            'applicationRound' => $applicationRound,
+            ]
+        );
     }
 
     /**
@@ -96,34 +107,30 @@ class ApplicationRoundController extends Controller
      */
     public function update(ApplicationRoundRequest $request, ApplicationRound $applicationRound)
     {
+        // Define them once at the top of the method
+        $startTime = $request->date('start_time');
+        $endTime = $request->date('end_time');
+        $now = now();
 
         if ($request->status === RoundStatus::OPEN->value) {
-
-            // A. REVISED SECURITY: Check if a NEWER round has already started
-            $newerRoundStarted = ApplicationRound::where('id', '!=', $applicationRound->id)
-                ->where('start_time', '>', $applicationRound->end_time)
-                ->where('status', RoundStatus::OPEN->value)
-                ->exists();
-
-            if ($newerRoundStarted) {
-                return back()->withErrors(['status' => 'You cannot reopen this round because a newer round has already started.']);
+            // 1. TIME GATE: Use variables
+            if ($now->lt($startTime) || $now->gt($endTime)) {
+                return back()->withErrors([
+                    'status' => "Cannot open: current time must be between the start and end period."
+                ])->withInput();
             }
 
-            // B. EMERGENCY: Check if the NEWLY provided date is in the future
-            $newEndTime = $request->date('end_time');
-            if ($newEndTime->isPast()) {
-                return back()->withErrors(['end_time' => 'To open this round, the end time must be set to a future date.']);
-            }
-
-            // C. CONCURRENCY: Check if another round is active
+            // 2. CONCURRENCY: One at a time
             if ($this->anotherRoundIsActive($applicationRound->id)) {
-                return back()->withErrors(['status' => 'Another round is already open. Close it before opening this one.']);
+                return back()->withErrors(['status' => 'Another round is already open.']);
             }
         }
 
-        // D. OVERLAP: Always check this, pass the ID to avoid self-collision
-        if ($this->isOverlapping($request->date('start_time'), $request->date('end_time'), $applicationRound->id)) {
-            return back()->withErrors(['start_time' => 'These dates overlap with another existing round.'])->withInput();
+        // 3. NO OVERLAP: Reuse the same variables here!
+        if ($this->isOverlapping($startTime, $endTime, $applicationRound->id)) {
+            return back()->withErrors([
+                'start_time' => 'These dates overlap with another existing round.'
+            ])->withInput();
         }
 
         $applicationRound->update($request->validated());
@@ -135,7 +142,15 @@ class ApplicationRoundController extends Controller
      */
     public function destroy(ApplicationRound $applicationRound)
     {
-        //
+        // 1. Safety Gate: If there is student data, NEVER delete.
+        if ($applicationRound->applications()->count() > 0) {
+            return back()->withErrors(['delete' => 'History exists: Cannot delete a round with applications.']);
+        }
+
+        // 2. Clear Path: If no student data exists, use Force Delete.
+        $applicationRound->forceDelete();
+
+        return redirect()->route('rounds.index')->with('success', 'Round removed completely.');
     }
 
     private function anotherRoundIsActive($excludeId = null): bool
@@ -151,9 +166,7 @@ class ApplicationRoundController extends Controller
             ->orderBy('semester', 'desc')
             ->first();
 
-        // In your getNextExpectedRound helper
         if (!$lastRound) {
-            // Return the Enum case itself, not a string
             return ['year' => now()->year, 'semester' => \App\Enums\Semester::FIRST];
         }
 
