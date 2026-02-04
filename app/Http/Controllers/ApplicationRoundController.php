@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\RoundStatus;
 use App\Http\Requests\ApplicationRoundRequest;
 use App\Models\ApplicationRound;
+use App\Repositories\ApplicationRoundRepository;
 use Illuminate\Http\Request;
 
 class ApplicationRoundController extends Controller
@@ -12,12 +13,13 @@ class ApplicationRoundController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    public function __construct(private ApplicationRoundRepository $roundRepo){
+    }
+
     public function index()
     {
-        $rounds = ApplicationRound::withCount('applications')
-            ->orderBy('academic_year', 'desc')
-            ->orderBy('semester', 'desc')
-            ->get();
+        $rounds = $this->roundRepo->getAllOrdered();
 
         return view('rounds.index', ['rounds' => $rounds]);
     }
@@ -27,7 +29,7 @@ class ApplicationRoundController extends Controller
      */
     public function create()
     {
-        $expected = $this->getNextExpectedRound();
+        $expected = $this->roundRepo->getNextExpectedRound();
 
         return view('rounds.create', [
             'expectedYear' => $expected['year'],
@@ -46,7 +48,7 @@ class ApplicationRoundController extends Controller
         $now = now();
 
         // 1. SEQUENTIAL GUARD: Must be the correct next Year/Semester
-        $expected = $this->getNextExpectedRound();
+        $expected = $this->roundRepo->getNextExpectedRound();
         if ($request->academic_year != $expected['year'] ||
             $request->semester != $expected['semester']->value) {
             return back()->withErrors([
@@ -65,7 +67,7 @@ class ApplicationRoundController extends Controller
             }
 
             // B. CONCURRENCY: Only one active round allowed
-            if ($this->anotherRoundIsActive()) {
+            if ($this->roundRepo->anotherRoundIsActive()) {
                 return back()->withErrors([
                     'status' => 'Cannot create an open round while another is already active.'
                 ]);
@@ -73,13 +75,13 @@ class ApplicationRoundController extends Controller
         }
 
         // 3. OVERLAP GUARD: Always check this for all rounds (including drafts)
-        if ($this->isOverlapping($startTime, $endTime)) {
+        if ($this->roundRepo->isOverlapping($startTime, $endTime)) {
             return back()->withErrors([
                 'start_time' => 'These dates overlap with an existing application round.'
             ])->withInput();
         }
 
-        ApplicationRound::create($request->validated());
+        $this->roundRepo->create($request->validated());
         return redirect()->route('rounds.index')->with('success', 'Round created!');
     }
 
@@ -121,13 +123,14 @@ class ApplicationRoundController extends Controller
             }
 
             // 2. CONCURRENCY: One at a time
-            if ($this->anotherRoundIsActive($applicationRound->id)) {
+            if ($this->roundRepo->anotherRoundIsActive($applicationRound->id)) {
+
                 return back()->withErrors(['status' => 'Another round is already open.']);
             }
         }
 
         // 3. NO OVERLAP: Reuse the same variables here!
-        if ($this->isOverlapping($startTime, $endTime, $applicationRound->id)) {
+        if ($this->roundRepo->isOverlapping($startTime, $endTime, $applicationRound->id)) {
             return back()->withErrors([
                 'start_time' => 'These dates overlap with another existing round.'
             ])->withInput();
@@ -151,51 +154,5 @@ class ApplicationRoundController extends Controller
         $applicationRound->forceDelete();
 
         return redirect()->route('rounds.index')->with('success', 'Round removed completely.');
-    }
-
-    private function anotherRoundIsActive($excludeId = null): bool
-    {
-        return ApplicationRound::active()
-            ->when($excludeId, fn($query) => $query->where('id', '!=', $excludeId))
-            ->exists();
-    }
-
-    private function getNextExpectedRound()
-    {
-        $lastRound = ApplicationRound::orderBy('academic_year', 'desc')
-            ->orderBy('semester', 'desc')
-            ->first();
-
-        if (!$lastRound) {
-            return ['year' => now()->year, 'semester' => \App\Enums\Semester::FIRST];
-        }
-
-        if ($lastRound->semester === \App\Enums\Semester::FIRST) {
-            return [
-                'year' => $lastRound->academic_year,
-                'semester' => \App\Enums\Semester::SECOND
-            ];
-        } else {
-            return [
-                'year' => $lastRound->academic_year + 1,
-                'semester' => \App\Enums\Semester::FIRST
-            ];
-        }
-
-    }
-
-    private function isOverlapping($startTime, $endTime, $excludeId = null): bool
-    {
-        return ApplicationRound::query()
-            ->when($excludeId, fn($query) => $query->where('id', '!=', $excludeId))
-            ->where(function ($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function ($q) use ($startTime, $endTime) {
-                        $q->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
-            })
-            ->exists();
     }
 }
