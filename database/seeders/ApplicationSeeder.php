@@ -13,15 +13,22 @@ class ApplicationSeeder extends Seeder
     /**
      * Run the database seeds.
      */
+// Update ApplicationSeeder.php
     public function run(): void
     {
         $users = User::all();
+        $rounds = \App\Models\ApplicationRound::all();
 
         foreach ($users as $user) {
-            Application::factory(2)
-                ->for($user)
-                ->has(Attachment::factory(2), 'attachments')
-                ->create();
+            // Take 2 random but UNIQUE rounds from your seeded rounds
+            $selectedRounds = $rounds->random(min(2, $rounds->count()));
+
+            foreach ($selectedRounds as $round) {
+                Application::factory()->create([
+                    'user_id' => $user->id,
+                    'application_round_id' => $round->id,
+                ]);
+            }
         }
     }
 }

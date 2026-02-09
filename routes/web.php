@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\ApplicationRoundController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('applications', ApplicationController::class);
     Route::resource('users', UserController::class);
+    Route::resource('rounds', ApplicationRoundController::class)
+        ->parameters(['rounds' => 'applicationRound']);
 });
 
 Route::get('/api/departments', [UserController::class, 'departmentsByFaculty'])

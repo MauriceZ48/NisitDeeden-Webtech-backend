@@ -32,6 +32,10 @@
                        class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
                         Users
                     </a>
+                    <a href="{{ route('rounds.index') }}"
+                       class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                        Rounds
+                    </a>
                 @endif
             </nav>
 
@@ -60,6 +64,10 @@
                         <a href="{{ route('users.index') }}"
                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                             Users
+                        </a>
+                        <a href="{{ route('rounds.index') }}"
+                           class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            Rounds
                         </a>
                     </div>
 

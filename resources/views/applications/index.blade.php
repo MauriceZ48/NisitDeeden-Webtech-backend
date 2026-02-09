@@ -140,6 +140,7 @@
 {{--                            <th class="px-6 py-3">#</th>--}}
                             <th class="px-6 py-3">ID</th>
                             <th class="px-6 py-3">User</th>
+                            <th class="px-6 py-3">Round</th>
                             <th class="px-6 py-3">Category</th>
                             <th class="px-6 py-3">Status</th> {{-- NEW --}}
                             <th class="px-6 py-3">Created At</th>
@@ -178,6 +179,20 @@
                                             @endif
                                         </div>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($application->applicationRound)
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-semibold text-slate-900">
+                                                {{ $application->applicationRound->academic_year }}
+                                            </span>
+                                            <span class="text-xs text-slate-500">
+                                                Semester {{ $application->applicationRound->semester->value }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic">N/A</span>
+                                    @endif
                                 </td>
 
                                 <td class="px-6 py-4">

@@ -29,6 +29,22 @@
     <section class="bg-background">
         <div class="container mx-auto w-[80%] py-10">
 
+            @if ($errors->any())
+                <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                        </svg>
+                        <h3 class="text-sm font-bold text-red-800">There were issues with your submission:</h3>
+                    </div>
+                    <ul class="mt-2 list-inside list-disc text-sm text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{-- Page title --}}
             <div class="mb-8">
                 <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">
