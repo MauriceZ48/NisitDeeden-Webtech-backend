@@ -198,7 +198,7 @@
                                 <td class="px-6 py-4">
                                     <span
                                         class="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                                        {{ ucfirst(strtolower($application->category->value)) }}
+                                        {{ $application->applicationCategory->name }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
