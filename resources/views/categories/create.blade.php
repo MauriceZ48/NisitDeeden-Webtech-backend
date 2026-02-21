@@ -8,23 +8,26 @@
 
             <div>
                 <div>
-                    <label for="name">Name</label>
+                    <label for="name">Name:</label>
                     <input type="text" name="name" value="{{ old('name') }}" class="@error('name') border-red-500 @enderror">
                     @error('name')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="icon">Icon</label>
-                    <input type="file" name="icon" accept=".png, .jpg, .jpeg" >
+                    <label for="icon">Icon:</label>
+                    <input type="text" name="icon" value="{{ old('icon') }}">
                     @error('icon')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
-                    <label for="description">Description</label>
+                    <label for="description">Description:</label>
                     <input type="text" name="description" value="{{ old('description') }}" >
                 </div>
+                @error('description')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
 

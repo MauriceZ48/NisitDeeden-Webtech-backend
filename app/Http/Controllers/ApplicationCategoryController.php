@@ -7,7 +7,7 @@ use App\Models\CategoryAttribute;
 use App\Repositories\ApplicationCategoryRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -38,9 +38,10 @@ class ApplicationCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $slug = Str::slug($request->name);
-        $request->merge(['slug' => $slug]);
+        // 1. Generate and merge the slug
+        $request->merge(['slug' => Str::slug($request->name)]);
 
+        // 2. Strict Validation Firewall
         $request->validate([
             'name' => [
                 'required',
@@ -50,42 +51,51 @@ class ApplicationCategoryController extends Controller
                 'required',
                 Rule::unique('application_categories')->whereNull('deleted_at')
             ],
-            'icon' => 'required|image|max:2048',
-            'attributes.*.label' => 'required',
+            'icon' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000', // Secured the description
+
+            // Ensure attributes is an array if it exists
+            'attributes' => 'nullable|array',
+            'attributes.*.label' => 'required_with:attributes|string|max:255',
+
+            // Whitelist the exact input types you support in your dynamic form
+            'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
         ], [
             'name.required' => 'Need category name',
             'name.unique' => 'This category name is already taken (even in trash)',
-            'attributes.*.label.required' => 'Every attribute needs a label',
+            'attributes.*.label.required_with' => 'Every attribute needs a label',
+            'attributes.*.type.in' => 'Invalid input type selected.',
         ]);
 
-         DB::transaction(function () use ($request) {
-            $icon_path = $request->file('icon')->store('category_icons', 'public');
+        // 3. Database Transaction
+        DB::transaction(function () use ($request) {
 
             $category = $this->categoryRepo->create([
                 'name' => $request->name,
                 'slug' => $request->slug,
-                'icon' => $icon_path,
+                'icon' => $request->icon,
                 'description' => $request->description,
             ]);
 
             $attributes = $request->input('attributes', []);
 
             if (!empty($attributes)) {
-                foreach ($attributes as $index => $attr) {
-
+                foreach ($attributes as $attr) {
                     $category->attributes()->create([
                         'label' => $attr['label'],
                         'type' => $attr['type'],
+                        // isset() is perfect here for handling HTML checkbox behavior
                         'is_required' => isset($attr['is_required']),
                     ]);
                 }
             } else {
-                \Log::error('CHECK: No attributes found in the request.');
+                // Changed to info() - an empty attribute list isn't necessarily an "error"
+                Log::info("No dynamic attributes provided for category: {$category->name}");
             }
-
         });
-        return redirect()->route('categories.index');
 
+        return redirect()->route('categories.index')
+            ->with('success', 'Category created successfully!');
     }
 
     /**
@@ -127,10 +137,6 @@ class ApplicationCategoryController extends Controller
             return back()->with('warning', 'Category soft-deleted (data preserved).');
         }
 
-
-        if ($applicationCategory->icon) {
-            Storage::disk('public')->delete($applicationCategory->icon);
-        }
 
         $applicationCategory->forceDelete();
 

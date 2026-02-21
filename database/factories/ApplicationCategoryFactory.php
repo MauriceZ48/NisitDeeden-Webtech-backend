@@ -21,7 +21,7 @@ class ApplicationCategoryFactory extends Factory
             'name' => $this->faker->name(),
             'slug' => $this->faker->slug(),
             'description' => $this->faker->text(),
-            'icon' => 'category_icons/' . $name . '.png',
+            'icon' => 'category_icons',
             'is_active' => $this->faker->boolean(),
         ];
     }

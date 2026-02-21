@@ -17,17 +17,17 @@ class ApplicationCategorySeeder extends Seeder
             [
                 'name' => 'Activity',
                 'description' => 'Leadership, community service, and extracurricular activities.',
-                'icon' => 'category_icons/activity.png',
+                'icon' => 'activity',
             ],
             [
                 'name' => 'Creativity',
                 'description' => 'Arts, innovation, and creative problem-solving.',
-                'icon' => 'category_icons/creativity.png',
+                'icon' => 'creativity',
             ],
             [
                 'name' => 'Behavior',
                 'description' => 'Ethics, discipline, and outstanding conduct.',
-                'icon' => 'category_icons/behavior.png',
+                'icon' => 'behavior',
             ],
         ];
 

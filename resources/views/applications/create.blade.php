@@ -143,9 +143,6 @@
                                     class="relative rounded-2xl border p-5 text-left transition"
                                     :class="selectedCategorySlug === cat.slug ? 'border-primary ring-2 ring-primary/15 bg-primary/5' : 'border-slate-200 hover:border-slate-300'">
                                 <div class="flex items-center justify-between">
-                                    <div class="h-11 w-11 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center p-2 overflow-hidden">
-                                        <img :src="'/storage/' + cat.icon" class="w-full h-full object-contain">
-                                    </div>
                                     <div class="h-5 w-5 rounded-full border flex items-center justify-center"
                                          :class="selectedCategorySlug === cat.slug ? 'border-primary bg-primary' : 'border-slate-300 bg-white'">
                                         <svg x-show="selectedCategorySlug === cat.slug" class="h-3 w-3 text-white" viewBox="0 0 24 24" fill="currentColor">

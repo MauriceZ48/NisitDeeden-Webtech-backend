@@ -15,13 +15,8 @@
                     <a href="{{ route('categories.show', $category->slug) }}">
                     <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center space-y-4">
 
-                        <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center p-4">
-                            <img src="{{ Storage::url($category->icon) }}"
-                                 alt="{{ $category->name }} icon"
-                                 class="w-full h-full object-contain">
-                        </div>
-
                         <h2 class="text-xl font-semibold text-gray-900">{{ $category->name }}</h2>
+                        <p class="text-sm text-gray-500 line-clamp-3">icon-string:{{ $category->icon }}</p>
                         <p class="text-sm text-gray-500 line-clamp-3">{{ $category->description }}</p>
 
                     </div>

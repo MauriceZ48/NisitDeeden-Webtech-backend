@@ -57,9 +57,7 @@
 
                         {{-- Category Summary --}}
                         <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200">
-                            <div class="h-12 w-12 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center p-2">
-                                <img src="{{ Storage::url($category->icon) }}" class="w-full h-full object-contain">
-                            </div>
+
                             <div>
                                 <p class="text-xs text-slate-500 font-semibold">Category</p>
                                 <p class="font-bold text-slate-900">{{ $category->name }}</p>
