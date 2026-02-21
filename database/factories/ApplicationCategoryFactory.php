@@ -16,11 +16,12 @@ class ApplicationCategoryFactory extends Factory
      */
     public function definition(): array
     {
+        $name = $this->faker->unique()->word();
         return [
             'name' => $this->faker->name(),
             'slug' => $this->faker->slug(),
             'description' => $this->faker->text(),
-            'icon' => $this->faker->randomElement(['users', 'lightbulb', 'shield-check', 'star']),
+            'icon' => 'category_icons/' . $name . '.png',
             'is_active' => $this->faker->boolean(),
         ];
     }

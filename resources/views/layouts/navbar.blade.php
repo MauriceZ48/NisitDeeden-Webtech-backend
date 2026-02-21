@@ -69,6 +69,10 @@
                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                             Rounds
                         </a>
+                        <a href="{{ route('categories.index') }}"
+                           class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            Category
+                        </a>
                     </div>
 
                     {{-- User dropdown --}}

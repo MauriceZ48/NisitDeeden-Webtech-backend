@@ -10,7 +10,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ApplicationCategory extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $fillable = ['name', 'slug', 'description', 'icon', 'is_active'];
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'icon',
+        'is_active'
+    ];
 
     public function applications(): HasMany
     {
@@ -20,6 +26,16 @@ class ApplicationCategory extends Model
     public function attributes(): HasMany
     {
         return $this->hasMany(CategoryAttribute::class);
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
+    public function hasApplications(): bool
+    {
+        return $this->applications()->exists();
     }
 
 }
