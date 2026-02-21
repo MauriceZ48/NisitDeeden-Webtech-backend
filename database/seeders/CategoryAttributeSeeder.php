@@ -21,14 +21,14 @@ class CategoryAttributeSeeder extends Seeder
             ['label' => 'Organization Name', 'type' => 'text', 'is_required' => true], // Added here!
             ['label' => 'Co-curricular Activity Transcript', 'type' => 'file', 'is_required' => true],
             ['label' => 'Project Documents', 'type' => 'file', 'is_required' => true],
-            ['label' => 'Activity Photos', 'type' => 'image', 'is_required' => true],
+            ['label' => 'Activity Photos', 'type' => 'file', 'is_required' => true],
         ]);
 
         // Creativity
         $this->createAttributes($creativity->id, [
             ['label' => 'Project/Innovation Name', 'type' => 'text', 'is_required' => true], // Or here!
             ['label' => 'Evidence of Award (Certificate/Results)', 'type' => 'file', 'is_required' => true],
-            ['label' => 'Project Portfolio Link', 'type' => 'url', 'is_required' => false],
+            ['label' => 'Project Portfolio ', 'type' => 'textarea', 'is_required' => false],
         ]);
 
         // Behavior

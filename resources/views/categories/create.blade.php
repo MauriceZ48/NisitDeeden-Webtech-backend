@@ -50,7 +50,7 @@
                             <label class="block text-sm font-medium">Type</label>
                             <select :name="`attributes[${index}][type]`" x-model="attr.type" class="w-full rounded-md border-gray-300">
                                 <option value="text">Short Text</option>
-                                <option value="number">Number</option>
+                                <option value="textarea">Text Area</option>
                                 <option value="file">File Upload</option>
                             </select>
                         </div>

@@ -31,6 +31,8 @@ class ApplicationCategoryRepository{
 
     public function getActiveCategories()
     {
-        return ApplicationCategory::where('is_active', true)->get();
+        return ApplicationCategory::where('is_active', true)
+            ->orderBy('name')
+            ->get();
     }
 }

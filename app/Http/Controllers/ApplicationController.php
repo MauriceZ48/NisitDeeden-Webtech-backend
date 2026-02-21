@@ -2,23 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ApplicationCategory;
+use App\Models\ApplicationCategory;
 use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\ApplicationRound;
 use App\Models\Attachment;
 use App\Models\User;
+use App\Repositories\ApplicationCategoryRepository;
 use App\Repositories\ApplicationRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class ApplicationController extends Controller
 {
+
     public function __construct(
-        private ApplicationRepository $applicationRepository
+        private ApplicationRepository $applicationRepository,
+        private UserRepository $userRepo,
+        private ApplicationCategoryRepository $categoryRepo
     ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -78,20 +86,30 @@ class ApplicationController extends Controller
     {
         Gate::authorize('create', Application::class);
 
-        $users = User::query()
-            ->where('role', UserRole::USER)
-            ->select(['id','name','email','university_id','faculty','department','profile_path'])
-            ->orderBy('name')
-            ->get()
-            ->append('profile_url');
+        $users = $this->userRepo->getStudentsForSelection();
 
-        return view('applications.form', [
-            'users'      => $users,
-            'categories' => ApplicationCategory::cases(),
-            'statuses'   => ApplicationStatus::cases(), // ถ้าหน้า create ไม่ให้เลือก status ก็ส่งไว้เฉยๆ ได้
+        $categories = $this->categoryRepo->getActiveCategories();
+
+        return view('applications.create', [
+            'users' => $users,
+            'categories' => $categories,
         ]);
     }
 
+    public function showForm(Request $request, ApplicationCategory $applicationCategory)
+    {
+
+        $student_id = $request->query('student_id');
+        $student = $this->userRepo->getById($student_id);
+
+        $applicationCategory->load('attributes');
+
+        return view('applications.form', [
+            'student' => $student,
+            'category' => $applicationCategory
+        ]);
+
+    }
 
 
 
@@ -101,67 +119,105 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', Application::class);
-        $currentRound = ApplicationRound::active()->first();
 
-        if(!$currentRound) {
+        $currentRound = ApplicationRound::active()->first();
+        if (!$currentRound) {
             return back()->withErrors(['error' => 'There is no active application round at this time.']);
         }
 
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'category' => 'required',
-            'attachments.*' => 'nullable|file|max:5120',
-        ]);
+        // 1. Determine Target User First
+        $targetUserId = auth()->user()->isAdmin() ? $request->user_id : auth()->id();
 
-        // Check if creation from admin or user
-        $targetUserId = auth()->user()->isAdmin()
-            ? $request->user_id
-            : auth()->id();
+        // 2. Adjust Rules (user_id is only required from the request if Admin is submitting)
+        $rules = [
+            'user_id' => auth()->user()->isAdmin() ? 'required|exists:users,id' : 'nullable',
+            'category_id' => 'required|exists:application_categories,id',
+            'values' => 'nullable|array',
+            'attachments.*' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:5120',
+        ];
 
-        // Look for existing record
-        $application = Application::withTrashed()
-            ->where('user_id', $targetUserId)
-            ->where('application_round_id',$currentRound->id)
-            ->first();
+        $category = ApplicationCategory::with('attributes')->findOrFail($request->category_id);
 
-        if ($application) {
-            if ($application->trashed()) {
-                $application->restore();
-                $application->update([
-                    'category' => $request->category,
-                    'status' => ApplicationStatus::PENDING,
-                    'rejection_reason' => null,
-                ]);
-                $message = 'Application restored and updated for the user!';
+        // 3. Dynamically build rules
+        foreach ($category->attributes as $attribute) {
+            $fieldRules = [];
+            $fieldRules[] = $attribute->is_required ? 'required' : 'nullable';
+
+            if ($attribute->type === 'file') {
+                array_push($fieldRules, 'file', 'mimes:pdf,png,jpg,jpeg', 'max:5120');
             } else {
-                return back()->withErrors(['error' => 'An active application already exists for this user in this round.']);
+                $fieldRules[] = 'string';
             }
-        } else {
-            // Create new
-            $application = Application::create([
-                'user_id' => $targetUserId,
-                'application_round_id' => $currentRound->id,
-                'category' => $request->category,
-                'status' => ApplicationStatus::PENDING,
-            ]);
-            $message = 'Application created successfully!';
+
+            $rules["values.{$attribute->id}"] = $fieldRules;
         }
 
-        // Handle Attachments
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('applications/attachments', 'public');
-                $application->attachments()->create([
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
+        $validatedData = $request->validate($rules);
+
+        // 4. Wrap database logic in a Transaction
+        return DB::transaction(function () use ($request, $targetUserId, $currentRound) {
+
+            $application = Application::withTrashed()
+                ->where('user_id', $targetUserId)
+                ->where('application_round_id', $currentRound->id)
+                ->first();
+
+            if ($application) {
+                if ($application->trashed()) {
+                    $application->restore();
+                    $application->update([
+                        'application_category_id' => $request->category_id,
+                        'status' => ApplicationStatus::PENDING,
+                        'rejection_reason' => null,
+                    ]);
+
+                    $application->attributeValues()->delete();
+                    $application->attachments()->delete();
+
+                } else {
+                    throw ValidationException::withMessages([
+                        'error' => 'An active application already exists for this user in this round.'
+                    ]);
+                }
+            } else {
+                $application = Application::create([
+                    'user_id' => $targetUserId,
+                    'application_round_id' => $currentRound->id,
+                    'application_category_id' => $request->category_id,
+                    'status' => ApplicationStatus::PENDING,
                 ]);
             }
-        }
 
-        return redirect($request->input('return_url', url()->previous()))
-            ->with('success', $message);
+            // 5. Save Values
+            if ($request->has('values')) {
+                foreach ($request->values as $attributeId => $inputValue) {
+                    if ($request->hasFile("values.$attributeId")) {
+                        $file = $request->file("values.$attributeId");
+                        $inputValue = $file->store('applications/dynamic_submissions', 'public');
+                    }
+
+                    $application->attributeValues()->create([
+                        'category_attribute_id' => $attributeId,
+                        'value' => $inputValue,
+                    ]);
+                }
+            }
+
+            // 6. Save Attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('applications/attachments', 'public');
+                    $application->attachments()->create([
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                    ]);
+                }
+            }
+
+            return redirect()->route('applications.index')->with('success', 'Application submitted successfully!');
+        });
     }
 
     /**
