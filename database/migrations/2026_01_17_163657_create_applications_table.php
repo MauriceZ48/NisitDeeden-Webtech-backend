@@ -23,8 +23,6 @@ return new class extends Migration
             $table->string('status')->default(ApplicationStatus::PENDING->value);
 
             $table->text('rejection_reason')->nullable();
-            $table->string('transcript_path')->nullable();
-
             $table->timestamps();
             $table->softDeletes();
         });

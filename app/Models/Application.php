@@ -19,7 +19,6 @@ class Application extends Model
         'user_id',
         'application_round_id',
         'rejection_reason',
-        'transcript_path',
     ];
     protected $casts = [
         'status' => ApplicationStatus::class,

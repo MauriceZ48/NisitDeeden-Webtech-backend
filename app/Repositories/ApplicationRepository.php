@@ -18,5 +18,17 @@ class ApplicationRepository
         return $this->model::where('status', $status->value)->count();
     }
 
+    public function getFullApplicationsPaginated(int $perPage = 10)
+    {
+        return Application::with([
+            'attributeValues.attribute',
+            'attachments',
+            'user',
+            'applicationCategory'
+        ])
+            ->latest()
+            ->paginate($perPage);
+    }
+
 
 }

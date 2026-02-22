@@ -28,7 +28,6 @@ class ApplicationFactory extends Factory
                 ?? ApplicationCategory::factory(),
             'status' => fake()->randomElement(ApplicationStatus::cases()),
             'rejection_reason' => null,
-            'transcript_path' => 'transcripts/fake_file.pdf',
         ];
     }
 }

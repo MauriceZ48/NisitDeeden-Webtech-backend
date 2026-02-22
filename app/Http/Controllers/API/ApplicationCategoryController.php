@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CategoryResource;
+use App\Http\Resources\ApplicationCategoryResource;
 use App\Models\ApplicationCategory;
 use App\Repositories\ApplicationCategoryRepository;
 use Illuminate\Http\Request;
 
-class CategoryController extends Controller
+class ApplicationCategoryController extends Controller
 {
     public function __construct(
         private ApplicationCategoryRepository $categoryRepo
@@ -16,14 +16,14 @@ class CategoryController extends Controller
 
     public function index(){
         $categories = $this->categoryRepo->getActiveCategories();
-        return CategoryResource::collection($categories);
+        return ApplicationCategoryResource::collection($categories);
     }
 
 
     public function show(ApplicationCategory $category)
     {
         $category->load('attributes');
-        return new CategoryResource($category);
+        return new ApplicationCategoryResource($category);
     }
 
 }
