@@ -29,6 +29,11 @@ class UserRepository
             ->append('profile_url');
     }
 
+    public function getPaginatedUsers(int $perPage = 10)
+    {
+        return $this->model::query()->paginate($perPage);
+    }
+
     public function getUserById(int $id): User
     {
         return $this->model::query()->findOrFail($id);
