@@ -37,7 +37,9 @@ class ApplicationController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('create', Application::class);
+        //Gate::authorize('create', Application::class);
+
+//         dd(auth()->user()->isAdmin());
 
         $currentRound = $this->RoundRepo->getActive();
         if (!$currentRound) {

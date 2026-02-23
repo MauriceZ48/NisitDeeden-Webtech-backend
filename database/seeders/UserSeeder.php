@@ -24,6 +24,14 @@ class UserSeeder extends Seeder
             'department' => Department::COMPUTER,
         ]);
 
+        User::factory()->create([
+            'name' => 'Stamp Picha',
+            'email' => 'stamp@exmple.com',
+            'role' => UserRole::USER,
+            'faculty' => Faculty::SCIENCE,
+            'department' => Department::COMPUTER,
+        ]);
+
         User::factory()->count(5)->withImage()->create();
 
         User::factory()->count(44)->create();
