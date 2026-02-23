@@ -22,8 +22,8 @@ class ApplicationController extends Controller
 {
 
     public function __construct(
-        private ApplicationRepository $applicationRepository,
-        private UserRepository $userRepo,
+        private ApplicationRepository         $applicationRepo,
+        private UserRepository                $userRepo,
         private ApplicationCategoryRepository $categoryRepo
     ) {}
 
@@ -65,7 +65,7 @@ class ApplicationController extends Controller
             ->appends($request->query());
 
         // summary counts (จะนับแบบเดียวกับผลลัพธ์หลัง search ก็ได้)
-        $totalCount = $this->applicationRepository->count(); // หรือ count ทั้งหมดจริงก็แยก query อีกชุด
+        $totalCount = $this->applicationRepo->count(); // หรือ count ทั้งหมดจริงก็แยก query อีกชุด
         $pendingCount = Application::where('status', \App\Enums\ApplicationStatus::PENDING)->count();
         $approvedCount = Application::where('status', \App\Enums\ApplicationStatus::APPROVED)->count();
 
@@ -165,14 +165,15 @@ class ApplicationController extends Controller
             if ($application) {
                 if ($application->trashed()) {
                     $application->restore();
+
+                    $this->applicationRepo->clearApplicationData($application);
+
                     $application->update([
                         'application_category_id' => $request->category_id,
                         'status' => ApplicationStatus::PENDING,
                         'rejection_reason' => null,
                     ]);
 
-                    $application->attributeValues()->delete();
-                    $application->attachments()->delete();
 
                 } else {
                     throw ValidationException::withMessages([
@@ -191,28 +192,14 @@ class ApplicationController extends Controller
             // 5. Save Values
             if ($request->has('values')) {
                 foreach ($request->values as $attributeId => $inputValue) {
-                    if ($request->hasFile("values.$attributeId")) {
-                        $file = $request->file("values.$attributeId");
-                        $inputValue = $file->store('applications/dynamic_submissions', 'public');
-                    }
-
-                    $application->attributeValues()->create([
-                        'category_attribute_id' => $attributeId,
-                        'value' => $inputValue,
-                    ]);
+                    $this->applicationRepo->createAttributeValue($application, $attributeId, $inputValue);
                 }
             }
 
             // 6. Save Attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('applications/attachments', 'public');
-                    $application->attachments()->create([
-                        'file_path' => $path,
-                        'file_name' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'file_size' => $file->getSize(),
-                    ]);
+                    $this->applicationRepo->createAttachment($application, $file);
                 }
             }
 
@@ -226,7 +213,7 @@ class ApplicationController extends Controller
     public function show(Application $application)
     {
         return view('applications.show', [
-            'application' => $application->load('attachments')
+            'application' => $application->load('attachments', 'applicationCategory')
         ]);
     }
 
@@ -237,21 +224,15 @@ class ApplicationController extends Controller
     {
         Gate::authorize('update', $application);
 
-        $application->load(['user']);
-
-        $users = User::query()
-            ->where('role', UserRole::USER)
-            ->select(['id','name','email','university_id','faculty','department','profile_path'])
-            ->orderBy('name')
-            ->get()
-            ->append('profile_url');
-
-        return view('applications.form', [
-            'application' => $application,
-            'users'       => $users,
-            'categories'  => ApplicationCategory::cases(),
-            'statuses'    => ApplicationStatus::cases(),
+        $application->load([
+            'user',
+            'applicationCategory',
+            'applicationRound',
+            'attributeValues.attribute',
+            'attachments'
         ]);
+
+        return view('applications.edit', ['application' => $application]);
     }
 
 
@@ -262,51 +243,40 @@ class ApplicationController extends Controller
     public function update(Request $request, Application $application)
     {
         Gate::authorize('update', $application);
+
         $request->validate([
-            'user_id' => ['required','exists:users,id'],
-            'category' => ['required', new \Illuminate\Validation\Rules\Enum(ApplicationCategory::class)],
             'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
-            'attachments.*' => ['nullable','file','max:5120'],
-            'delete_attachments.*' => ['nullable', 'exists:attachments,id'], // Validate deletion IDs
+            'rejection_reason' => ['nullable', 'string', 'max:1000'],
+            'new_attachments.*' => ['nullable', 'file', 'max:5120'],
+            'delete_attachments.*' => ['nullable', 'exists:attachments,id'],
         ]);
 
-        // 1. Handle Deletions first
-        if ($request->has('delete_attachments')) {
-            $toDelete = Attachment::whereIn('id', $request->delete_attachments)
-                ->where('application_id', $application->id) // Security check
-                ->get();
+        // 1. Handle Deletions of General Attachments
+        if ($request->filled('delete_attachments')) {
+            $this->applicationRepo->deleteAttachments(
+                $request->delete_attachments,
+                $application->id
+            );
+        }
 
-            foreach ($toDelete as $file) {
-                Storage::disk('public')->delete($file->file_path); // Remove physical file
-                $file->delete(); // Remove DB record
+        // 2. Update Static Application Info
+        $application->update($request->only(['status', 'rejection_reason']));
+
+        // 3. Update Dynamic Attributes
+        if ($request->has('values')) {
+            foreach ($request->values as $id => $val) {
+                    $this->applicationRepo->updateValue($application, $id, $val);
             }
         }
 
-        // 2. Update Application Info
-        $application->category = $request->category;
-        if ($request->has('status')) {
-            $application->status = $request->status;
-        }
-        $application->save();
-
-        // 3. Handle New Uploads
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('applications/attachments', 'public');
-
-                $application->attachments()->create([
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
-                ]);
+        // 4. Handle New General Attachments
+        if ($request->hasFile('new_attachments')) {
+            foreach ($request->file('new_attachments') as $file) {
+                $this->applicationRepo->createAttachment($application, $file);
             }
         }
 
-        return redirect()
-            ->route('applications.index')
-            ->with('success', 'Application and attachments added!');
-
+        return redirect()->route('applications.show', ['application' => $application])->with('success', 'Updated successfully!');
     }
 
     /**
@@ -315,11 +285,9 @@ class ApplicationController extends Controller
     public function destroy(Application $application)
     {
         Gate::authorize('delete', $application);
-        foreach ($application->attachments as $attachment) {
-            Storage::disk('public')->delete($attachment->file_path);
-        }
 
         $application->delete();
+
         return redirect()->route('applications.index')->with('success', 'Deleted.');
     }
 

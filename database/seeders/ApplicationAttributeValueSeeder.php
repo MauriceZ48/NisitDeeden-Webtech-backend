@@ -11,32 +11,31 @@ class ApplicationAttributeValueSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Get all applications
-        $applications = Application::with(['applicationCategory.attributes', 'user'])->get();
+        // 1. Get all applications with their category attributes
+        $applications = Application::with(['applicationCategory.attributes'])->get();
 
         foreach ($applications as $app) {
-            // 2. Find which attributes belong to this application's category
             $attributes = $app->applicationCategory->attributes;
 
             foreach ($attributes as $attribute) {
-                // 3. Create a mock value based on the type
-                if ($attribute->type === 'number') {
-                    $mockValue = rand(1, 100);
-                } elseif ($attribute->type === 'text') {
+                $mockValue = '';
+
+                // 2. Generate mock data based on your 3 specific types
+                if ($attribute->type === 'text') {
                     $mockValue = fake()->sentence();
-                } elseif ($attribute->type === 'file' || $attribute->type === 'image') {
-                    $mockValue = 'mocks/sample-file.pdf';
-                } elseif ($attribute->type === 'url') {
-                    $username = Str::slug($app->user->name);
-                    $mockValue = 'https://github.com/' . $username . '/nisit-deeden';
+                } elseif ($attribute->type === 'textarea') {
+                    $mockValue = fake()->paragraph();
+                } elseif ($attribute->type === 'file') {
+                    $mockValue = 'applications/dynamic_submissions/mock_file.pdf';
                 } else {
                     $mockValue = 'Mock data for ' . $attribute->label;
                 }
 
+                // 3. Create the record
                 ApplicationAttributeValue::create([
                     'application_id' => $app->id,
                     'category_attribute_id' => $attribute->id,
-                    'value' => $mockValue,
+                    'value' => $mockValue ?? '',
                 ]);
             }
         }

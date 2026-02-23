@@ -30,7 +30,7 @@
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div class="space-y-2">
                     <div class="flex items-center gap-3">
-                        <a href="{{ $backUrl }}"
+                        <a href="{{ route('applications.index') }}"
                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M15.5 5 8.5 12l7 7 1.5-1.5L11.5 12 17 6.5 15.5 5z"/>
@@ -99,7 +99,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="rounded-2xl border border-slate-200 bg-slate-50/40 p-4">
                                     <p class="text-xs font-semibold text-slate-500">Category</p>
-                                    <p class="mt-1 text-sm font-semibold text-slate-900">{{ $categoryLabel }}</p>
+                                    <p class="mt-1 text-sm font-semibold text-slate-900">{{ $application->applicationCategory?->name ?? 'Unknown Category'}}</p>
                                 </div>
 
                                 <div class="rounded-2xl border border-slate-200 bg-slate-50/40 p-4">
