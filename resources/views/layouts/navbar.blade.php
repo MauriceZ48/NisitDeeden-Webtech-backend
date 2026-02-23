@@ -36,6 +36,10 @@
                        class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
                         Rounds
                     </a>
+                    <a href="{{ route('categories.index') }}"
+                       class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                        Category
+                    </a>
                 @endif
             </nav>
 
