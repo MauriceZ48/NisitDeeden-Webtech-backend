@@ -35,4 +35,9 @@ class ApplicationCategoryRepository{
             ->orderBy('name')
             ->get();
     }
+
+    public function getWithAttributes(int $id): ApplicationCategory
+    {
+        return ApplicationCategory::with('attributes')->findOrFail($id);
+    }
 }

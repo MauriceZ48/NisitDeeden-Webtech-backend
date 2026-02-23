@@ -19,7 +19,11 @@ class ApplicationResource extends JsonResource
             'id' => $this->id,
             'status' => $this->status,
             'rejection_reason' => $this->rejection_reason,
-            'created_at' => $this->created_at,
+//            'created_at' => $this->created_at,
+
+            'submitted_at' => $this->created_at->translatedFormat('d M Y'),
+            'submitted_time' => $this->created_at->format('H:i'),
+            'timestamp' => $this->created_at->toIso8601String(),
 
             'user_id' => $this->user_id,
             'application_round_id' => $this->application_round_id,

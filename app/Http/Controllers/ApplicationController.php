@@ -11,6 +11,7 @@ use App\Models\Attachment;
 use App\Models\User;
 use App\Repositories\ApplicationCategoryRepository;
 use App\Repositories\ApplicationRepository;
+use App\Repositories\ApplicationRoundRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,8 @@ class ApplicationController extends Controller
     public function __construct(
         private ApplicationRepository         $applicationRepo,
         private UserRepository                $userRepo,
-        private ApplicationCategoryRepository $categoryRepo
+        private ApplicationCategoryRepository $categoryRepo,
+        private ApplicationRoundRepository    $roundRepo,
     ) {}
 
     /**
@@ -120,7 +122,7 @@ class ApplicationController extends Controller
     {
         Gate::authorize('create', Application::class);
 
-        $currentRound = ApplicationRound::active()->first();
+        $currentRound = $this->roundRepo->getActive();
         if (!$currentRound) {
             return back()->withErrors(['error' => 'There is no active application round at this time.']);
         }
@@ -136,7 +138,7 @@ class ApplicationController extends Controller
             'attachments.*' => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:5120',
         ];
 
-        $category = ApplicationCategory::with('attributes')->findOrFail($request->category_id);
+        $category = $this->categoryRepo->getWithAttributes($request->category_id);
 
         // 3. Dynamically build rules
         foreach ($category->attributes as $attribute) {

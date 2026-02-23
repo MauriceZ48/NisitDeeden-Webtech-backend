@@ -25,10 +25,7 @@ class ApplicationRoundRepository{
 
     public function getActive()
     {
-        return ApplicationRound::where('status', RoundStatus::OPEN->value)
-            ->where('start_time', '<=', now())
-            ->where('end_time', '>=', now())
-            ->first();
+        return ApplicationRound::active()->first();
     }
 
     public function anotherRoundIsActive($excludeId = null): bool

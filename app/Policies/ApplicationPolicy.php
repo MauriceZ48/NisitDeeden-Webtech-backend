@@ -13,7 +13,7 @@ class ApplicationPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     /**
@@ -21,7 +21,7 @@ class ApplicationPolicy
      */
     public function view(User $user, Application $application): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     /**
@@ -29,7 +29,7 @@ class ApplicationPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     /**

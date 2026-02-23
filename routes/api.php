@@ -11,7 +11,7 @@ Route::name('api.')->group(function () {
 
     Route::apiResource('categories', ApplicationCategoryController::class)->only(['index', 'show']);
     Route::apiResource('users', UserController::class);
-    Route::apiResource('applications', ApplicationController::class);
+    Route::apiResource('applications', ApplicationController::class)->withTrashed();
     Route::apiResource('rounds', ApplicationRoundController::class);
 
 });
