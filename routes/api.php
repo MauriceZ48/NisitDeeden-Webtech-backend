@@ -25,16 +25,22 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::post('login', [AuthenticateController::class, 'login'])->name('user.login');
 
     // Allow index and show without a token for easy testing
+
+    //Application
     Route::apiResource('applications', ApplicationController::class)
         ->only(['index', 'show'])
         ->withTrashed();
-
-    Route::apiResource('rounds', ApplicationRoundController::class);
-
+    //Round
+    Route::get('/rounds/next-expected', [ApplicationRoundController::class, 'getNextExpectedRound'])
+        ->name('rounds.nextExpected');
+    Route::apiResource('rounds', ApplicationRoundController::class)
+        ->parameters(['rounds' => 'applicationRound']);
+    //Category
     Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
         ->name('categories.toggleStatus');
-    Route::apiResource('categories', ApplicationCategoryController::class)->parameters(['categories' => 'applicationCategory']);
-
+    Route::apiResource('categories', ApplicationCategoryController::class)
+        ->parameters(['categories' => 'applicationCategory']);
+    //User
     Route::apiResource('users', UserController::class);
 });
 

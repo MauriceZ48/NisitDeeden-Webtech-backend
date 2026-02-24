@@ -38,14 +38,11 @@ class ApplicationRoundRepository{
     public function isOverlapping($startTime, $endTime, $excludeId = null): bool
     {
         return ApplicationRound::query()
+            //Exclude the current round being edited so it doesn't collide with itself
             ->when($excludeId, fn($query) => $query->where('id', '!=', $excludeId))
             ->where(function ($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function ($q) use ($startTime, $endTime) {
-                        $q->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
+                $query->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
             })
             ->exists();
     }

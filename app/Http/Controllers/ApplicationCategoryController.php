@@ -138,7 +138,7 @@ class ApplicationCategoryController extends Controller
     {
         if ($applicationCategory->hasApplications()) {
             $applicationCategory->delete();
-            return back()->with('warning', 'Category soft-deleted (data preserved).');
+            return back()->with('warning', 'Category soft-deleted . ' . $applicationCategory->countApplications() . ' applications is affected.');
         }
 
 

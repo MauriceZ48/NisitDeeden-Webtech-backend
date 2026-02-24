@@ -145,12 +145,11 @@ class ApplicationRoundController extends Controller
      */
     public function destroy(ApplicationRound $applicationRound)
     {
-        // 1. Safety Gate: If there is student data, NEVER delete.
         if ($applicationRound->applications()->count() > 0) {
-            return back()->withErrors(['delete' => 'History exists: Cannot delete a round with applications.']);
+            $applicationRound->delete();
+            return redirect()->route('rounds.index')->with('warning', 'Round is soft-deleted. ' . $applicationRound->countApplications() . ' applications is affected.');
         }
 
-        // 2. Clear Path: If no student data exists, use Force Delete.
         $applicationRound->forceDelete();
 
         return redirect()->route('rounds.index')->with('success', 'Round removed completely.');

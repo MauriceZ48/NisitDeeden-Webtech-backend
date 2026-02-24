@@ -38,4 +38,9 @@ class ApplicationCategory extends Model
         return $this->applications()->exists();
     }
 
+    public function countApplications(): int
+    {
+        return $this->applications()->count();
+    }
+
 }

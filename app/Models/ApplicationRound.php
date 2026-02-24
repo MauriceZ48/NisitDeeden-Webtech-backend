@@ -54,4 +54,9 @@ class ApplicationRound extends Model
 
         return (int) now()->diffInDays($this->end_time);
     }
+
+    public function countApplications(): int
+    {
+        return $this->applications()->count();
+    }
 }

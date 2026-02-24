@@ -111,7 +111,7 @@ class ApplicationCategoryController extends Controller
             $applicationCategory->delete();
 
             return response()->json([
-                'message' => 'Category soft-deleted (data preserved).',
+                'message' => 'Category soft-deleted .' . $applicationCategory->countApplications() . ' applications is affected.',
                 'type' => 'warning',
                 'soft_deleted' => true
             ], 200);
