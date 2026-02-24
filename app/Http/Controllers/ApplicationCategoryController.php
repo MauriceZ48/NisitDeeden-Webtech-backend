@@ -38,6 +38,7 @@ class ApplicationCategoryController extends Controller
      */
     public function store(Request $request)
     {
+        dd($request->all());
         // 1. Generate and merge the slug
         $request->merge(['slug' => Str::slug($request->name)]);
 
@@ -89,7 +90,6 @@ class ApplicationCategoryController extends Controller
                     ]);
                 }
             } else {
-                // Changed to info() - an empty attribute list isn't necessarily an "error"
                 Log::info("No dynamic attributes provided for category: {$category->name}");
             }
         });
@@ -123,6 +123,10 @@ class ApplicationCategoryController extends Controller
      */
     public function update(Request $request, ApplicationCategory $applicationCategory)
     {
+        //
+    }
+
+    public function toggleStatus(ApplicationCategory $applicationCategory){
         $this->categoryRepo->toggleStatus($applicationCategory);
         return redirect()->route('categories.index');
     }
@@ -133,7 +137,7 @@ class ApplicationCategoryController extends Controller
     public function destroy(ApplicationCategory $applicationCategory)
     {
         if ($applicationCategory->hasApplications()) {
-            $this->categoryRepo->delete($applicationCategory->id);
+            $applicationCategory->delete();
             return back()->with('warning', 'Category soft-deleted (data preserved).');
         }
 

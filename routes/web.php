@@ -26,9 +26,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/applications/form/{applicationCategory:slug}', [ApplicationController::class, 'showForm'])
         ->name('applications.form');
     Route::resource('applications', ApplicationController::class);
+
     Route::resource('users', UserController::class);
+
     Route::resource('rounds', ApplicationRoundController::class)
         ->parameters(['rounds' => 'applicationRound']);
+
+    Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
+        ->name('categories.toggleStatus');
     Route::resource('categories', ApplicationCategoryController::class)
     ->parameters(['categories' => 'applicationCategory']);
 });

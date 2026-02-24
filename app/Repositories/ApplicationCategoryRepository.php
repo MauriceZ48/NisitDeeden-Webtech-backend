@@ -31,7 +31,7 @@ class ApplicationCategoryRepository{
 
     public function getActiveCategories()
     {
-        return ApplicationCategory::where('is_active', true)
+        return ApplicationCategory::with('attributes')->where('is_active', true)
             ->orderBy('name')
             ->get();
     }
@@ -39,5 +39,9 @@ class ApplicationCategoryRepository{
     public function getWithAttributes(int $id): ApplicationCategory
     {
         return ApplicationCategory::with('attributes')->findOrFail($id);
+    }
+
+    public function getAllWithAttributes(){
+        return ApplicationCategory::with('attributes')->get();
     }
 }

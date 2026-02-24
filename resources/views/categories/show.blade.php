@@ -15,7 +15,7 @@
             </ul>
 
             <div class="flex gap-4">
-                <form action="{{ route('categories.update', $category) }}" method="POST">
+                <form action="{{ route('categories.toggleStatus', $category) }}" method="POST">
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="is_active" value="{{ $category->is_active ? 0 : 1 }}">

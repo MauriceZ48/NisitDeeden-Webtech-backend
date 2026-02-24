@@ -30,7 +30,11 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
         ->withTrashed();
 
     Route::apiResource('rounds', ApplicationRoundController::class);
-    Route::apiResource('categories', ApplicationCategoryController::class)->only(['index', 'show']);
+
+    Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
+        ->name('categories.toggleStatus');
+    Route::apiResource('categories', ApplicationCategoryController::class)->parameters(['categories' => 'applicationCategory']);
+
     Route::apiResource('users', UserController::class);
 });
 
