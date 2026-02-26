@@ -34,6 +34,41 @@ class ApplicationController extends Controller
         return new ApplicationResource($application);
     }
 
+    public function applicationsForHeadOfDepartment(){
+        $applications = $this->applicationRepo->getPendingForHeadOfDepartment();
+        return ApplicationResource::collection($applications);
+    }
+
+    public function applicationsForAssociateDean()
+    {
+        $applications = $this->applicationRepo->getPendingForAssociateDean();
+        return ApplicationResource::collection($applications);
+    }
+
+    public function applicationsForDean()
+    {
+        $applications = $this->applicationRepo->getPendingForDean();
+        return ApplicationResource::collection($applications);
+    }
+
+    public function applicationsForCommittee()
+    {
+        $applications = $this->applicationRepo->getPendingForCommittee();
+        return ApplicationResource::collection($applications);
+    }
+
+    public function applicationsApprovedByCommittee()
+    {
+        $applications = $this->applicationRepo->getApprovedFormCommittee();
+        return ApplicationResource::collection($applications);
+    }
+
+    public function applicationsRejected()
+    {
+        $applications = $this->applicationRepo->getAllRejectedApplications();
+        return ApplicationResource::collection($applications);
+    }
+
 
     public function store(Request $request)
     {

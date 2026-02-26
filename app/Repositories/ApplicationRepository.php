@@ -112,9 +112,32 @@ class ApplicationRepository
         ]);
     }
 
+    public function getPendingForHeadOfDepartment()
+    {
+        return Application::where('status', ApplicationStatus::PENDING)->get();
+    }
     public function getPendingForAssociateDean() {
         return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)->get();
     }
 
+    public function getPendingForDean()
+    {
+        return Application::where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)->get();
+    }
+
+    public function getPendingForCommittee()
+    {
+        return Application::where('status', ApplicationStatus::APPROVED_BY_DEAN)->get();
+    }
+
+    public function getApprovedFormCommittee()
+    {
+        return Application::where('status', ApplicationStatus::APPROVED_BY_COMMITTEE)->get();
+    }
+
+    public function getAllRejectedApplications()
+    {
+        return Application::where('status', ApplicationStatus::REJECTED)->get();
+    }
 
 }

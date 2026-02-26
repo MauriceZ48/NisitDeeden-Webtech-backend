@@ -9,6 +9,7 @@ enum ApplicationStatus: string
     case APPROVED_BY_DEPARTMENT = 'APPROVED_BY_DEPARTMENT';
     case APPROVED_BY_ASSOCIATE_DEAN = 'APPROVED_BY_ASSOCIATE_DEAN';
     case APPROVED_BY_DEAN = 'APPROVED_BY_DEAN';
+    case APPROVED_BY_COMMITTEE = 'APPROVED_BY_COMMITTEE';
     case REJECTED = 'REJECTED';
 
     public function color(): string
@@ -18,6 +19,7 @@ enum ApplicationStatus: string
             self::REJECTED => 'bg-red-100 text-red-700 border-red-200',
             self::APPROVED_BY_DEPARTMENT,
             self::APPROVED_BY_ASSOCIATE_DEAN,
+            self::APPROVED_BY_COMMITTEE,
             self::APPROVED_BY_DEAN => 'bg-green-100 text-green-700 border-green-200',
         };
     }
@@ -29,6 +31,7 @@ enum ApplicationStatus: string
             self::REJECTED => 'Rejected',
             self::APPROVED_BY_DEPARTMENT => 'Dept Approved',
             self::APPROVED_BY_ASSOCIATE_DEAN => 'Dean Office Approved',
+            self::APPROVED_BY_COMMITTEE => 'Committee Approved',
             self::APPROVED_BY_DEAN => 'Faculty Approved',
         };
     }

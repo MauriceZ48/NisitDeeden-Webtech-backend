@@ -24,9 +24,13 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::post('login', [AuthenticateController::class, 'login'])->name('user.login');
 
-    // Allow index and show without a token for easy testing
-
     //Application
+    Route::get('applications/head-of-dept', [ApplicationController::class, 'applicationsForHeadOfDepartment']);
+    Route::get('applications/associate-dean', [ApplicationController::class, 'applicationsForAssociateDean']);
+    Route::get('applications/dean', [ApplicationController::class, 'applicationsForDean']);
+    Route::get('applications/committee', [ApplicationController::class, 'applicationsForCommittee']);
+    Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
+    Route::get('applications/rejected', [ApplicationController::class, 'applicationsRejected']);
     Route::apiResource('applications', ApplicationController::class)
         ->only(['index', 'show'])
         ->withTrashed();

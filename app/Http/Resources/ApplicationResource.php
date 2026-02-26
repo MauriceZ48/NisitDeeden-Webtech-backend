@@ -20,15 +20,16 @@ class ApplicationResource extends JsonResource
             'APPROVED_BY_DEPARTMENT'         => 'ผ่านการพิจารณาโดยหัวหน้าภาควิชา',
             'APPROVED_BY_ASSOCIATE_DEAN'     => 'ผ่านการพิจารณาโดยรองคณบดี',
             'APPROVED_BY_DEAN'               => 'ผ่านการพิจารณาโดยคณบดี (รอเสนออธิการบดี)',
+            'APPROVED_BY_COMMITTEE'          => 'ผ่านการพิจารณาโดยคณะกรรมการ',
             'REJECTED'                       => 'ไม่ผ่านการพิจารณา',
         ];
 
         return [
             'id' => $this->id,
-            'rejection_reason' => $this->rejection_reason,
             'status' => $this->status,
             'status_th' => $statusTranslations[$this->status->value] ?? $this->status->value,
 //            'created_at' => $this->created_at,
+            'rejection_reason' => $this->rejection_reason,
 
             'submitted_at' => $this->created_at->translatedFormat('d M Y'),
             'submitted_time' => $this->created_at->format('H:i'),

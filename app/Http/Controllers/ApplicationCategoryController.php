@@ -38,7 +38,6 @@ class ApplicationCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
         // 1. Generate and merge the slug
         $request->merge(['slug' => Str::slug($request->name)]);
 
