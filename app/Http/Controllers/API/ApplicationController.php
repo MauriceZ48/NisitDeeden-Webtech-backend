@@ -69,6 +69,44 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
+    public function updateStatus(Request $request, Application $application)
+    {
+        $user = auth()->user();
+        $action = $request->action;
+
+        $canApprove = match($user->position) {
+            'Head of Department' => $application->status === ApplicationStatus::PENDING,
+            'Associate Dean'     => $application->status === ApplicationStatus::APPROVED_BY_DEPARTMENT,
+            'Dean'               => $application->status === ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
+            'Committee Member'   => $application->status === ApplicationStatus::APPROVED_BY_DEAN,
+            default              => false
+        };
+
+        if (!$canApprove) {
+            return response()->json(['message' => 'Not authorized for this stage.'], 403);
+        }
+
+        if ($action === 'rejected'){
+            $application->update([
+                'status' => ApplicationStatus::REJECTED,
+                'rejection_reason' => $request->rejection_reason,
+            ]);
+            return response()->json(['message' => 'Application rejected']);
+        }
+
+        $nextStatus = match($user->position) {
+            'Head of Department' => ApplicationStatus::APPROVED_BY_DEPARTMENT,
+            'Associate Dean'     => ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
+            'Dean'               => ApplicationStatus::APPROVED_BY_DEAN,
+            'Committee Member'   => ApplicationStatus::APPROVED_BY_COMMITTEE,
+            default              => null
+        };
+
+        $application->update(['status' => $nextStatus]);
+
+        return response()->json(['message' => 'Status updated to ' . $nextStatus->value]);
+    }
+
 
     public function store(Request $request)
     {

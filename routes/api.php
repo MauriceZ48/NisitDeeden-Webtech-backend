@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         return $request->user();
     })->name('me');
 
+    Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
     // Only protect the sensitive actions
     Route::apiResource('applications', ApplicationController::class)
         ->only(['store', 'update', 'destroy'])
