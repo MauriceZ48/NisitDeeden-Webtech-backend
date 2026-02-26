@@ -74,7 +74,7 @@ pipeline {
                 sh '${SAIL} up -d'
                 sh '''
                     echo "Waiting for MySQL..."
-                    until ./vendor/bin/sail exec -T mysql sh -c 'mysql -u$MYSQL_USER -p $MYSQL_PASSWORD -e "SELECT 1"' ; do
+                    until ./vendor/bin/sail exec -T mysql sh -c 'mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e "SELECT 1"' ; do
                         sleep 3
                     done
                     echo "MySQL ready!"
