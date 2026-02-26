@@ -70,7 +70,7 @@ pipeline {
                   composer:latest \
                   install --ignore-platform-reqs
                 '''
-                sh '${SAIL} down -v'
+                sh '${SAIL} down'
                 sh '${SAIL} up -d'
                 sh '''
                     echo "Waiting for MySQL..."
