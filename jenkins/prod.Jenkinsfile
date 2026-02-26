@@ -11,7 +11,7 @@ pipeline {
                 withVault([
                     vaultSecrets: [
                         [
-                            path: 'kv/nisit-deeden-backend-dev',
+                            path: 'kv/nisit-deeden-backend-production',
                             secretValues: [
                                 [envVar: 'APP_NAME', vaultKey: 'APP_NAME'],
                                 [envVar: 'APP_ENV', vaultKey: 'APP_ENV'],
@@ -49,7 +49,7 @@ pipeline {
                             ]
                         ]
                     ]
-                ])
+                ]) {}
             }
         }
         
