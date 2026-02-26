@@ -7,6 +7,7 @@ use App\Enums\Department;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -41,7 +42,8 @@ class UserFactory extends Factory
             'university_id' => fake()->unique()->bothify('ID-#####'),
             'department' => $department,
             'faculty' => $faculty,
-            'role' => UserRole::USER,
+            'role' => UserRole::STUDENT,
+            'position' => 'Student',
         ];
     }
 
@@ -59,12 +61,20 @@ class UserFactory extends Factory
 
             if ($image) {
                 // 3. Save it to your local storage
-                \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $image);
+                Storage::disk('public')->put($filename, $image);
                 return ['profile_path' => $filename];
             }
 
             return ['profile_path' => null];
         });
+    }
+
+    public function committee(string $position = 'Committee Member'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::COMMITTEE,
+            'position' => $position,
+        ]);
     }
 
     /**

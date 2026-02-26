@@ -35,48 +35,27 @@ class ApplicationController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
-
-        $query = Application::query()
-            ->with(['user']); // กัน N+1
+        $query = Application::with(['user', 'applicationRound', 'applicationCategory']);
 
         if ($q !== '') {
-            $qLower = mb_strtolower($q);
-
-            $query->where(function ($qq) use ($q, $qLower) {
-
-                // ค้นหา ID (ถ้าพิมพ์เป็นตัวเลข)
-                if (ctype_digit($q)) {
-                    $qq->orWhere('id', (int) $q);
-                }
-
-                // ค้นหา category / status (enum string ใน DB)
-                $qq->orWhereRaw('LOWER(category) LIKE ?', ["%{$qLower}%"])
-                    ->orWhereRaw('LOWER(status) LIKE ?', ["%{$qLower}%"]);
-
-                // ค้นหาข้อมูล user
-                $qq->orWhereHas('user', function ($u) use ($qLower) {
-                    $u->whereRaw('LOWER(name) LIKE ?', ["%{$qLower}%"])
-                        ->orWhereRaw('LOWER(email) LIKE ?', ["%{$qLower}%"]);
-                });
+            $query->where(function ($qq) use ($q) {
+                $qq->where('id', 'like', "%{$q}%")
+                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$q}%"))
+                    ->orWhereHas('applicationCategory', fn($c) => $c->where('name', 'like', "%{$q}%"));
             });
         }
 
-        $applications = $query
-            ->latest()
-            ->paginate(10)
-            ->appends($request->query());
+        $applications = $query->latest()->paginate(10);
 
-        // summary counts (จะนับแบบเดียวกับผลลัพธ์หลัง search ก็ได้)
-        $totalCount = $this->applicationRepo->count(); // หรือ count ทั้งหมดจริงก็แยก query อีกชุด
-        $pendingCount = Application::where('status', \App\Enums\ApplicationStatus::PENDING)->count();
-        $approvedCount = Application::where('status', \App\Enums\ApplicationStatus::APPROVED)->count();
+        // Dynamic counts based on your new multi-step logic
+        $totalCount = Application::count();
+        $pendingCount = Application::where('status', ApplicationStatus::PENDING)->count();
+        $approvedCount = Application::where('status', '!=', ApplicationStatus::PENDING)
+            ->where('status', '!=', ApplicationStatus::REJECTED)
+            ->count();
+        $rejectedCount = Application::where('status', ApplicationStatus::REJECTED)->count();
 
-        return view('applications.index', compact(
-            'applications',
-            'totalCount',
-            'pendingCount',
-            'approvedCount'
-        ));
+        return view('applications.index', compact('applications', 'totalCount', 'pendingCount', 'approvedCount', 'rejectedCount'));
     }
 
 

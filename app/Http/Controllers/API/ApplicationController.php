@@ -30,7 +30,7 @@ class ApplicationController extends Controller
     }
 
     public function show(Application $application){
-        $application->load('attributeValues.attribute', 'attachments', 'user', 'applicationCategory');
+        $application->load('attributeValues.attribute', 'applicationRound', 'attachments', 'user', 'applicationCategory');
         return new ApplicationResource($application);
     }
 

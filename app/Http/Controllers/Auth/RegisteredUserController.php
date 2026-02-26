@@ -52,7 +52,7 @@ class RegisteredUserController extends Controller
             'university_id' => $request->university_id,
             'faculty' => $request->faculty,
             'department' => $request->department,
-            'role' => UserRole::USER,
+            'role' => UserRole::STUDENT,
         ]);
 
         event(new Registered($user));

@@ -14,6 +14,16 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
+        $positionTranslations = [
+            'Student'            => 'นิสิต',
+            'Head of Department' => 'หัวหน้าภาควิชา',
+            'Associate Dean'     => 'รองคณบดี',
+            'Dean'               => 'คณบดี',
+            'Committee Member'   => 'คณะกรรมการ',
+            'Student Development Division' => 'กองพัฒนานิสิต'
+        ];
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -22,6 +32,8 @@ class UserResource extends JsonResource
             'faculty' => $this->faculty,
             'department' => $this->department,
             'role' => $this->role,
+            'position_en' => $this->position,
+            'position_th' => $positionTranslations[$this->position] ?? $this->position,
             'profile_path' => $this->profile_path,
         ];
     }

@@ -15,10 +15,19 @@ class ApplicationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $statusTranslations = [
+            'PENDING'                        => 'รอดำเนินการ',
+            'APPROVED_BY_DEPARTMENT'         => 'ผ่านการพิจารณาโดยหัวหน้าภาควิชา',
+            'APPROVED_BY_ASSOCIATE_DEAN'     => 'ผ่านการพิจารณาโดยรองคณบดี',
+            'APPROVED_BY_DEAN'               => 'ผ่านการพิจารณาโดยคณบดี (รอเสนออธิการบดี)',
+            'REJECTED'                       => 'ไม่ผ่านการพิจารณา',
+        ];
+
         return [
             'id' => $this->id,
-            'status' => $this->status,
             'rejection_reason' => $this->rejection_reason,
+            'status' => $this->status,
+            'status_th' => $statusTranslations[$this->status->value] ?? $this->status->value,
 //            'created_at' => $this->created_at,
 
             'submitted_at' => $this->created_at->translatedFormat('d M Y'),
@@ -30,7 +39,7 @@ class ApplicationResource extends JsonResource
             'application_category_id' => $this->application_category_id,
 
             'user' => new UserResource($this->whenLoaded('user')),
-//            'round' => new ApplicationRoundResource($this->whenLoaded('applicationRound')),
+            'round' => new ApplicationRoundResource($this->whenLoaded('applicationRound')),
             'category' => new ApplicationCategoryResource($this->whenLoaded('applicationCategory')),
 
             'attachments' => $this->whenLoaded('attachments', function () {

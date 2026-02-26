@@ -22,7 +22,7 @@ class UserRepository
 
     public function getStudentsForSelection()
     {
-        return $this->model::where('role', UserRole::USER)
+        return $this->model::where('role', UserRole::STUDENT)
             ->select(['id','name','email','university_id','faculty','department','profile_path'])
             ->orderBy('name')
             ->get()

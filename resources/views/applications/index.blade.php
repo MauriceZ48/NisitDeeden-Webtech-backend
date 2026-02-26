@@ -21,7 +21,7 @@
             </div>
 
             {{-- Summary cards --}}
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
                 {{-- Total --}}
                 <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div class="flex items-start justify-between">
@@ -65,10 +65,17 @@
                 <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Approved</p>
                     <p class="mt-2 text-4xl font-extrabold text-slate-900">{{ $approvedCount }}</p>
-                    <p class="mt-1 text-xs text-slate-400">Finalized applications</p>
+                    <p class="mt-1 text-xs text-slate-400">Processing applications</p>
                     <div class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full"
                          style="background: color-mix(in oklab, theme(colors.approved) 18%, transparent);"></div>
                 </div>
+
+                    {{-- Rejected Card --}}
+                    <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Rejected</p>
+                        <p class="mt-2 text-4xl font-extrabold text-slate-900">{{ $rejectedCount }}</p>
+                        <p class="mt-1 text-xs text-slate-400">Applications not accepted</p>
+                    </div>
             </div>
 
             {{-- Table card --}}
@@ -202,25 +209,10 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    @php
-
-                                        $status = $application->status?->label() ?? 'pending';
-
-                                       $statusStyles = [
-                                           'Pending'  => 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                                           'Approved' => 'bg-green-100 text-green-700 border-green-200',
-                                           'Rejected' => 'bg-red-100 text-red-700 border-red-200',
-                                       ];
-                                    @endphp
-
-                                    <span
-                                        class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold
-                                        {{ $statusStyles[$status] ?? 'bg-slate-100 text-slate-600 border-slate-200' }}">
-                                        {{ ucfirst($status) }}
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $application->status->color() }}">
+                                        {{ $application->status->label() }}
                                     </span>
                                 </td>
-
-
                                 <td class="px-6 py-4 text-sm text-slate-500">
                                     {{ $application->created_at->format('M d, Y') }}
                                 </td>

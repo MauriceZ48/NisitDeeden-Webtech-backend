@@ -29,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'position',
         'university_id',
         'faculty',
         'department',
@@ -80,9 +81,14 @@ class User extends Authenticatable
         return $this->role === UserRole::ADMIN;
     }
 
-    public function isUser(): bool
+    public function isStudent(): bool
     {
-        return $this->role === UserRole::USER;
+        return $this->role === UserRole::STUDENT;
+    }
+
+    public function isCommittee(): bool
+    {
+        return $this->role === UserRole::COMMITTEE;
     }
 
 }

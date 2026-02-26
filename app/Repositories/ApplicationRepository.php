@@ -27,6 +27,7 @@ class ApplicationRepository
         return Application::with([
             'attributeValues.attribute',
             'attachments',
+            'applicationRound',
             'user',
             'applicationCategory'
         ])
@@ -109,6 +110,10 @@ class ApplicationRepository
             'category_attribute_id' => $attributeId,
             'value' => $value ?? '',
         ]);
+    }
+
+    public function getPendingForAssociateDean() {
+        return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)->get();
     }
 
 

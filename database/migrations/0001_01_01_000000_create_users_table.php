@@ -24,7 +24,8 @@ return new class extends Migration
             $table->string('university_id')->unique()->nullable();
             $table->string('faculty')->nullable();
             $table->string('department')->nullable();
-            $table->string('role')->default(UserRole::USER->value);
+            $table->string('role')->default(UserRole::STUDENT->value);
+            $table->string('position')->default('Student');
             $table->rememberToken();
             $table->timestamps();
         });

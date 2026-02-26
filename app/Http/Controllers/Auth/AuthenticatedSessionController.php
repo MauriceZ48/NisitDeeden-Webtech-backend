@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
 
         return match ($user->role) {
             UserRole::ADMIN => redirect()->route('applications.index'),
-            UserRole::USER  => redirect()->route('index'),
+            UserRole::STUDENT  => redirect()->route('index'),
             default => redirect()->route('home'),
         };
     }
