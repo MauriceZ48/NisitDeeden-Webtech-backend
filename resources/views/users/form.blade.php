@@ -19,7 +19,7 @@
 $roles = [
         [
             'value' => \App\Enums\UserRole::STUDENT->value,
-            'label' => 'User',
+            'label' => 'Student',
             'desc'  => 'Can submit applications and manage own profile.'
         ],
         [
@@ -165,28 +165,30 @@ $roles = [
                     </div>
 
                     {{-- 2. Role & Access --}}
+                    {{-- Replace section 2. Role & Access with this: --}}
                     <div>
                         <div class="flex items-center gap-2 mb-4">
                             <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
                                 2
                             </div>
-                            <h2 class="text-base {{ $title }}">Role &amp; Access</h2>
+                            <h2 class="text-base {{ $title }}">Work Position</h2>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            @foreach($roles as $r)
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @foreach(\App\Models\User::getPositionRoleMap() as $pos => $role)
                                 <label class="cursor-pointer">
-                                    <input type="radio" name="role" value="{{ $r['value'] }}" class="sr-only peer"
-                                            {{ $selectedRole === $r['value'] ? 'checked' : '' }}>
+                                    <input type="radio" name="position" value="{{ $pos }}" class="sr-only peer"
+                                        {{ old('position', $user->position) === $pos ? 'checked' : '' }}>
                                     <div class="w-full text-left border rounded-2xl p-4 bg-white shadow-sm transition
-                                                border-gray-200 hover:border-primary/60
-                                                peer-checked:border-primary peer-checked:bg-primary/10">
-                                        <div class="flex items-start gap-3">
-                                            <div class="text-sm font-semibold text-gray-900">{{ $r['label'] }}</div>
-                                        </div>
+                            border-gray-200 hover:border-primary/60
+                            peer-checked:border-primary peer-checked:bg-primary/10">
+                                        <div class="text-sm font-semibold text-gray-900">{{ $pos }}</div>
+                                        <div class="text-[10px] text-gray-500 uppercase mt-1">Assigns {{ $role->value }} Role</div>
                                     </div>
                                 </label>
                             @endforeach
                         </div>
+                        @error('position') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- 3. Organization --}}

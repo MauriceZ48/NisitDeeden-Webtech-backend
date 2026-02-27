@@ -91,4 +91,16 @@ class User extends Authenticatable
         return $this->role === UserRole::COMMITTEE;
     }
 
+    public static function getPositionRoleMap(): array
+    {
+        return [
+            'Student'            => \App\Enums\UserRole::STUDENT,
+            'Head of Department' => \App\Enums\UserRole::COMMITTEE,
+            'Associate Dean'     => \App\Enums\UserRole::COMMITTEE,
+            'Dean'               => \App\Enums\UserRole::COMMITTEE,
+            'Committee Member'   => \App\Enums\UserRole::COMMITTEE,
+            'Student Development Division'        => \App\Enums\UserRole::ADMIN,
+        ];
+    }
+
 }

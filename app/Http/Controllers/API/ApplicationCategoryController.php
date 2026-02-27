@@ -96,7 +96,74 @@ class ApplicationCategoryController extends Controller
 
     public function update(Request $request, ApplicationCategory $applicationCategory)
     {
-        //
+
+//        dd($request);
+
+        if($applicationCategory->applications()->count() > 0){
+            return response()->json(['message' => 'Category already in use'], 422);
+        }
+
+        $request->merge(['slug' => Str::slug($request->name)]);
+
+        $validated = $request->validate([
+            'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
+            'slug' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
+            'icon' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'attributes' => 'nullable|array',
+            'attributes.*.id' => 'nullable|exists:category_attributes,id',
+            'attributes.*.label' => 'required_with:attributes|string|max:255',
+            'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
+        ]);
+
+        $applicationCategory->update($request->only(['name', 'slug', 'icon', 'description']));
+
+        if ($request->has('attributes')) {
+            $attributes = $request->attributes; // Standard PHP array
+
+            // 1. Identify which IDs to keep
+            $idsToKeep = [];
+            foreach ($attributes as $attr) {
+                if (!empty($attr['id'])) {
+                    $idsToKeep[] = $attr['id'];
+                }
+            }
+
+            // 2. DELETE: Remove attributes not in the "keep" list
+            $applicationCategory->attributes()->whereNotIn('id', $idsToKeep)->delete();
+
+            // 3. UPDATE & CREATE: Loop through all sent data
+            foreach ($attributes as $attrData) {
+                try {
+                    if (!empty($attrData['id'])) {
+                        // It has an ID, so UPDATE
+                        $applicationCategory->attributes()
+                            ->where('id', $attrData['id'])
+                            ->update([
+                                'label' => $attrData['label'],
+                                'type'  => $attrData['type']
+                            ]);
+                    } else {
+                        // No ID, so CREATE
+                        $applicationCategory->attributes()->create([
+                            'label' => $attrData['label'],
+                            'type'  => $attrData['type']
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // If the database rejects it, you will get a helpful message
+                    return response()->json([
+                        'error' => 'Database failure: ' . $e->getMessage(),
+                        'data'  => $attrData
+                    ], 500);
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Category updated',
+            'category' => $applicationCategory->load('attributes')
+        ]);
     }
 
     public function toggleStatus(ApplicationCategory $applicationCategory)

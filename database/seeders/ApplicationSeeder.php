@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Application;
+use App\Models\ApplicationRound;
 use App\Models\Attachment;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -18,7 +20,7 @@ class ApplicationSeeder extends Seeder
     public function run(): void
     {
         $students = User::query()->where('role', UserRole::STUDENT)->get();
-        $rounds = \App\Models\ApplicationRound::all();
+        $rounds = ApplicationRound::all();
 
         if ($rounds->isEmpty()) {
             $this->command->warn("No Application Rounds found. Seed rounds first!");
@@ -30,12 +32,12 @@ class ApplicationSeeder extends Seeder
 
             foreach ($selectedRounds as $round) {
                 // 1. Randomly pick a status from your Enum cases
-                $status = fake()->randomElement(\App\Enums\ApplicationStatus::cases());
+                $status = fake()->randomElement(ApplicationStatus::cases());
 
                 // 2. Logic for rejection reason
                 $rejectReason = null;
-                if ($status === \App\Enums\ApplicationStatus::REJECTED) {
-                    $rejectReason = fake()->sentence(); // Generates a random reason
+                if ($status === ApplicationStatus::REJECTED) {
+                    $rejectReason = fake()->sentence();
                 }
 
                 Application::factory()->create([

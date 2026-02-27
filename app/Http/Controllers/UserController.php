@@ -25,47 +25,43 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $q          = $request->string('q')->toString();
-        $role       = $request->string('role')->toString();
+        $q = $request->string('q')->toString();
+        $role = $request->string('role')->toString();
         $selectedId = $request->integer('selected');
 
         $query = User::query();
 
+        // 1. Unified Search (Includes Name, University ID, and Email)
         if ($q !== '') {
             $query->where(function ($qq) use ($q) {
                 $qq->where('name', 'like', "%{$q}%")
-                    ->orWhere('university_id', 'like', "%{$q}%");
+                    ->orWhere('university_id', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
             });
         }
 
+        // 2. Exact Role Filter
         if ($role !== '') {
-            $query->where('role', $role); // <-- change column name if yours is different
+            $query->where('role', $role);
         }
 
         $users = $query->orderBy('name')->paginate(10)->appends($request->query());
-        $count = $this->userRepository->count();
+        $count = User::count();
+
+        // 3. New Summary Counts using your Enums
+        $userCount = User::where('role', UserRole::STUDENT)->count();
+        $adminCount = User::where('role', UserRole::ADMIN)->count();
+        $committeeCount = User::where('role', UserRole::COMMITTEE)->count();
 
         $selectedUser = $selectedId ? User::find($selectedId) : null;
 
-        $userCount  = $this->userRepository->countByRole('USER');
-        $adminCount = $this->userRepository->countByRole('ADMIN');
+        // 4. Get distinct roles for the dropdown
+        $roles = UserRole::cases();
 
-        $roles = User::query()
-            ->whereNotNull('role')
-            ->distinct()
-            ->orderBy('role')
-            ->pluck('role');
-
-        return view('users.index', [
-            'users'        => $users,
-            'count'        => $count,
-            'selectedUser' => $selectedUser,
-            'q'            => $q,
-            'role'         => $role,
-            'roles'        => $roles,
-            'userCount'    => $userCount,
-            'adminCount'   => $adminCount,
-        ]);
+        return view('users.index', compact(
+            'users', 'count', 'selectedUser', 'q', 'role', 'roles',
+            'userCount', 'adminCount', 'committeeCount'
+        ));
     }
 
 
@@ -98,9 +94,20 @@ class UserController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', User::class);
-        $data = $this->validated($request);
 
-        // Logic for profile_path during creation
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'university_id' => 'required|string|unique:users,university_id',
+            'position' => 'required|string',
+            'faculty' => 'required',
+            'department' => 'required',
+            'photo' => 'nullable|image|max:2048'
+        ]);
+
+        $map = User::getPositionRoleMap();
+        $data['role'] = $map[$request->position] ?? UserRole::STUDENT;
+
         if ($request->hasFile('photo')) {
             $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
         }
@@ -109,29 +116,7 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('users.index')->with('success', 'User created.');
-    }
-
-    /**
-     * Centralized validation logic
-     */
-    private function validated(Request $request, ?int $userId = null): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required', 'email', 'max:255',
-                Rule::unique('users', 'email')->ignore($userId),
-            ],
-            'university_id' => [
-                'required', 'string', 'max:50',
-                Rule::unique('users', 'university_id')->ignore($userId),
-            ],
-            'role' => ['required', new Enum(UserRole::class)],
-            'faculty' => ['nullable', new Enum(Faculty::class)],
-            'department' => ['nullable', new Enum(Department::class)],
-            'photo' => ['nullable', 'image', 'max:2048'], // Added photo validation
-        ]);
+        return redirect()->route('users.index')->with('success', 'User created with position ' . $request->position);
     }
 
     /**
@@ -165,31 +150,45 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         Gate::authorize('update', $user);
-        $validated = $this->validated($request, $user->id);
 
-        // Handle the Remove Button
-        if ($request->delete_photo == "1") {
+        // 1. Validate including the new 'position' field
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email,' . $user->id,
+            'university_id' => 'required|string|unique:users,university_id,' . $user->id,
+            'position'      => 'required|string', // Ensure position is validated
+            'faculty'       => 'required',
+            'department'    => 'required',
+            'photo'         => 'nullable|image|max:2048',
+            'delete_photo'  => 'nullable|string'
+        ]);
+
+        // 2. Handle Photo Removal
+        if ($request->delete_photo === "1") {
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
                 $user->profile_path = null;
             }
         }
 
+        // 3. Handle New Photo Upload
         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
             }
-
-            // Store new photo under standardized name profile_path
             $user->profile_path = $request->file('photo')->store('profile-photos', 'public');
         }
 
+        // 4. MAP: Sync the Role with the selected Position
+        $map = User::getPositionRoleMap();
+        $user->role = $map[$request->position] ?? UserRole::STUDENT;
+
+        // 5. Fill and Save other fields
         $user->fill($validated);
         $user->save();
 
         return redirect()->route('users.index')
-            ->with('success', 'User updated successfully!');
+            ->with('success', "User profile updated to {$user->position} successfully!");
     }
 
     /**

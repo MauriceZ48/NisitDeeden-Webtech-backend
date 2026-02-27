@@ -29,18 +29,22 @@
 {{--                $deptCount    = $usersCollection->pluck('department')->filter()->unique()->count();--}}
 {{--            @endphp--}}
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4"> {{-- Changed to 4 cols --}}
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Users</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</p>
                     <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $count }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Users</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Students</p>
                     <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $userCount }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Admins</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Admins (Student Development Division)</p>
                     <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $adminCount }}</p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Committee</p>
+                    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ $committeeCount }}</p>
                 </div>
             </div>
 
@@ -161,27 +165,26 @@
                                         <td class="px-4 py-4 text-sm text-slate-700">{{ $u->faculty }}</td>
                                         <td class="px-4 py-4">
                                             @php
-                                                $role = $u->role;
-//                                                {{ dump($u->role); }}
-                                                $roleValue = $role?->value;
+                                                $roleValue = $u->role?->value ?? $u->role;
 
                                                 $roleStyles = match($roleValue) {
-                                                    'ADMIN' => 'bg-red-100 text-red-700 border border-red-200',
-                                                    'USER' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
-                                                    default => 'bg-slate-100 text-slate-700 border border-slate-200', // USER
-                                                };
-
-                                                $roleLabel = match($roleValue) {
-                                                    'ADMIN' => 'Admin',
-                                                    'USER' => 'User',
-                                                    default => 'what',
+                                                    'ADMIN'     => 'bg-red-100 text-red-700 border-red-200',
+                                                    'COMMITTEE' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                                    'STUDENT'      => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                                    default     => 'bg-slate-100 text-slate-700 border-slate-200',
                                                 };
                                             @endphp
 
-                                            <span
-                                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $roleStyles }}">
-                                                {{ $roleLabel }}
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold border {{ $roleStyles }}">
+                                                {{ ucfirst(strtolower($roleValue)) }}
                                             </span>
+
+                                            {{-- Show the specific position (e.g., Dean) below the role badge --}}
+                                            @if($u->position)
+                                                <div class="mt-1 text-[10px] font-medium text-slate-400 uppercase tracking-tight">
+                                                    {{ $u->position }}
+                                                </div>
+                                            @endif
                                         </td>
 
 
@@ -283,16 +286,16 @@
                                             $roleValue = $selectedUser->role?->value ?? $selectedUser->role;
 
                                             $roleStyles = match($roleValue) {
-                                                'ADMIN' => 'bg-red-100 text-red-700 border border-red-200',
-                                                'USER'  => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
-                                                'STAFF' => 'bg-amber-100 text-amber-700 border border-amber-200',
+                                                'ADMIN' => 'bg-red-100 text-red-700 border-red-200',
+                                                'STUDENT'  => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                                'COMMITTEE' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
                                                 default => 'bg-slate-100 text-slate-700 border border-slate-200',
                                             };
 
                                             $roleLabel = match($roleValue) {
                                                 'ADMIN' => 'Admin',
-                                                'USER'  => 'User',
-                                                'STAFF' => 'Staff',
+                                                'STUDENT'  => 'Student',
+                                                'COMMITTEE' => 'Committee',
                                                 default => 'Unknown',
                                             };
                                         @endphp
@@ -322,6 +325,12 @@
                                                 Faculty</p>
                                             <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedUser->faculty }}</p>
                                         </div>
+                                        @if($selectedUser->position)
+                                            <div class="rounded-xl border border-slate-200 p-4">
+                                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Official Position</p>
+                                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $selectedUser->position }}</p>
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <div class="mt-5 flex flex-col gap-2">
