@@ -80,6 +80,7 @@ pipeline {
                     echo "MySQL ready!"
                 '''
                 sh '${SAIL} artisan migrate:fresh --seed'
+                sh '${SAIL} artisan storage:link'
                 sh '${SAIL} yarn install'
                 sh '${SAIL} yarn build'
             }
