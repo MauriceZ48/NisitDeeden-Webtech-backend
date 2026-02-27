@@ -6,3 +6,6 @@
         I am USER
     </h1>
 @endsection
+<script>
+    window.location.href = "/applications";
+</script>
