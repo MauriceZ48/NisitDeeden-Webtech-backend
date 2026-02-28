@@ -39,6 +39,14 @@ class UserSeeder extends Seeder
             'faculty' => Faculty::SCIENCE,
             'department' => Department::COMPUTER,
         ]);
+
+        User::factory()->create([
+            'name' => 'Farhana Malem',
+            'email' => 'hana@example.com',
+            'role' => UserRole::STUDENT,
+            'faculty' => Faculty::SCIENCE,
+            'department' => Department::COMPUTER,
+        ]);
         User::factory()->count(5)->withImage()->create();
         User::factory()->count(44)->create();
         //Committee
