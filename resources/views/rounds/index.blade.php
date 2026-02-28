@@ -27,9 +27,11 @@
                     </div>
 
                     <div class="mb-2">
+                        <a href="{{route('rounds.show', $applicationRound)}}">
                         <h2 class="text-xl font-bold text-slate-900">
                             Academic Year {{ $applicationRound->academic_year }}
                         </h2>
+                        </a>
                         <p class="text-sm font-medium text-slate-500">Semester {{ $applicationRound->semester->value }}</p>
                     </div>
 

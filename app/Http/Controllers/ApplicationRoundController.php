@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\RoundStatus;
 use App\Http\Requests\ApplicationRoundRequest;
+use App\Models\ApplicationCategory;
 use App\Models\ApplicationRound;
+use App\Repositories\ApplicationCategoryRepository;
 use App\Repositories\ApplicationRoundRepository;
 use Illuminate\Http\Request;
 
@@ -14,8 +16,11 @@ class ApplicationRoundController extends Controller
      * Display a listing of the resource.
      */
 
-    public function __construct(private ApplicationRoundRepository $roundRepo){
-    }
+    public function __construct(
+        private ApplicationRoundRepository $roundRepo,
+        private ApplicationCategoryRepository $categoryRepo,
+    )
+    {}
 
     public function index()
     {
@@ -90,7 +95,21 @@ class ApplicationRoundController extends Controller
      */
     public function show(ApplicationRound $applicationRound)
     {
-        //
+        $categories = ApplicationCategory::whereHas('applications', function ($q) use ($applicationRound) {
+            $q->where('application_round_id', $applicationRound->id)
+                ->where('status', 'APPROVED_BY_COMMITTEE');
+        })
+            ->with(['applications' => function ($q) use ($applicationRound) {
+                // 2. Load only the specific approved applications for this round
+                $q->where('application_round_id', $applicationRound->id)
+                    ->where('status', 'APPROVED_BY_COMMITTEE')
+                    ->with('user');
+            }])
+            ->get();
+        return view('rounds.show', [
+            'applicationRound' => $applicationRound,
+            'categories'  => $categories,
+        ]);
     }
 
     /**
