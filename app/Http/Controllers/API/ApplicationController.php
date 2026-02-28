@@ -34,6 +34,26 @@ class ApplicationController extends Controller
         return new ApplicationResource($application);
     }
 
+    public function applicationsByUserId(Request $request)
+    {
+        $userId = $request->input('user_id');
+
+        if (!$userId) {
+            return response()->json(['message' => 'User ID is required'], 400);
+        }
+
+        $applications = $this->applicationRepo->getApplicationsByUserId($userId);
+
+        if ($applications->isEmpty()) {
+            return response()->json([
+                'message' => 'No applications found for user ID: ' . $userId,
+                'data' => []
+            ], 404);
+        }
+
+        return ApplicationResource::collection($applications);
+    }
+
     public function applicationsForHeadOfDepartment(){
         $applications = $this->applicationRepo->getPendingForHeadOfDepartment();
         return ApplicationResource::collection($applications);

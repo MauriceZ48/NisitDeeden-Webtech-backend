@@ -6,6 +6,7 @@ use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\ApplicationAttributeValue;
 use App\Models\Attachment;
+use App\Models\User;
 use App\Repositories\Traits\SimpleCRUD;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -138,6 +139,15 @@ class ApplicationRepository
     public function getAllRejectedApplications()
     {
         return Application::where('status', ApplicationStatus::REJECTED)->get();
+    }
+
+    public function getApplicationsByUserId($userId)
+    {
+        return Application::query()
+            ->where('user_id', $userId)
+            ->with(['applicationCategory', 'applicationRound'])
+            ->latest()
+            ->get();
     }
 
 }
