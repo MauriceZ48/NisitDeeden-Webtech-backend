@@ -25,7 +25,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::post('login', [AuthenticateController::class, 'login'])->name('user.login');
 
     //Application
-    Route::post('applications/by-user-id', [ApplicationController::class, 'applicationsByUserId']);
+    Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
     Route::get('applications/head-of-dept', [ApplicationController::class, 'applicationsForHeadOfDepartment']);
     Route::get('applications/associate-dean', [ApplicationController::class, 'applicationsForAssociateDean']);
     Route::get('applications/dean', [ApplicationController::class, 'applicationsForDean']);
