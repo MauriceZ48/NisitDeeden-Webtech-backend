@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\ApplicationCategoryController;
+use App\Http\Controllers\API\ApplicationCategoryController;
 use App\Http\Controllers\API\ApplicationController;
 use App\Http\Controllers\API\ApplicationRoundController;
 use App\Http\Controllers\API\Auth\AuthenticateController;

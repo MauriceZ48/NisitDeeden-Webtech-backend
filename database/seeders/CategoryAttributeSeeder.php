@@ -28,7 +28,7 @@ class CategoryAttributeSeeder extends Seeder
         $this->createAttributes($creativity->id, [
             ['label' => 'Project/Innovation Name', 'type' => 'text', 'is_required' => true], // Or here!
             ['label' => 'Evidence of Award (Certificate/Results)', 'type' => 'file', 'is_required' => true],
-            ['label' => 'Project Portfolio ', 'type' => 'textarea', 'is_required' => false],
+            ['label' => 'Project Portfolio ', 'type' => 'textarea', 'is_required' => true],
         ]);
 
         // Behavior
