@@ -27,17 +27,8 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 
     //User
     Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
-    //Application
-    Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
-    Route::get('applications/head-of-dept', [ApplicationController::class, 'applicationsForHeadOfDepartment']);
-    Route::get('applications/associate-dean', [ApplicationController::class, 'applicationsForAssociateDean']);
-    Route::get('applications/dean', [ApplicationController::class, 'applicationsForDean']);
-    Route::get('applications/committee', [ApplicationController::class, 'applicationsForCommittee']);
-    Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
-    Route::get('applications/rejected', [ApplicationController::class, 'applicationsRejected']);
-    Route::apiResource('applications', ApplicationController::class)
-        ->only(['index', 'show'])
-        ->withTrashed();
+
+
     //Round
     Route::get('/rounds/next-expected', [ApplicationRoundController::class, 'getNextExpectedRound'])
         ->name('rounds.nextExpected');
@@ -57,13 +48,22 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         return $request->user();
     })->name('me');
 
-    Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
     // Only protect the sensitive actions
-    Route::apiResource('applications', ApplicationController::class)
-        ->only(['store', 'update', 'destroy'])
-        ->withTrashed();
+    
     //User
     Route::apiResource('users', UserController::class);
+
+    //Application
+    Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
+    Route::get('applications/head-of-dept', [ApplicationController::class, 'applicationsForHeadOfDepartment']);
+    Route::get('applications/associate-dean', [ApplicationController::class, 'applicationsForAssociateDean']);
+    Route::get('applications/dean', [ApplicationController::class, 'applicationsForDean']);
+    Route::get('applications/committee', [ApplicationController::class, 'applicationsForCommittee']);
+    Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
+    Route::get('applications/rejected', [ApplicationController::class, 'applicationsRejected']);
+    Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
+
+    Route::apiResource('applications', ApplicationController::class)->withTrashed();
 
     Route::middleware(['ability:ADMIN'])->as('admin.')->group(function () {
         Route::get('/admin/dashboard', function () {

@@ -18,12 +18,19 @@ class ApplicationRepository
 
     private string $model = Application::class;
 
-    public function countByStatus(ApplicationStatus $status): int
+    private function getDomain()
     {
-        return $this->model::where('status', $status->value)->count();
+        return auth()->user()?->domain;
     }
 
-    public function getFullApplicationsPaginated(int $perPage = 10)
+    public function countByStatus(ApplicationStatus $status): int
+    {
+        return $this->model::where('domain', $this->getDomain())
+            ->where('status', $status->value)
+            ->count();
+    }
+
+    public function getFullApplicationsInDomainPaginated(int $perPage = 10)
     {
         return Application::with([
             'attributeValues.attribute',
@@ -32,6 +39,7 @@ class ApplicationRepository
             'user',
             'applicationCategory'
         ])
+            ->where('domain', $this->getDomain())
             ->latest()
             ->paginate($perPage);
     }
@@ -115,35 +123,48 @@ class ApplicationRepository
 
     public function getPendingForHeadOfDepartment()
     {
-        return Application::where('status', ApplicationStatus::PENDING)->get();
+        return Application::where('status', ApplicationStatus::PENDING)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
     public function getPendingForAssociateDean() {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getPendingForDean()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getPendingForCommittee()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_DEAN)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_DEAN)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getApprovedFormCommittee()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_COMMITTEE)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_COMMITTEE)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getAllRejectedApplications()
     {
-        return Application::where('status', ApplicationStatus::REJECTED)->get();
+        return Application::where('status', ApplicationStatus::REJECTED)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getApplicationsByUserId($userId)
     {
         return Application::query()
+            ->where('domain', $this->getDomain())
             ->where('user_id', $userId)
             ->with(['applicationCategory', 'applicationRound'])
             ->latest()

@@ -51,4 +51,9 @@ class UserRepository
         return $this->model::query()->paginate($perPage);
     }
 
+    public function getUserById(int $id)
+    {
+        return $this->model::query()->findOrFail($id);
+    }
+
 }

@@ -46,14 +46,16 @@ class ApplicationController extends Controller
         }
 
         $applications = $query->latest()->paginate(10);
+        $domain = auth()->user()->domain;
 
         // Dynamic counts based on your new multi-step logic
-        $totalCount = Application::count();
-        $pendingCount = Application::where('status', ApplicationStatus::PENDING)->count();
-        $approvedCount = Application::where('status', '!=', ApplicationStatus::PENDING)
+        $totalCount = Application::where('domain', $domain)->count();
+        $pendingCount = $this->applicationRepo->countByStatus(ApplicationStatus::PENDING);
+        $approvedCount = Application::where('domain', $domain)
+            ->where('status', '!=', ApplicationStatus::PENDING)
             ->where('status', '!=', ApplicationStatus::REJECTED)
             ->count();
-        $rejectedCount = Application::where('status', ApplicationStatus::REJECTED)->count();
+        $rejectedCount = $this->applicationRepo->countByStatus(ApplicationStatus::REJECTED);
 
         return view('applications.index', compact('applications', 'totalCount', 'pendingCount', 'approvedCount', 'rejectedCount'));
     }
