@@ -41,7 +41,7 @@
                 <div>
                     <label for="status" class="block text-sm font-semibold text-slate-700">Round Status</label>
                     <select name="status" id="status" class="mt-1 block w-full rounded-lg border-slate-200 focus:border-primary focus:ring-primary/20">
-                        @foreach(\App\Enums\RoundStatus::cases() as $status)
+                        @foreach(\App\Enums\RoundStatus::selectableCases() as $status)
                             <option value="{{ $status->value }}"
                                 {{ old('status', $applicationRound->status->value) === $status->value ? 'selected' : '' }}>
                                 {{ ucfirst(strtolower($status->name)) }}
