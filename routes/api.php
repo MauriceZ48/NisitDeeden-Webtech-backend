@@ -23,7 +23,9 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 // 1. Routes that require NO authentication (Public/Testing)
 Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::post('login', [AuthenticateController::class, 'login'])->name('user.login');
+    Route::post('register', [AuthenticateController::class, 'register'])->name('user.register');
 
+    //User
     Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
     //Application
     Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
