@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Domain;
+use App\Enums\RoundStatus;
+use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,11 +20,12 @@ class ApplicationRoundFactory extends Factory
     public function definition(): array
     {
         return [
-            'academic_year' => $this->faker->unique()->numberBetween(2020, 2030),
-            'semester' => $this->faker->randomElement(\App\Enums\Semester::cases()),
+            'academic_year' => $this->faker->numberBetween(2020, 2030),
+            'semester' => $this->faker->randomElement(Semester::cases()),
             'start_time' => now(),
             'end_time' => now()->addMonth(),
-            'status' => \App\Enums\RoundStatus::CLOSED,
+            'status' => RoundStatus::CLOSED,
+            'domain' => Domain::BANGKHEN,
         ];
     }
 }

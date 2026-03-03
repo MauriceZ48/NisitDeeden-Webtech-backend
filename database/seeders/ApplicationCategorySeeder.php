@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Domain;
 use App\Models\ApplicationCategory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -31,15 +32,18 @@ class ApplicationCategorySeeder extends Seeder
             ],
         ];
 
-        foreach ($categories as $category) {
-            ApplicationCategory::create([
-                'name'  => $category['name'],
-                'slug'  => Str::slug($category['name']),
-                'description' => $category['description'],
-                'icon'  => $category['icon'],
-                'is_active' => true,
-            ]);
+        // Loop through each campus
+        foreach (Domain::cases() as $domain) {
+            foreach ($categories as $category) {
+                ApplicationCategory::create([
+                    'name'        => $category['name'],
+                    'slug'        => Str::slug($category['name'] . '-' . $domain->value),
+                    'description' => $category['description'],
+                    'icon'        => $category['icon'],
+                    'is_active'   => true,
+                    'domain'      => $domain, // Use the Enum object directly
+                ]);
+            }
         }
-
     }
 }
