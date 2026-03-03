@@ -17,7 +17,7 @@ use Illuminate\Validation\Rules\Enum;
 class UserController extends Controller
 {
     public function __construct(
-        private UserRepository $userRepository
+        private UserRepository $userRepo
     ) {}
 
     /**
@@ -29,9 +29,12 @@ class UserController extends Controller
         $role = $request->string('role')->toString();
         $selectedId = $request->integer('selected');
 
-        $query = User::query();
+        // Get current user's domain
+        $domain = auth()->user()->domain;
 
-        // 1. Unified Search (Includes Name, University ID, and Email)
+        // 1. Filter main query by domain
+        $query = User::query()->where('domain', $domain);
+
         if ($q !== '') {
             $query->where(function ($qq) use ($q) {
                 $qq->where('name', 'like', "%{$q}%")
@@ -40,22 +43,24 @@ class UserController extends Controller
             });
         }
 
-        // 2. Exact Role Filter
         if ($role !== '') {
             $query->where('role', $role);
         }
 
         $users = $query->orderBy('name')->paginate(10)->appends($request->query());
-        $count = User::count();
 
-        // 3. New Summary Counts using your Enums
-        $userCount = User::where('role', UserRole::STUDENT)->count();
-        $adminCount = User::where('role', UserRole::ADMIN)->count();
-        $committeeCount = User::where('role', UserRole::COMMITTEE)->count();
+        // 2. Filter total count and summary counts by domain
+        $count = User::where('domain', $domain)->count();
 
-        $selectedUser = $selectedId ? User::find($selectedId) : null;
+        $userCount = User::where('domain', $domain)->where('role', UserRole::STUDENT)->count();
+        $adminCount = User::where('domain', $domain)->where('role', UserRole::ADMIN)->count();
+        $committeeCount = User::where('domain', $domain)->where('role', UserRole::COMMITTEE)->count();
 
-        // 4. Get distinct roles for the dropdown
+        // 3. Ensure selected user is in the same domain (Security check)
+        $selectedUser = $selectedId
+            ? User::where('domain', $domain)->find($selectedId)
+            : null;
+
         $roles = UserRole::cases();
 
         return view('users.index', compact(
@@ -107,6 +112,7 @@ class UserController extends Controller
 
         $map = User::getPositionRoleMap();
         $data['role'] = $map[$request->position] ?? UserRole::STUDENT;
+        $data['domain'] = auth()->user()->domain;
 
         if ($request->hasFile('photo')) {
             $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
@@ -124,6 +130,11 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+
+        if ($user->domain !== auth()->user()->domain) {
+            abort(403, 'You cannot view users from other campuses.');
+        }
+
         return view('users.show', [
             'user' => $user->load('applications')
         ]);
@@ -136,6 +147,10 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
         $faculties = Faculty::cases();
+
+        if ($user->domain !== auth()->user()->domain) {
+            abort(403, 'You cannot edit users from other campuses.');
+        }
 
         return view('users.form', [
             'user' => $user,
@@ -151,12 +166,16 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
 
+        if ($user->domain !== auth()->user()->domain) {
+            abort(403, 'You cannot update users from other campuses.');
+        }
+
         // 1. Validate including the new 'position' field
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'email'         => 'required|email|unique:users,email,' . $user->id,
             'university_id' => 'required|string|unique:users,university_id,' . $user->id,
-            'position'      => 'required|string', // Ensure position is validated
+            'position'      => 'required|string',
             'faculty'       => 'required',
             'department'    => 'required',
             'photo'         => 'nullable|image|max:2048',
@@ -201,6 +220,10 @@ class UserController extends Controller
             return back()->with('error', 'You cannot delete your own account.');
         }
 
+        if ($user->domain !== auth()->user()->domain) {
+            back()->with('You cannot delete users from other campuses.');
+        }
+
         // Clean up the storage when user is deleted
         if ($user->profile_path) {
             Storage::disk('public')->delete($user->profile_path);
@@ -215,7 +238,7 @@ class UserController extends Controller
     public function departmentsByFaculty(Request $request)
     {
         $request->validate([
-            'faculty' => ['required', new \Illuminate\Validation\Rules\Enum(Faculty::class)],
+            'faculty' => ['required', new Enum(Faculty::class)],
         ]);
 
         $faculty = Faculty::from($request->faculty);
