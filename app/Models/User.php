@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\Department;
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'university_id',
         'faculty',
         'department',
+        'domain',
     ];
 
     public function applications(): HasMany
@@ -63,6 +65,7 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'faculty' => Faculty::class,
             'department' => Department::class,
+            'domain' => Domain::class,
         ];
     }
 

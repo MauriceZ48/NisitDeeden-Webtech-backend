@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Department;
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
@@ -21,13 +22,16 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('university_id')->unique()->nullable();
+            $table->string('university_id')->nullable();
             $table->string('faculty')->nullable();
             $table->string('department')->nullable();
             $table->string('role')->default(UserRole::STUDENT->value);
             $table->string('position')->default('Student');
             $table->rememberToken();
             $table->timestamps();
+            $table->string('domain')->default(Domain::BANGKHEN->value);
+
+            $table->unique(['university_id', 'domain']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
