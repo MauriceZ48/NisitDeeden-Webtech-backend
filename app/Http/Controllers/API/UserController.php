@@ -19,7 +19,13 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = $this->userRepo->getPaginatedUsers();
+        $users = $this->userRepo->getPaginatedUsersInDomain();
+        return UserResource::collection($users);
+    }
+
+    public function allUsers()
+    {
+        $users = $this->userRepo->getAllUsers();
         return UserResource::collection($users);
     }
 

@@ -24,6 +24,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::post('login', [AuthenticateController::class, 'login'])->name('user.login');
 
+    Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
     //Application
     Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
     Route::get('applications/head-of-dept', [ApplicationController::class, 'applicationsForHeadOfDepartment']);
@@ -45,8 +46,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
         ->name('categories.toggleStatus');
     Route::apiResource('categories', ApplicationCategoryController::class)
         ->parameters(['categories' => 'applicationCategory']);
-    //User
-    Route::apiResource('users', UserController::class);
+
 });
 
 // 2. Routes that REQUIRE authentication
@@ -60,6 +60,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     Route::apiResource('applications', ApplicationController::class)
         ->only(['store', 'update', 'destroy'])
         ->withTrashed();
+    //User
+    Route::apiResource('users', UserController::class);
 
     Route::middleware(['ability:ADMIN'])->as('admin.')->group(function () {
         Route::get('/admin/dashboard', function () {
