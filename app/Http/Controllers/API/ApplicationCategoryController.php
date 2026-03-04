@@ -42,25 +42,22 @@ class ApplicationCategoryController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Generate and merge the slug
-        $request->merge(['slug' => Str::slug($request->name)]);
+        $domain = auth()->user()->domain;
 
-        // 2. Strict Validation Firewall
-        $request->validate([
+        // 1. Validate only what the user SENDS
+        $validated = $request->validate([
             'name' => [
                 'required',
-                Rule::unique('application_categories')->whereNull('deleted_at')
-            ],
-            'slug' => [
-                'required',
-                Rule::unique('application_categories')->whereNull('deleted_at')
+                'string',
+                'max:255',
+                Rule::unique('application_categories')
+                    ->where('domain', $domain)
+                    ->whereNull('deleted_at')
             ],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
-
             'attributes' => 'nullable|array',
             'attributes.*.label' => 'required_with:attributes|string|max:255',
-
             'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
         ], [
             'name.required' => 'Need category name',
@@ -70,13 +67,14 @@ class ApplicationCategoryController extends Controller
         ]);
 
         // 3. Database Transaction
-        return DB::transaction(function () use ($request) {
-
+        return DB::transaction(function () use ($validated, $domain, $request) {
+            $customSlug = Str::slug($validated['name'] . '-' . $domain->value);
             $category = $this->categoryRepo->create([
-                'name' => $request->name,
-                'slug' => $request->slug,
-                'icon' => $request->icon,
-                'description' => $request->description,
+                'name'        => $validated['name'],
+                'slug'        => $customSlug,
+                'icon'        => $validated['icon'],
+                'description' => $validated['description'],
+                'domain'      => $domain,
             ]);
 
             $attributes = $request->input('attributes', []);
@@ -86,7 +84,7 @@ class ApplicationCategoryController extends Controller
                     $category->attributes()->create([
                         'label' => $attr['label'],
                         'type' => $attr['type'],
-                        'is_required' => (bool) ($attr['is_required'] ?? false)
+                        'is_required' => filter_var($attr['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN)
                     ]);
                 }
             }
@@ -96,8 +94,6 @@ class ApplicationCategoryController extends Controller
 
     public function update(Request $request, ApplicationCategory $applicationCategory)
     {
-
-//        dd($request);
 
         if($applicationCategory->applications()->count() > 0){
             return response()->json(['message' => 'Category already in use'], 422);
@@ -116,7 +112,12 @@ class ApplicationCategoryController extends Controller
             'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
         ]);
 
-        $applicationCategory->update($request->only(['name', 'slug', 'icon', 'description']));
+        $applicationCategory->update([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name . '-' . $applicationCategory->domain->value),
+            'icon' => $request->icon,
+            'description' => $request->description,
+        ]);
 
         if ($request->has('attributes')) {
             $attributes = $request->attributes; // Standard PHP array
@@ -168,12 +169,20 @@ class ApplicationCategoryController extends Controller
 
     public function toggleStatus(ApplicationCategory $applicationCategory)
     {
+        if ($applicationCategory->domain !== auth()->user()->domain) {
+            return response()->json(['message' => 'Unauthorized domain access.'], 403);
+        }
+
         $this->categoryRepo->toggleStatus($applicationCategory);
         return new ApplicationCategoryResource($applicationCategory);
     }
 
     public function destroy(ApplicationCategory $applicationCategory)
     {
+        if ($applicationCategory->domain !== auth()->user()->domain) {
+            return response()->json(['message' => 'Unauthorized domain access.'], 403);
+        }
+
         if ($applicationCategory->hasApplications()) {
             $applicationCategory->delete();
 

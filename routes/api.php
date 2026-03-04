@@ -29,13 +29,6 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
 
 
-
-    //Category
-    Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
-        ->name('categories.toggleStatus');
-    Route::apiResource('categories', ApplicationCategoryController::class)
-        ->parameters(['categories' => 'applicationCategory']);
-
 });
 
 // 2. Routes that REQUIRE authentication
@@ -66,6 +59,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         ->name('rounds.nextExpected');
     Route::apiResource('rounds', ApplicationRoundController::class)
         ->parameters(['rounds' => 'applicationRound']);
+
+    //Category
+    Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
+        ->name('categories.toggleStatus');
+    Route::apiResource('categories', ApplicationCategoryController::class)
+        ->parameters(['categories' => 'applicationCategory']);
+
 
     Route::middleware(['ability:ADMIN'])->as('admin.')->group(function () {
         Route::get('/admin/dashboard', function () {

@@ -72,7 +72,7 @@ class ApplicationController extends Controller
 
         $users = $this->userRepo->getStudentsForSelection();
 
-        $categories = $this->categoryRepo->getActiveCategories();
+        $categories = $this->categoryRepo->getActiveCategoriesInDomain();
 
         return view('applications.create', [
             'users' => $users,
