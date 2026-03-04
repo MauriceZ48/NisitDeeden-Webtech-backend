@@ -16,7 +16,10 @@
                     <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center space-y-4">
 
                         <h2 class="text-xl font-semibold text-gray-900">{{ $category->name }}</h2>
-                        <p class="text-sm text-gray-500 line-clamp-3">icon-string:{{ $category->icon }}</p>
+                        <div class="text-primary">
+                            {{-- We strip "lucide:" from the string so "lucide:lightbulb" becomes "lightbulb" --}}
+                            <i data-lucide="{{ str_replace('lucide:', '', $category->icon) }}" class="w-10 h-10"></i>
+                        </div>
                         <p class="text-sm text-gray-500 line-clamp-3">{{ $category->description }}</p>
 
                     </div>
@@ -25,4 +28,8 @@
             </div>
         </div>
     </section>
+
+    <script>
+        lucide.createIcons();
+    </script>
 @endsection

@@ -6,6 +6,7 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <div class="h-screen flex overflow-hidden bg-gray-200">
     @include('layouts.sidebar')
