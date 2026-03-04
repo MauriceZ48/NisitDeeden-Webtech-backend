@@ -29,11 +29,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
 
 
-    //Round
-    Route::get('/rounds/next-expected', [ApplicationRoundController::class, 'getNextExpectedRound'])
-        ->name('rounds.nextExpected');
-    Route::apiResource('rounds', ApplicationRoundController::class)
-        ->parameters(['rounds' => 'applicationRound']);
+
     //Category
     Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
         ->name('categories.toggleStatus');
@@ -49,7 +45,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     })->name('me');
 
     // Only protect the sensitive actions
-    
+
     //User
     Route::apiResource('users', UserController::class);
 
@@ -64,6 +60,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
 
     Route::apiResource('applications', ApplicationController::class)->withTrashed();
+
+    //Round
+    Route::get('/rounds/next-expected', [ApplicationRoundController::class, 'getNextExpectedRound'])
+        ->name('rounds.nextExpected');
+    Route::apiResource('rounds', ApplicationRoundController::class)
+        ->parameters(['rounds' => 'applicationRound']);
 
     Route::middleware(['ability:ADMIN'])->as('admin.')->group(function () {
         Route::get('/admin/dashboard', function () {

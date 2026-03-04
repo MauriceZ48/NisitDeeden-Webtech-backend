@@ -45,8 +45,9 @@ class ApplicationController extends Controller
             });
         }
 
-        $applications = $query->latest()->paginate(10);
         $domain = auth()->user()->domain;
+        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated();
+
 
         // Dynamic counts based on your new multi-step logic
         $totalCount = Application::where('domain', $domain)->count();

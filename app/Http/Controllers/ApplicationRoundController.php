@@ -24,7 +24,7 @@ class ApplicationRoundController extends Controller
 
     public function index()
     {
-        $rounds = $this->roundRepo->getAllOrdered();
+        $rounds = $this->roundRepo->getAllOrderedInDomain();
 
         return view('rounds.index', ['rounds' => $rounds]);
     }
@@ -86,7 +86,10 @@ class ApplicationRoundController extends Controller
             ])->withInput();
         }
 
-        $this->roundRepo->create($request->validated());
+        $data = $request->validated();
+        $data['domain'] = auth()->user()->domain;
+
+        $this->roundRepo->create($data);
         return redirect()->route('rounds.index')->with('success', 'Round created!');
     }
 
