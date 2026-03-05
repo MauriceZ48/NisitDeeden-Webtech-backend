@@ -21,17 +21,34 @@ class ApplicationController extends Controller
         private ApplicationRepository $applicationRepo,
         private ApplicationRoundRepository $RoundRepo,
         private ApplicationCategoryRepository $categoryRepo,
-    ){}
+    ) {}
 
-    public function index(){
+    public function index()
+    {
         $applications = $this->applicationRepo->getFullApplicationsPaginated();
         return ApplicationResource::collection($applications);
-
     }
 
-    public function show(Application $application){
+    public function show(Application $application)
+    {
         $application->load('attributeValues.attribute', 'applicationRound', 'attachments', 'user', 'applicationCategory');
         return new ApplicationResource($application);
+    }
+
+    public function myApplications()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $applications = $this->applicationRepo
+            ->getApplicationsByUserId($user->id);
+
+        return ApplicationResource::collection($applications);
     }
 
     public function applicationsByUserId(Request $request)
@@ -54,7 +71,8 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
-    public function applicationsForHeadOfDepartment(){
+    public function applicationsForHeadOfDepartment()
+    {
         $applications = $this->applicationRepo->getPendingForHeadOfDepartment();
         return ApplicationResource::collection($applications);
     }
@@ -94,7 +112,7 @@ class ApplicationController extends Controller
         $user = auth()->user();
         $action = $request->action;
 
-        $canApprove = match($user->position) {
+        $canApprove = match ($user->position) {
             'Head of Department' => $application->status === ApplicationStatus::PENDING,
             'Associate Dean'     => $application->status === ApplicationStatus::APPROVED_BY_DEPARTMENT,
             'Dean'               => $application->status === ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
@@ -106,7 +124,7 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'Not authorized for this stage.'], 403);
         }
 
-        if ($action === 'rejected'){
+        if ($action === 'rejected') {
             $application->update([
                 'status' => ApplicationStatus::REJECTED,
                 'rejection_reason' => $request->rejection_reason,
@@ -114,7 +132,7 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'Application rejected']);
         }
 
-        $nextStatus = match($user->position) {
+        $nextStatus = match ($user->position) {
             'Head of Department' => ApplicationStatus::APPROVED_BY_DEPARTMENT,
             'Associate Dean'     => ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
             'Dean'               => ApplicationStatus::APPROVED_BY_DEAN,
@@ -132,7 +150,7 @@ class ApplicationController extends Controller
     {
         //Gate::authorize('create', Application::class);
 
-//         dd(auth()->user()->isAdmin());
+        //         dd(auth()->user()->isAdmin());
 
         $currentRound = $this->RoundRepo->getActive();
         if (!$currentRound) {
@@ -190,8 +208,6 @@ class ApplicationController extends Controller
                         'status' => ApplicationStatus::PENDING,
                         'rejection_reason' => null,
                     ]);
-
-
                 } else {
                     throw ValidationException::withMessages([
                         'error' => 'An active application already exists for this user in this round.'
@@ -262,9 +278,9 @@ class ApplicationController extends Controller
         return new ApplicationResource($application);
     }
 
-    public function destroy(Application $application){
+    public function destroy(Application $application)
+    {
         $application->delete();
         return response()->json(null, 204);
     }
-
 }
