@@ -128,21 +128,54 @@ class ApplicationRepository
 
     public function getPendingForHeadOfDepartment()
     {
-        return Application::where('status', ApplicationStatus::PENDING)
+        $user = auth()->user();
+
+        return Application::with([
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
             ->where('domain', $this->getDomain())
+            ->where('status', ApplicationStatus::PENDING)
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('department', $user->department);
+            })
+            ->latest()
             ->get();
     }
+
     public function getPendingForAssociateDean()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
+        $user = auth()->user();
+
+        return Application::with([
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
             ->where('domain', $this->getDomain())
+            ->where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('faculty', $user->faculty);
+            })
+            ->latest()
             ->get();
     }
 
     public function getPendingForDean()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)
+        $user = auth()->user();
+
+        return Application::with([
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
             ->where('domain', $this->getDomain())
+            ->where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('faculty', $user->faculty);
+            })
             ->get();
     }
 
