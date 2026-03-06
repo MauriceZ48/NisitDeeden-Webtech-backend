@@ -34,6 +34,8 @@ class ApplicationResource extends JsonResource
             'submitted_at' => $this->created_at->translatedFormat('d M Y'),
             'submitted_time' => $this->created_at->format('H:i'),
             'timestamp' => $this->created_at->toIso8601String(),
+            'domain_en' => $this->domain,
+            'domain_th' => $this->domain->label(),
 
             'user_id' => $this->user_id,
             'application_round_id' => $this->application_round_id,

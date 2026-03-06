@@ -20,7 +20,7 @@ class ApplicationRoundController extends Controller
      */
     public function index()
     {
-        $rounds = $this->roundRepo->getAllOrdered();
+        $rounds = $this->roundRepo->getAllOrderedInDomain();
         return ApplicationRoundResource::collection($rounds);
     }
 
@@ -56,9 +56,10 @@ class ApplicationRoundController extends Controller
         $expected = $this->roundRepo->getNextExpectedRound();
         if ($request->academic_year != $expected['year'] ||
             $request->semester != $expected['semester']->value) {
-            return back()->withErrors([
-                'academic_year' => "Next round must be {$expected['year']} Semester {$expected['semester']->value}."
-            ]);
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['academic_year' => ["Next round must be {$expected['year']} Semester {$expected['semester']->value}."]]
+            ], 422);
         }
 
         // 2. OPEN-SPECIFIC GUARDS: Only run these if status is OPEN
@@ -66,27 +67,32 @@ class ApplicationRoundController extends Controller
 
             // A. TIME GATE: now() must be within the period
             if ($now->lt($startTime) || $now->gt($endTime)) {
-                return back()->withErrors([
-                    'status' => "Cannot create an OPEN round: current time must be between the start and end period."
-                ])->withInput();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['status' => ["Cannot create an OPEN round: current time must be between the start and end period."]]
+                ], 422);
             }
 
             // B. CONCURRENCY: Only one active round allowed
             if ($this->roundRepo->anotherRoundIsActive()) {
-                return back()->withErrors([
-                    'status' => 'Cannot create an open round while another is already active.'
-                ]);
+                return response()->json([
+                    'message' => "Cannot create an open round while another is already active.",
+                ], 422);
             }
         }
 
         // 3. OVERLAP GUARD: Always check this for all rounds (including drafts)
         if ($this->roundRepo->isOverlapping($startTime, $endTime)) {
-            return back()->withErrors([
-                'start_time' => 'These dates overlap with an existing application round.'
-            ])->withInput();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['start_time' => 'These dates overlap with an existing application round.']
+            ], 422);
         }
 
-        $round = $this->roundRepo->create($request->validated());
+        $data = $request->validated();
+        $data['domain'] = auth()->user()->domain;
+
+        $round = $this->roundRepo->create($data);
         return new ApplicationRoundResource($round);
     }
 
@@ -95,6 +101,9 @@ class ApplicationRoundController extends Controller
      */
     public function show(ApplicationRound $applicationRound)
     {
+        if ($applicationRound->domain !== auth()->user()->domain) {
+            return response()->json(['message' => 'Unauthorized campus access.'], 403);
+        }
         return new ApplicationRoundResource($applicationRound);
     }
 
@@ -104,6 +113,10 @@ class ApplicationRoundController extends Controller
      */
     public function update(ApplicationRoundRequest $request, ApplicationRound $applicationRound)
     {
+        if ($applicationRound->domain !== auth()->user()->domain) {
+            return response()->json(['message' => 'Unauthorized campus access.'], 403);
+        }
+
         $startTime = $request->date('start_time');
         $endTime = $request->date('end_time');
         $now = now();
@@ -143,6 +156,10 @@ class ApplicationRoundController extends Controller
      */
     public function destroy(ApplicationRound $applicationRound)
     {
+        if ($applicationRound->domain !== auth()->user()->domain) {
+            return response()->json(['message' => 'Unauthorized campus access.'], 403);
+        }
+
         if ($applicationRound->applications()->count() > 0) {
             $applicationRound->delete();
 

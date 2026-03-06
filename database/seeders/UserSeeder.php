@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\Department;
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\UserRole;
 use App\Models\User;
@@ -16,6 +17,8 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+
+        // BANGKHEN
         //Admin
         User::factory()->create([
             'name' => 'System Admin',
@@ -26,7 +29,7 @@ class UserSeeder extends Seeder
             'department' => Department::COMPUTER,
         ]);
 
-        User::factory()->count(20)->create([
+        User::factory()->count(10)->create([
             'role' => UserRole::ADMIN,
             'position' => 'Student Development Division',
         ]);
@@ -50,10 +53,100 @@ class UserSeeder extends Seeder
         User::factory()->count(5)->withImage()->create();
         User::factory()->count(44)->create();
         //Committee
-        User::factory()->count(10)->committee('Head of Department')->create();
-        User::factory()->count(5)->committee('Associate Dean')->create();
-        User::factory()->count(2)->committee('Dean')->create();
-        User::factory()->count(15)->committee('Committee Member')->create();
+        User::factory()->count(10)->committee(Domain::BANGKHEN,'Head of Department')->create();
+        User::factory()->count(5)->committee(Domain::BANGKHEN, 'Associate Dean')->create();
+        User::factory()->count(2)->committee(Domain::BANGKHEN, 'Dean')->create();
+        User::factory()->count(15)->committee(Domain::BANGKHEN, 'Committee Member')->create();
+
+        //KAMPHAENG SEAN
+        //Admin
+        User::factory()->create([
+            'name' => 'Kamp Phaeng',
+            'email' => 'sean@example.com',
+            'role' => UserRole::ADMIN,
+            'position' => 'Student Development Division',
+            'faculty' => Faculty::SCIENCE,
+            'department' => Department::COMPUTER,
+            'domain' => Domain::KAMPHAENG_SEAN,
+        ]);
+
+        User::factory()->count(20)->create([
+            'role' => UserRole::ADMIN,
+            'position' => 'Student Development Division',
+            'domain' => Domain::KAMPHAENG_SEAN,
+        ]);
+        // Student
+
+
+        User::factory()->count(50)->create([
+            'domain' => Domain::KAMPHAENG_SEAN,
+        ]);
+        //Committee
+        User::factory()->count(10)->committee(Domain::KAMPHAENG_SEAN,'Head of Department')->create();
+        User::factory()->count(5)->committee(Domain::KAMPHAENG_SEAN, 'Associate Dean')->create();
+        User::factory()->count(2)->committee(Domain::KAMPHAENG_SEAN, 'Dean')->create();
+        User::factory()->count(15)->committee(Domain::KAMPHAENG_SEAN, 'Committee Member')->create();
+
+        //SRIRACHA
+        //Admin
+        User::factory()->create([
+            'name' => 'Sri Racha',
+            'email' => 'racha@example.com',
+            'role' => UserRole::ADMIN,
+            'position' => 'Student Development Division',
+            'faculty' => Faculty::SCIENCE,
+            'department' => Department::COMPUTER,
+            'domain' => Domain::SRIRACHA,
+        ]);
+
+        User::factory()->count(20)->create([
+            'role' => UserRole::ADMIN,
+            'position' => 'Student Development Division',
+            'domain' => Domain::SRIRACHA,
+        ]);
+        // Student
+
+
+        User::factory()->count(50)->create([
+            'domain' => Domain::SRIRACHA,
+        ]);
+        //Committee
+        User::factory()->count(10)->committee(Domain::SRIRACHA,'Head of Department')->create();
+        User::factory()->count(5)->committee(Domain::SRIRACHA, 'Associate Dean')->create();
+        User::factory()->count(2)->committee(Domain::SRIRACHA, 'Dean')->create();
+        User::factory()->count(15)->committee(Domain::SRIRACHA, 'Committee Member')->create();
+
+        //CHALERMPHRAKIAT
+        //Admin
+        User::factory()->create([
+            'name' => 'CHALERM PHRAKIAT',
+            'email' => 'chal@example.com',
+            'role' => UserRole::ADMIN,
+            'position' => 'Student Development Division',
+            'faculty' => Faculty::SCIENCE,
+            'department' => Department::COMPUTER,
+            'domain' => Domain::CHALERMPHRAKIAT,
+        ]);
+
+        User::factory()->count(20)->create([
+            'role' => UserRole::ADMIN,
+            'position' => 'Student Development Division',
+            'domain' => Domain::CHALERMPHRAKIAT,
+        ]);
+        // Student
+
+
+        User::factory()->count(50)->create([
+            'domain' => Domain::CHALERMPHRAKIAT,
+        ]);
+        //Committee
+        User::factory()->count(10)->committee(Domain::CHALERMPHRAKIAT,'Head of Department')->create();
+        User::factory()->count(5)->committee(Domain::CHALERMPHRAKIAT, 'Associate Dean')->create();
+        User::factory()->count(2)->committee(Domain::CHALERMPHRAKIAT, 'Dean')->create();
+        User::factory()->count(15)->committee(Domain::CHALERMPHRAKIAT, 'Committee Member')->create();
+
+
+
 
     }
 }

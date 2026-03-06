@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -31,5 +32,31 @@ class AuthenticateController extends Controller
                 'role' => $user->role,
             ]
         ]);
+    }
+
+    public function register(Request $request)
+    {
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|confirmed|min:8',
+            'university_id' => 'required|string|unique:users,university_id',
+            'faculty' => 'required',
+            'department' => 'required',
+            'photo' => 'nullable|image|max:2048',
+            'domain' => ['required', new \Illuminate\Validation\Rules\Enum(\App\Enums\Domain::class)],
+        ]);
+        $data['position'] = 'Student';
+        $data['role'] = UserRole::STUDENT;
+        $data['password'] = Hash::make($request->password);
+
+        if ($request->hasFile('photo')) {
+            $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
+        }
+
+        $user = User::create($data);
+
+        return response()->json(['message' => 'Registration successful', 'user' => $user], 201);
     }
 }

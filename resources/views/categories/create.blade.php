@@ -6,29 +6,54 @@
             <form action="{{ route('categories.store') }}" method="POST" enctype="multipart/form-data" class="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
                 @csrf
 
-            <div>
-                <div>
-                    <label for="name">Name:</label>
-                    <input type="text" name="name" value="{{ old('name') }}" class="@error('name') border-red-500 @enderror">
-                    @error('name')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+                <div class="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                        <input type="text"
+                               name="name"
+                               id="name"
+                               value="{{ old('name') }}"
+                               placeholder="e.g. Academic Excellence"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all
+               @error('name') border-red-500 @else border-gray-300 @enderror">
+                        @error('name')
+                        <p class="text-red-500 text-xs mt-1 italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="icon" class="block text-sm font-medium text-gray-700 mb-1">Lucide Icon Name</label>
+                        <div class="relative">
+                            <input type="text"
+                                   name="icon"
+                                   id="icon"
+                                   value="{{ old('icon') }}"
+                                   placeholder="e.g. lucide:award"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all
+                   @error('icon') border-red-500 @enderror">
+                            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                                <i data-lucide="info" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-[10px] mt-1">Use format 'lucide:icon-name'</p>
+                        @error('icon')
+                        <p class="text-red-500 text-xs mt-1 italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea name="description"
+                                  id="description"
+                                  rows="3"
+                                  placeholder="Describe the requirements for this category..."
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all
+                  @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                        @error('description')
+                        <p class="text-red-500 text-xs mt-1 italic">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
-                <div>
-                    <label for="icon">Icon:</label>
-                    <input type="text" name="icon" value="{{ old('icon') }}">
-                    @error('icon')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label for="description">Description:</label>
-                    <input type="text" name="description" value="{{ old('description') }}" >
-                </div>
-                @error('description')
-                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
 
 
                 <div x-data="{

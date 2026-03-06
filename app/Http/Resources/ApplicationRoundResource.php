@@ -21,6 +21,8 @@ class ApplicationRoundResource extends JsonResource
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'status' => $this->status,
+            'domain_en' => $this->domain,
+            'domain_th' => $this->domain->label(),
         ];
     }
 }

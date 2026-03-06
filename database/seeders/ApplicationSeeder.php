@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Application;
+use App\Models\ApplicationCategory;
 use App\Models\ApplicationRound;
 use App\Models\Attachment;
 use App\Models\User;
@@ -28,23 +29,28 @@ class ApplicationSeeder extends Seeder
         }
 
         foreach ($students as $student) {
-            $selectedRounds = $rounds->random(min(3, $rounds->count()));
+            // Only pick rounds that belong to the SAME domain as the student
+            $matchingRounds = $rounds->where('domain', $student->domain);
+            $matchingCategories = ApplicationCategory::where('domain', $student->domain)->get();
+
+            if ($matchingRounds->isEmpty() || $matchingCategories->isEmpty()){
+                continue;
+            }
+
+            $selectedRounds = $matchingRounds->random(min(2, $matchingRounds->count()));
 
             foreach ($selectedRounds as $round) {
-                // 1. Randomly pick a status from your Enum cases
                 $status = fake()->randomElement(ApplicationStatus::cases());
-
-                // 2. Logic for rejection reason
-                $rejectReason = null;
-                if ($status === ApplicationStatus::REJECTED) {
-                    $rejectReason = fake()->sentence();
-                }
+                $domain = $round->domain;
+                $category = $matchingCategories->random();
 
                 Application::factory()->create([
                     'user_id' => $student->id,
                     'application_round_id' => $round->id,
+                    'application_category_id' => $category->id,
                     'status' => $status,
-                    'rejection_reason' => $rejectReason,
+                    'rejection_reason' => ($status === ApplicationStatus::REJECTED) ? fake()->sentence() : null,
+                    'domain' => $domain,
                 ]);
             }
         }

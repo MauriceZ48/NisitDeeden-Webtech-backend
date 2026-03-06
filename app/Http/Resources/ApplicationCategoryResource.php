@@ -21,6 +21,8 @@ class ApplicationCategoryResource extends JsonResource
             'description' => $this->description,
             'icon' => $this->icon,
             'is_active' => (bool) $this->is_active,
+            'domain_en' => $this->domain,
+            'domain_th' => $this->domain->label(),
 
             'attributes' => $this->whenLoaded('attributes', function () {
                 return $this->attributes->map(function ($attribute) {

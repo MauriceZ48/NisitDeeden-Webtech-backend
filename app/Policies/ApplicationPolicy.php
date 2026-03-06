@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Application;
 use App\Models\User;
+use App\Enums\ApplicationStatus;
 use Illuminate\Auth\Access\Response;
 
 class ApplicationPolicy
@@ -37,7 +38,8 @@ class ApplicationPolicy
      */
     public function update(User $user, Application $application): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin()  || ($user->id === $application->user_id
+        && $application->status === ApplicationStatus::PENDING);
     }
 
     /**

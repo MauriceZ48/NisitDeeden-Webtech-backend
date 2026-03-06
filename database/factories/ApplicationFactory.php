@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Domain;
 use App\Models\ApplicationCategory;
 use App\Enums\ApplicationStatus;
 use App\Models\ApplicationRound;
@@ -28,6 +29,7 @@ class ApplicationFactory extends Factory
                 ?? ApplicationCategory::factory(),
             'status' => fake()->randomElement(ApplicationStatus::cases()),
             'rejection_reason' => null,
+            'domain' => Domain::BANGKHEN,
         ];
     }
 }

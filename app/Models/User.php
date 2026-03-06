@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\Department;
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'university_id',
         'faculty',
         'department',
+        'domain',
     ];
 
     public function applications(): HasMany
@@ -63,6 +65,7 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'faculty' => Faculty::class,
             'department' => Department::class,
+            'domain' => Domain::class,
         ];
     }
 
@@ -94,13 +97,26 @@ class User extends Authenticatable
     public static function getPositionRoleMap(): array
     {
         return [
-            'Student'            => \App\Enums\UserRole::STUDENT,
-            'Head of Department' => \App\Enums\UserRole::COMMITTEE,
-            'Associate Dean'     => \App\Enums\UserRole::COMMITTEE,
-            'Dean'               => \App\Enums\UserRole::COMMITTEE,
-            'Committee Member'   => \App\Enums\UserRole::COMMITTEE,
-            'Student Development Division'        => \App\Enums\UserRole::ADMIN,
+            'Student'            => UserRole::STUDENT,
+            'Head of Department' => UserRole::COMMITTEE,
+            'Associate Dean'     => UserRole::COMMITTEE,
+            'Dean'               => UserRole::COMMITTEE,
+            'Committee Member'   => UserRole::COMMITTEE,
+            'Student Development Division'        => UserRole::ADMIN,
         ];
+    }
+
+    public function getPositionThaiAttribute(): string
+    {
+        return [
+            'Student'            => 'นิสิต',
+            'Head of Department' => 'หัวหน้าภาควิชา',
+            'Associate Dean'     => 'รองคณบดี',
+            'Dean'               => 'คณบดี',
+            'Committee Member'   => 'คณะกรรมการ',
+            'Student Development Division' => 'กองพัฒนานิสิต'
+        ][$this->position] ?? $this->position;
+
     }
 
 }

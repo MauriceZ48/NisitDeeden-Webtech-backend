@@ -10,6 +10,7 @@ use App\Models\ApplicationCategory;
 use App\Repositories\ApplicationCategoryRepository;
 use App\Repositories\ApplicationRepository;
 use App\Repositories\ApplicationRoundRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -21,18 +22,54 @@ class ApplicationController extends Controller
         private ApplicationRepository $applicationRepo,
         private ApplicationRoundRepository $RoundRepo,
         private ApplicationCategoryRepository $categoryRepo,
+        private UserRepository $userRepo,
     ) {}
 
     public function index()
     {
-        $applications = $this->applicationRepo->getFullApplicationsPaginated();
+        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated();
         return ApplicationResource::collection($applications);
     }
 
     public function show(Application $application)
     {
+        if ($application->domain !== auth()->user()->domain) {
+            return response()->json([
+                'message' => 'Unauthorized domain access.',
+            ], 403);
+        }
         $application->load('attributeValues.attribute', 'applicationRound', 'attachments', 'user', 'applicationCategory');
         return new ApplicationResource($application);
+    }
+
+    public function applicationsByUserId($user_id)
+    {
+
+        if (!$user_id) {
+            return response()->json(['message' => 'User ID is required'], 400);
+        }
+
+        $targetUser = $this->userRepo->getUserById($user_id);
+
+        if (!$targetUser || $targetUser->domain !== auth()->user()->domain) {
+            return response()->json(
+                [
+                    'message' => 'Unauthorized or user not found'
+                ],
+                403
+            );
+        }
+
+        $applications = $this->applicationRepo->getApplicationsByUserId($user_id);
+
+        if ($applications->isEmpty()) {
+            return response()->json([
+                'message' => 'No applications found for user ID: ' . $user_id,
+                'data' => []
+            ], 404);
+        }
+
+        return ApplicationResource::collection($applications);
     }
 
     public function myApplications()
@@ -47,26 +84,6 @@ class ApplicationController extends Controller
 
         $applications = $this->applicationRepo
             ->getApplicationsByUserId($user->id);
-
-        return ApplicationResource::collection($applications);
-    }
-
-    public function applicationsByUserId(Request $request)
-    {
-        $userId = $request->input('user_id');
-
-        if (!$userId) {
-            return response()->json(['message' => 'User ID is required'], 400);
-        }
-
-        $applications = $this->applicationRepo->getApplicationsByUserId($userId);
-
-        if ($applications->isEmpty()) {
-            return response()->json([
-                'message' => 'No applications found for user ID: ' . $userId,
-                'data' => []
-            ], 404);
-        }
 
         return ApplicationResource::collection($applications);
     }
@@ -111,6 +128,12 @@ class ApplicationController extends Controller
     {
         $user = auth()->user();
         $action = $request->action;
+
+        if ($application->domain !== auth()->user()->domain) {
+            return response()->json([
+                'message' => 'Cross-domain approval denied.'
+            ], 403);
+        }
 
         $canApprove = match ($user->position) {
             'Head of Department' => $application->status === ApplicationStatus::PENDING,
@@ -219,6 +242,7 @@ class ApplicationController extends Controller
                     'application_round_id' => $currentRound->id,
                     'application_category_id' => $request->category_id,
                     'status' => ApplicationStatus::PENDING,
+                    'domain' => auth()->user()->domain,
                 ]);
             }
 
@@ -280,6 +304,11 @@ class ApplicationController extends Controller
 
     public function destroy(Application $application)
     {
+        if ($application->domain !== auth()->user()->domain) {
+            return response()->json([
+                'message' => 'Unauthorized domain access.',
+            ], 403);
+        }
         $application->delete();
         return response()->json(null, 204);
     }

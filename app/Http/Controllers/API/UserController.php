@@ -19,7 +19,13 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = $this->userRepo->getPaginatedUsers();
+        $users = $this->userRepo->getPaginatedUsersInDomain();
+        return UserResource::collection($users);
+    }
+
+    public function allUsers()
+    {
+        $users = $this->userRepo->getAllUsers();
         return UserResource::collection($users);
     }
 
@@ -37,6 +43,11 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        if ($user->domain !== auth()->user()->domain) {
+            return response()->json([
+                'message' => 'Cannot inspect user in other domain.',
+            ], 422);
+        }
         return new UserResource($user);
     }
 

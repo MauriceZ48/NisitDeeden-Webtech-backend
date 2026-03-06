@@ -21,7 +21,7 @@ class ApplicationCategoryController extends Controller
      */
     public function index()
     {
-        $categories = $this->categoryRepo->getAll();
+        $categories = $this->categoryRepo->getAllWithAttributes();
         return view('categories.index', ['categories' => $categories]);
     }
 
@@ -38,18 +38,23 @@ class ApplicationCategoryController extends Controller
      */
     public function store(Request $request)
     {
+        $domain = auth()->user()->domain;
         // 1. Generate and merge the slug
         $request->merge(['slug' => Str::slug($request->name)]);
 
         // 2. Strict Validation Firewall
-        $request->validate([
+        $validated = $request->validate([
             'name' => [
                 'required',
-                Rule::unique('application_categories')->whereNull('deleted_at')
+                Rule::unique('application_categories')
+                    ->where('domain', $domain)
+                    ->whereNull('deleted_at')
             ],
             'slug' => [
                 'required',
-                Rule::unique('application_categories')->whereNull('deleted_at')
+                Rule::unique('application_categories')
+                    ->where('domain', $domain)
+                    ->whereNull('deleted_at')
             ],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000', // Secured the description
@@ -68,29 +73,26 @@ class ApplicationCategoryController extends Controller
         ]);
 
         // 3. Database Transaction
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $validated, $domain) {
+            $customSlug = Str::slug($validated['name'] . '-' . $domain->value);
 
             $category = $this->categoryRepo->create([
                 'name' => $request->name,
-                'slug' => $request->slug,
+                'slug' => $customSlug,
                 'icon' => $request->icon,
                 'description' => $request->description,
+                'domain' => auth()->user()->domain,
             ]);
 
             $attributes = $request->input('attributes', []);
-
-            if (!empty($attributes)) {
-                foreach ($attributes as $attr) {
-                    $category->attributes()->create([
-                        'label' => $attr['label'],
-                        'type' => $attr['type'],
-                        // isset() is perfect here for handling HTML checkbox behavior
-                        'is_required' => isset($attr['is_required']),
-                    ]);
-                }
-            } else {
-                Log::info("No dynamic attributes provided for category: {$category->name}");
+            foreach ($attributes as $attr) {
+                $category->attributes()->create([
+                    'label' => $attr['label'],
+                    'type' => $attr['type'],
+                    'is_required' => isset($attr['is_required']),
+                ]);
             }
+
         });
 
         return redirect()->route('categories.index')

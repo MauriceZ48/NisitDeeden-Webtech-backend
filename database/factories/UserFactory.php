@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\Department;
 use App\Enums\UserRole;
@@ -44,6 +45,7 @@ class UserFactory extends Factory
             'faculty' => $faculty,
             'role' => UserRole::STUDENT,
             'position' => 'Student',
+            'domain' => Domain::BANGKHEN,
         ];
     }
 
@@ -69,11 +71,12 @@ class UserFactory extends Factory
         });
     }
 
-    public function committee(string $position = 'Committee Member'): static
+    public function committee(Domain $domain, string $position = 'Committee Member'): static
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::COMMITTEE,
             'position' => $position,
+            'domain' => $domain,
         ]);
     }
 

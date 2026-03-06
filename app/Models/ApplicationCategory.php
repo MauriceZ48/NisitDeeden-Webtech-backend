@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Domain;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,7 +16,12 @@ class ApplicationCategory extends Model
         'slug',
         'description',
         'icon',
-        'is_active'
+        'is_active',
+        'domain',
+    ];
+
+    protected $casts = [
+        'domain' => Domain::class,
     ];
 
     public function applications(): HasMany

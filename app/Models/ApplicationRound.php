@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Domain;
 use App\Enums\RoundStatus;
 use App\Enums\Semester;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,7 @@ class ApplicationRound extends Model
         'status',
         'start_time',
         'end_time',
+        'domain'
     ];
 
     protected $casts = [
@@ -27,6 +29,7 @@ class ApplicationRound extends Model
         'status'   => RoundStatus::class,
         'start_time' => 'datetime',
         'end_time'   => 'datetime',
+        'domain'    => Domain::class
     ];
 
     public function applications(): HasMany

@@ -18,12 +18,19 @@ class ApplicationRepository
 
     private string $model = Application::class;
 
-    public function countByStatus(ApplicationStatus $status): int
+    private function getDomain()
     {
-        return $this->model::where('status', $status->value)->count();
+        return auth()->user()?->domain;
     }
 
-    public function getFullApplicationsPaginated(int $perPage = 10)
+    public function countByStatus(ApplicationStatus $status): int
+    {
+        return $this->model::where('domain', $this->getDomain())
+            ->where('status', $status->value)
+            ->count();
+    }
+
+    public function getFullApplicationsInDomainPaginated(int $perPage = 10)
     {
         return Application::with([
             'attributeValues.attribute',
@@ -32,6 +39,7 @@ class ApplicationRepository
             'user',
             'applicationCategory'
         ])
+            ->where('domain', $this->getDomain())
             ->latest()
             ->paginate($perPage);
     }
@@ -41,7 +49,11 @@ class ApplicationRepository
     {
         $attributeValue = $application->attributeValues()
             ->with('attribute')
-            ->findOrFail($id);
+            ->where('category_attribute_id', $id)
+            ->firstOrNew([
+                'application_id' => $application->id,
+                'category_attribute_id' => $id,
+            ]);
 
         // Handle File Replacement Logic
         if ($newValue instanceof UploadedFile) {
@@ -102,7 +114,8 @@ class ApplicationRepository
         }
     }
 
-    public function createAttributeValue(Application $application, int $attributeId, $value){
+    public function createAttributeValue(Application $application, int $attributeId, $value)
+    {
         if ($value instanceof UploadedFile) {
             $value = $value->store('applications/dynamic_submissions', 'public');
         }
@@ -115,39 +128,52 @@ class ApplicationRepository
 
     public function getPendingForHeadOfDepartment()
     {
-        return Application::where('status', ApplicationStatus::PENDING)->get();
+        return Application::where('status', ApplicationStatus::PENDING)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
-    public function getPendingForAssociateDean() {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)->get();
+    public function getPendingForAssociateDean()
+    {
+        return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getPendingForDean()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getPendingForCommittee()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_DEAN)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_DEAN)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getApprovedFormCommittee()
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_COMMITTEE)->get();
+        return Application::where('status', ApplicationStatus::APPROVED_BY_COMMITTEE)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getAllRejectedApplications()
     {
-        return Application::where('status', ApplicationStatus::REJECTED)->get();
+        return Application::where('status', ApplicationStatus::REJECTED)
+            ->where('domain', $this->getDomain())
+            ->get();
     }
 
     public function getApplicationsByUserId($userId)
     {
         return Application::query()
+            ->where('domain', $this->getDomain())
             ->where('user_id', $userId)
             ->with(['applicationCategory', 'applicationRound'])
             ->latest()
             ->get();
     }
-
 }
