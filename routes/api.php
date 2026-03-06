@@ -37,6 +37,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         return $request->user();
     })->name('me');
 
+    Route::get('/my-applications', [ApplicationController::class, 'myApplications']);
+    // Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
     // Only protect the sensitive actions
 
     //User

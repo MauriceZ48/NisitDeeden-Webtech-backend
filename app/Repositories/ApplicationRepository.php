@@ -49,7 +49,11 @@ class ApplicationRepository
     {
         $attributeValue = $application->attributeValues()
             ->with('attribute')
-            ->findOrFail($id);
+            ->where('category_attribute_id', $id)
+            ->firstOrNew([
+                'application_id' => $application->id,
+                'category_attribute_id' => $id,
+            ]);
 
         // Handle File Replacement Logic
         if ($newValue instanceof UploadedFile) {
@@ -110,7 +114,8 @@ class ApplicationRepository
         }
     }
 
-    public function createAttributeValue(Application $application, int $attributeId, $value){
+    public function createAttributeValue(Application $application, int $attributeId, $value)
+    {
         if ($value instanceof UploadedFile) {
             $value = $value->store('applications/dynamic_submissions', 'public');
         }
@@ -127,7 +132,8 @@ class ApplicationRepository
             ->where('domain', $this->getDomain())
             ->get();
     }
-    public function getPendingForAssociateDean() {
+    public function getPendingForAssociateDean()
+    {
         return Application::where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
             ->where('domain', $this->getDomain())
             ->get();
@@ -170,5 +176,4 @@ class ApplicationRepository
             ->latest()
             ->get();
     }
-
 }
