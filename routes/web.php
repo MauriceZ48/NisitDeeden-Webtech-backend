@@ -14,7 +14,7 @@ require __DIR__ . '/auth.php'; // provides /login, /register, etc.
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::redirect('/', '/applications')->name('home');
+    Route::redirect('/', '/index')->name('home');
     Route::view('/index', 'index')->name('index');
 
     Route::view('/dashboard', 'dashboard')->middleware('verified')->name('dashboard');

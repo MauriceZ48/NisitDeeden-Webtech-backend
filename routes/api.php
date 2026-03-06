@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\ApplicationCategoryController;
 use App\Http\Controllers\API\ApplicationController;
 use App\Http\Controllers\API\ApplicationRoundController;
+use App\Http\Controllers\API\Auth\OAuthController;
 use App\Http\Controllers\API\Auth\AuthenticateController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
@@ -25,10 +26,13 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::post('login', [AuthenticateController::class, 'login'])->name('user.login');
     Route::post('register', [AuthenticateController::class, 'register'])->name('user.register');
 
+    // OAuth
+    Route::prefix('oauth2')->group(function () {
+        Route::get('/callback/google', [OAuthController::class, 'googleCallback']);
+    });
+
     //User
     Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
-
-
 });
 
 // 2. Routes that REQUIRE authentication

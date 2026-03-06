@@ -276,3 +276,6 @@ dist
 # macOS metadata files
 .DS_Store
 **/.DS_Store
+
+# vault
+vault/file
