@@ -249,7 +249,6 @@ class ApplicationController extends Controller
 
     public function update(Request $request, Application $application)
     {
-        Gate::authorize('update', $application);
 
         $request->validate([
             'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],

@@ -164,7 +164,6 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        Gate::authorize('update', $user);
 
         if ($user->domain !== auth()->user()->domain) {
             abort(403, 'You cannot update users from other campuses.');
@@ -173,8 +172,15 @@ class UserController extends Controller
         // 1. Validate including the new 'position' field
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email,' . $user->id,
-            'university_id' => 'required|string|unique:users,university_id,' . $user->id,
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users')->ignore($user->id)
+            ],
+            'university_id' => [
+                'required',
+                Rule::unique('users')->ignore($user->id)
+            ],
             'position'      => 'required|string',
             'faculty'       => 'required',
             'department'    => 'required',
