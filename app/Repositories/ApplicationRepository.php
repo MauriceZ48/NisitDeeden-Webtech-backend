@@ -130,6 +130,8 @@ class ApplicationRepository
     {
         return Application::where('status', ApplicationStatus::PENDING)
             ->where('domain', $this->getDomain())
+            ->with(['applicationCategory', 'applicationRound', 'user'])
+            ->latest()
             ->get();
     }
     public function getPendingForAssociateDean()
