@@ -12,6 +12,21 @@ enum ApplicationStatus: string
     case APPROVED_BY_COMMITTEE = 'APPROVED_BY_COMMITTEE';
     case REJECTED = 'REJECTED';
 
+
+    public static function randomWeighted(): self
+    {
+        return fake()->randomElement([
+            self::PENDING, self::PENDING, self::PENDING, self::PENDING,
+
+            self::APPROVED_BY_DEPARTMENT, self::APPROVED_BY_DEPARTMENT,
+            self::APPROVED_BY_ASSOCIATE_DEAN,
+            self::APPROVED_BY_DEAN,
+            self::APPROVED_BY_COMMITTEE,
+
+            self::REJECTED,
+        ]);
+    }
+
     public function color(): string
     {
         return match($this) {

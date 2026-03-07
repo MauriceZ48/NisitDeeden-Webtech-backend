@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Department;
 use App\Enums\Faculty;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
@@ -47,7 +48,7 @@ class UserController extends Controller
             $query->where('role', $role);
         }
 
-        $users = $query->orderBy('name')->paginate(10)->appends($request->query());
+        $users = $query->orderBy('name')->paginate(7)->appends($request->query());
 
         // 2. Filter total count and summary counts by domain
         $count = User::where('domain', $domain)->count();
@@ -101,17 +102,19 @@ class UserController extends Controller
         Gate::authorize('create', User::class);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
             'university_id' => 'required|string|unique:users,university_id',
-            'position' => 'required|string',
-            'faculty' => 'required',
-            'department' => 'required',
-            'photo' => 'nullable|image|max:2048'
+
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'faculty'       => ['nullable', new Enum(Faculty::class)],
+            'department'    => ['nullable', new Enum(Department::class)],
+
+            'photo'         => 'nullable|image|max:2048'
         ]);
 
-        $map = User::getPositionRoleMap();
-        $data['role'] = $map[$request->position] ?? UserRole::STUDENT;
+        $positionEnum = UserPosition::from($request->position);
+        $data['role'] = $positionEnum->getRole();
         $data['domain'] = auth()->user()->domain;
 
         if ($request->hasFile('photo')) {
@@ -122,7 +125,8 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('users.index')->with('success', 'User created with position ' . $request->position);
+        return redirect()->route('users.index')
+            ->with('success', 'เพิ่มผู้ใช้งานตำแหน่ง ' . $positionEnum->label() . ' เรียบร้อยแล้ว');
     }
 
     /**
@@ -172,7 +176,7 @@ class UserController extends Controller
         // 1. Validate including the new 'position' field
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
-            'email' => [
+            'email'         => [
                 'required',
                 'email',
                 Rule::unique('users')->ignore($user->id)
@@ -181,9 +185,9 @@ class UserController extends Controller
                 'required',
                 Rule::unique('users')->ignore($user->id)
             ],
-            'position'      => 'required|string',
-            'faculty'       => 'required',
-            'department'    => 'required',
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'faculty'       => ['nullable', new Enum(Faculty::class)],
+            'department'    => ['nullable', new Enum(Department::class)],
             'photo'         => 'nullable|image|max:2048',
             'delete_photo'  => 'nullable|string'
         ]);
@@ -204,16 +208,22 @@ class UserController extends Controller
             $user->profile_path = $request->file('photo')->store('profile-photos', 'public');
         }
 
-        // 4. MAP: Sync the Role with the selected Position
-        $map = User::getPositionRoleMap();
-        $user->role = $map[$request->position] ?? UserRole::STUDENT;
+        $positionEnum = UserPosition::from($request->position);
+        $user->role = $positionEnum->getRole();
 
-        // 5. Fill and Save other fields
+        if (in_array($positionEnum, [UserPosition::STAFF, UserPosition::COMMITTEE_MEMBER])) {
+            $validated['faculty'] = null;
+            $validated['department'] = null;
+        }
+        elseif (in_array($positionEnum, [UserPosition::DEAN, UserPosition::ASSOCIATE_DEAN])) {
+            $validated['department'] = null;
+        }
+
         $user->fill($validated);
         $user->save();
 
         return redirect()->route('users.index')
-            ->with('success', "User profile updated to {$user->position} successfully!");
+            ->with('success', "อัปเดตข้อมูลผู้ใช้งานตำแหน่ง " . $positionEnum->label() . " เรียบร้อยแล้ว");
     }
 
     /**
@@ -252,7 +262,7 @@ class UserController extends Controller
         $departments = array_values(array_map(
             fn (Department $d) => [
                 'value' => $d->value,
-                'label' => $d->value,
+                'label' => $d->label(),
             ],
             array_filter(
                 Department::cases(),

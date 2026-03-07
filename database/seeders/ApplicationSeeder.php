@@ -22,6 +22,7 @@ class ApplicationSeeder extends Seeder
     {
         $students = User::query()->where('role', UserRole::STUDENT)->get();
         $rounds = ApplicationRound::all();
+        $categories = ApplicationCategory::all();
 
         if ($rounds->isEmpty()) {
             $this->command->warn("No Application Rounds found. Seed rounds first!");
@@ -31,7 +32,7 @@ class ApplicationSeeder extends Seeder
         foreach ($students as $student) {
             // Only pick rounds that belong to the SAME domain as the student
             $matchingRounds = $rounds->where('domain', $student->domain);
-            $matchingCategories = ApplicationCategory::where('domain', $student->domain)->get();
+            $matchingCategories = $categories->where('domain', $student->domain);
 
             if ($matchingRounds->isEmpty() || $matchingCategories->isEmpty()){
                 continue;
@@ -40,7 +41,7 @@ class ApplicationSeeder extends Seeder
             $selectedRounds = $matchingRounds->random(min(2, $matchingRounds->count()));
 
             foreach ($selectedRounds as $round) {
-                $status = fake()->randomElement(ApplicationStatus::cases());
+                $status = ApplicationStatus::randomWeighted();
                 $domain = $round->domain;
                 $category = $matchingCategories->random();
 
