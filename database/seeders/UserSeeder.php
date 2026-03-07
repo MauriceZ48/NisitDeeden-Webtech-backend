@@ -159,55 +159,6 @@ class UserSeeder extends Seeder
             'department' => Department::COMPUTER,
             'domain' => Domain::BANGKHEN,
         ]);
-<<<<<<< HEAD
-
-        User::factory()->create([
-            'name' => 'Dr. Somchai Prasert',
-            'email' => 'hod1@example.com',
-            'role' => UserRole::COMMITTEE,
-            'position' => 'Head of Department',
-            'faculty' => Faculty::SCIENCE,
-            'department' => Department::COMPUTER,
-            'domain' => Domain::BANGKHEN,
-        ]);
-
-        User::factory()->create([
-            'name' => 'Assoc. Prof. Suda Kittipong',
-            'email' => 'assocdean1@example.com',
-            'role' => UserRole::COMMITTEE,
-            'position' => 'Associate Dean',
-            'faculty' => Faculty::SCIENCE,
-            'domain' => Domain::BANGKHEN,
-        ]);
-
-        User::factory()->create([
-            'name' => 'Prof. Chaiwat Rattanakul',
-            'email' => 'dean1@example.com',
-            'role' => UserRole::COMMITTEE,
-            'position' => 'Dean',
-            'faculty' => Faculty::SCIENCE,
-            'domain' => Domain::BANGKHEN,
-        ]);
-
-        User::factory()->create([
-            'name' => 'Dr. Preecha Boonmee',
-            'email' => 'committee1@example.com',
-            'role' => UserRole::COMMITTEE,
-            'position' => 'Committee Member',
-            'domain' => Domain::BANGKHEN,
-        ]);
-
-
-
-        User::factory()->count(5)->withImage()->create();
-        User::factory()->count(44)->create();
-        //Committee
-        User::factory()->count(10)->committee(Domain::BANGKHEN, 'Head of Department')->create();
-        User::factory()->count(5)->committee(Domain::BANGKHEN, 'Associate Dean')->create();
-        User::factory()->count(2)->committee(Domain::BANGKHEN, 'Dean')->create();
-        User::factory()->count(15)->committee(Domain::BANGKHEN, 'Committee Member')->create();
-=======
->>>>>>> de3fd6e287f4008d19f1351d9a4ba551b19c2978
 
         // แอดมินกองพัฒนานิสิตวิทยาเขตอื่นๆ
         User::factory()->create([
@@ -220,28 +171,6 @@ class UserSeeder extends Seeder
             'department' => null,
         ]);
 
-<<<<<<< HEAD
-        User::factory()->count(20)->create([
-            'role' => UserRole::ADMIN,
-            'position' => 'Student Development Division',
-            'domain' => Domain::KAMPHAENG_SEAN,
-        ]);
-        // Student
-
-
-        User::factory()->count(50)->create([
-            'domain' => Domain::KAMPHAENG_SEAN,
-        ]);
-        //Committee
-        User::factory()->count(10)->committee(Domain::KAMPHAENG_SEAN, 'Head of Department')->create();
-        User::factory()->count(5)->committee(Domain::KAMPHAENG_SEAN, 'Associate Dean')->create();
-        User::factory()->count(2)->committee(Domain::KAMPHAENG_SEAN, 'Dean')->create();
-        User::factory()->count(15)->committee(Domain::KAMPHAENG_SEAN, 'Committee Member')->create();
-
-        //SRIRACHA
-        //Admin
-=======
->>>>>>> de3fd6e287f4008d19f1351d9a4ba551b19c2978
         User::factory()->create([
             'name' => 'กองพัฒนานิสิต วิทยาเขตศรีราชา',
             'email' => 'racha@example.com',
@@ -252,28 +181,6 @@ class UserSeeder extends Seeder
             'department' => null,
         ]);
 
-<<<<<<< HEAD
-        User::factory()->count(20)->create([
-            'role' => UserRole::ADMIN,
-            'position' => 'Student Development Division',
-            'domain' => Domain::SRIRACHA,
-        ]);
-        // Student
-
-
-        User::factory()->count(50)->create([
-            'domain' => Domain::SRIRACHA,
-        ]);
-        //Committee
-        User::factory()->count(10)->committee(Domain::SRIRACHA, 'Head of Department')->create();
-        User::factory()->count(5)->committee(Domain::SRIRACHA, 'Associate Dean')->create();
-        User::factory()->count(2)->committee(Domain::SRIRACHA, 'Dean')->create();
-        User::factory()->count(15)->committee(Domain::SRIRACHA, 'Committee Member')->create();
-
-        //CHALERMPHRAKIAT
-        //Admin
-=======
->>>>>>> de3fd6e287f4008d19f1351d9a4ba551b19c2978
         User::factory()->create([
             'name' => 'กองพัฒนานิสิต วิทยาเขตเฉลิมพระเกียรติ',
             'email' => 'chal@example.com',
@@ -285,27 +192,8 @@ class UserSeeder extends Seeder
         ]);
     }
 
-<<<<<<< HEAD
-        User::factory()->count(20)->create([
-            'role' => UserRole::ADMIN,
-            'position' => 'Student Development Division',
-            'domain' => Domain::CHALERMPHRAKIAT,
-        ]);
-        // Student
-
-
-        User::factory()->count(50)->create([
-            'domain' => Domain::CHALERMPHRAKIAT,
-        ]);
-        //Committee
-        User::factory()->count(10)->committee(Domain::CHALERMPHRAKIAT, 'Head of Department')->create();
-        User::factory()->count(5)->committee(Domain::CHALERMPHRAKIAT, 'Associate Dean')->create();
-        User::factory()->count(2)->committee(Domain::CHALERMPHRAKIAT, 'Dean')->create();
-        User::factory()->count(15)->committee(Domain::CHALERMPHRAKIAT, 'Committee Member')->create();
-=======
     private function getDepartmentsByFaculty(Faculty $faculty): array
     {
         return array_filter(Department::cases(), fn($dept) => $dept->faculty() === $faculty);
->>>>>>> de3fd6e287f4008d19f1351d9a4ba551b19c2978
     }
 }

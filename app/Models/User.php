@@ -99,15 +99,6 @@ class User extends Authenticatable
 
     public function getPositionThaiAttribute(): string
     {
-        return [
-            'Student'            => 'นิสิต',
-            'Head of Department' => 'หัวหน้าภาควิชา',
-            'Associate Dean'     => 'รองคณบดี',
-            'Dean'               => 'คณบดี',
-            'Committee Member'   => 'คณะกรรมการ',
-            'Student Development Division' => 'กองพัฒนานิสิต'
-        ][$this->position] ?? $this->position;
-
+        return $this->position?->label() ?? '';
     }
-
 }
