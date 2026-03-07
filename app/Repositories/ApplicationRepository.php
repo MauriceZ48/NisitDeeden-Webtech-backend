@@ -136,6 +136,8 @@ class ApplicationRepository
             'applicationCategory'
         ])
             ->where('domain', $this->getDomain())
+            ->with(['applicationCategory', 'applicationRound', 'user'])
+            ->latest()
             ->where('status', ApplicationStatus::PENDING)
             ->whereHas('user', function ($query) use ($user) {
                 $query->where('department', $user->department);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\UserPosition;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
 use App\Models\Application;
@@ -136,10 +137,10 @@ class ApplicationController extends Controller
         }
 
         $canApprove = match ($user->position) {
-            'Head of Department' => $application->status === ApplicationStatus::PENDING,
-            'Associate Dean'     => $application->status === ApplicationStatus::APPROVED_BY_DEPARTMENT,
-            'Dean'               => $application->status === ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
-            'Committee Member'   => $application->status === ApplicationStatus::APPROVED_BY_DEAN,
+            UserPosition::HEAD_OF_DEPARTMENT => $application->status === ApplicationStatus::PENDING,
+            UserPosition::ASSOCIATE_DEAN     => $application->status === ApplicationStatus::APPROVED_BY_DEPARTMENT,
+            UserPosition::DEAN               => $application->status === ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
+            UserPosition::COMMITTEE_MEMBER   => $application->status === ApplicationStatus::APPROVED_BY_DEAN,
             default              => false
         };
 
@@ -156,10 +157,10 @@ class ApplicationController extends Controller
         }
 
         $nextStatus = match ($user->position) {
-            'Head of Department' => ApplicationStatus::APPROVED_BY_DEPARTMENT,
-            'Associate Dean'     => ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
-            'Dean'               => ApplicationStatus::APPROVED_BY_DEAN,
-            'Committee Member'   => ApplicationStatus::APPROVED_BY_COMMITTEE,
+            UserPosition::HEAD_OF_DEPARTMENT => ApplicationStatus::APPROVED_BY_DEPARTMENT,
+            UserPosition::ASSOCIATE_DEAN     => ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
+            UserPosition::DEAN               => ApplicationStatus::APPROVED_BY_DEAN,
+            UserPosition::COMMITTEE_MEMBER   => ApplicationStatus::APPROVED_BY_COMMITTEE,
             default              => null
         };
 
