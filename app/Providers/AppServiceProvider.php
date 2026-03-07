@@ -28,5 +28,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Carbon::setLocale('th');
+
+        Carbon::macro('toThaiDateTime', function () {
+            return $this->locale('th')->translatedFormat('j M') . ' ' .
+                ($this->year + 543) . ', ' .
+                $this->format('H:i') . ' น.';
+        });
     }
 }
