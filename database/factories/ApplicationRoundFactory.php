@@ -22,8 +22,8 @@ class ApplicationRoundFactory extends Factory
         return [
             'academic_year' => $this->faker->numberBetween(2020, 2030),
             'semester' => $this->faker->randomElement(Semester::cases()),
-            'start_time' => now(),
-            'end_time' => now()->addMonth(),
+            'start_time' => now()->subDays(5)->startOfDay(),
+            'end_time' => now()->addDays(25)->endOfDay(),
             'status' => RoundStatus::CLOSED,
             'domain' => Domain::BANGKHEN,
         ];

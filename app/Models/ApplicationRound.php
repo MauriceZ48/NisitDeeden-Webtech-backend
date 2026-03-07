@@ -46,7 +46,8 @@ class ApplicationRound extends Model
 
     public function isAcceptingSubmissions(): bool
     {
-        return $this->status === RoundStatus::OPEN && now()->between($this->start_at, $this->end_at);
+        return $this->status === RoundStatus::OPEN &&
+            now()->between($this->start_time, $this->end_time);
     }
 
     public function getDaysLeftAttribute(): int
@@ -61,5 +62,10 @@ class ApplicationRound extends Model
     public function countApplications(): int
     {
         return $this->applications()->count();
+    }
+
+    public function getThaiAcademicYearAttribute(): string
+    {
+        return (string) ($this->academic_year + 543);
     }
 }
