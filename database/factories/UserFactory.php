@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\Department;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -29,24 +30,33 @@ class UserFactory extends Factory
     public function definition(): array
     {
 
-        $department = fake()->randomElement(Department::cases());
-
-        $faculty = $department->faculty();
 
         return [
             'profile_path' => null,
-            'name' => fake()->name(),
+            'name' => fake('th_TH')->firstName() . ' ' . fake('th_TH')->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'university_id' => fake()->unique()->bothify('ID-#####'),
-            'department' => $department,
-            'faculty' => $faculty,
             'role' => UserRole::STUDENT,
-            'position' => 'Student',
+            'position' => UserPosition::STUDENT,
             'domain' => Domain::BANGKHEN,
+
+            'department' => null,
+            'faculty' => null,
         ];
+    }
+
+    public function withAcademicInfo(): static
+    {
+        return $this->state(function (array $attributes) {
+            $dept = fake()->randomElement(Department::cases());
+            return [
+                'department' => $dept,
+                'faculty' => $dept->faculty(),
+            ];
+        });
     }
 
     public function withImage(): static
@@ -71,7 +81,7 @@ class UserFactory extends Factory
         });
     }
 
-    public function committee(Domain $domain, string $position = 'Committee Member'): static
+    public function committee(Domain $domain, UserPosition $position = UserPosition::COMMITTEE_MEMBER): static
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::COMMITTEE,

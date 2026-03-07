@@ -3,6 +3,7 @@
 use App\Enums\Department;
 use App\Enums\Domain;
 use App\Enums\Faculty;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->string('faculty')->nullable();
             $table->string('department')->nullable();
             $table->string('role')->default(UserRole::STUDENT->value);
-            $table->string('position')->default('Student');
+            $table->string('position')->default(UserPosition::STUDENT->value);
             $table->rememberToken();
             $table->timestamps();
             $table->string('domain')->default(Domain::BANGKHEN->value);

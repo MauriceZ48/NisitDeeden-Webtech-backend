@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\API\Auth;
 
+use App\Enums\Department;
+use App\Enums\Domain;
+use App\Enums\Faculty;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Enum;
 
 class AuthenticateController extends Controller
 {
@@ -36,19 +41,23 @@ class AuthenticateController extends Controller
 
     public function register(Request $request)
     {
-
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|confirmed|min:8',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required|string|confirmed|min:8',
             'university_id' => 'required|string|unique:users,university_id',
-            'faculty' => 'required',
-            'department' => 'required',
-            'photo' => 'nullable|image|max:2048',
-            'domain' => ['required', new \Illuminate\Validation\Rules\Enum(\App\Enums\Domain::class)],
+
+            'faculty'       => ['required', new Enum(Faculty::class)],
+            'department'    => ['required', new Enum(Department::class)],
+
+            'photo'         => 'nullable|image|max:2048',
+            'domain'        => ['required', new Enum(Domain::class)],
         ]);
-        $data['position'] = 'Student';
-        $data['role'] = UserRole::STUDENT;
+
+        $positionEnum = UserPosition::STUDENT;
+
+        $data['position'] = $positionEnum;
+        $data['role']     = $positionEnum->getRole();
         $data['password'] = Hash::make($request->password);
 
         if ($request->hasFile('photo')) {
@@ -57,6 +66,9 @@ class AuthenticateController extends Controller
 
         $user = User::create($data);
 
-        return response()->json(['message' => 'Registration successful', 'user' => $user], 201);
+        return response()->json([
+            'message' => 'ลงทะเบียนผู้ใช้งานสำเร็จ',
+            'user'    => $user
+        ], 201);
     }
 }

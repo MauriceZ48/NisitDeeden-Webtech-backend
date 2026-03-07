@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Enums\Department;
 use App\Enums\Domain;
 use App\Enums\Faculty;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -63,6 +64,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'position' => UserPosition::class,
             'faculty' => Faculty::class,
             'department' => Department::class,
             'domain' => Domain::class,
@@ -94,17 +96,6 @@ class User extends Authenticatable
         return $this->role === UserRole::COMMITTEE;
     }
 
-    public static function getPositionRoleMap(): array
-    {
-        return [
-            'Student'            => UserRole::STUDENT,
-            'Head of Department' => UserRole::COMMITTEE,
-            'Associate Dean'     => UserRole::COMMITTEE,
-            'Dean'               => UserRole::COMMITTEE,
-            'Committee Member'   => UserRole::COMMITTEE,
-            'Student Development Division'        => UserRole::ADMIN,
-        ];
-    }
 
     public function getPositionThaiAttribute(): string
     {

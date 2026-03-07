@@ -15,25 +15,7 @@
         $input = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
                   focus:ring-2 focus:ring-primary focus:border-primary';
 
-        // FIXED: Roles now use the Enum cases for values
-$roles = [
-        [
-            'value' => \App\Enums\UserRole::STUDENT->value,
-            'label' => 'Student',
-            'desc'  => 'Can submit applications and manage own profile.'
-        ],
-        [
-            'value' => \App\Enums\UserRole::ADMIN->value,
-            'label' => 'Admin',
-            'desc'  => 'Full access to manage users and applications.'
-        ],
-    ];
-
-        // FIXED: Using the standardized accessor from your Model
         $currentPhoto = $isEdit ? ($user->profile_url ?? null) : null;
-
-        // FIXED: Ensures we handle the Enum or old value correctly
-        $selectedRole = old('role', $isEdit ? $user->role->value : 'user');
     @endphp
 
     <section class="bg-background">
@@ -41,10 +23,10 @@ $roles = [
 
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">
-                    {{ $isEdit ? 'Edit User Profile' : 'Create User Profile' }}
+                    {{ $isEdit ? 'แก้ไขข้อมูลผู้ใช้งาน' : 'เพิ่มผู้ใช้งานใหม่' }}
                 </h1>
                 <p class="mt-1 text-sm text-gray-500">
-                    Manage student and staff excellence award participants.
+                    จัดการข้อมูลส่วนตัว สิทธิ์การเข้าถึง และสังกัดของผู้ใช้งานในระบบ
                 </p>
             </div>
 
@@ -52,15 +34,13 @@ $roles = [
                 @csrf
                 @method($method)
 
-                {{-- Profile Photo --}}
-                {{-- Profile Photo Section --}}
+                {{-- ส่วนรูปโปรไฟล์ --}}
                 <div class="{{ $pad }}">
                     <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-center gap-5">
                             <div class="relative">
                                 <div id="photoPreviewBox"
                                      class="h-20 w-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                    {{-- FIXED: Logic to show current photo or placeholder --}}
                                     @if($isEdit && $user->profile_path)
                                         <img src="{{ $user->profile_url }}" class="h-full w-full object-cover"
                                              alt="Profile">
@@ -74,7 +54,6 @@ $roles = [
                                     @endif
                                 </div>
 
-                                {{-- FIXED: name="photo" and id="photo" --}}
                                 <label for="photo"
                                        class="absolute -right-2 -bottom-2 w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm cursor-pointer hover:opacity-95">
                                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -88,15 +67,15 @@ $roles = [
                             </div>
 
                             <div>
-                                <div class="text-sm font-semibold text-gray-900">Profile Photo</div>
+                                <div class="text-sm font-semibold text-gray-900">รูปประจำตัว</div>
                                 <p class="mt-1 text-xs {{ $muted }} max-w-md">
-                                    Upload a high-resolution headshot. Supports JPG, PNG. Max 2MB.
+                                    อัปโหลดรูปภาพที่เห็นใบหน้าชัดเจน รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 2MB
                                 </p>
 
                                 <div class="mt-3 flex items-center gap-2">
                                     <label for="photo"
                                            class="inline-flex items-center justify-center rounded-lg bg-primary text-white px-4 py-2 text-xs font-semibold shadow-sm cursor-pointer hover:opacity-95">
-                                        Upload New Image
+                                        อัปโหลดรูปภาพใหม่
                                     </label>
 
                                     <button type="button"
@@ -107,18 +86,16 @@ $roles = [
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
-                                        Remove Photo
+                                        ลบรูปภาพ
                                     </button>
 
-                                    {{-- Change: Hidden input to track if we should delete the file in the database --}}
                                     <input type="hidden" name="delete_photo" id="delete_photo_input" value="0">
                                 </div>
 
-                                {{-- FIXED: Error matches name="photo" --}}
                                 @error('photo')
                                 <div class="mt-2 p-2 bg-red-50 border border-red-100 rounded-lg">
                                     <p class="text-xs text-red-600 font-medium">
-                                        ⚠️ Validation failed. Please re-select your profile photo.
+                                        ⚠️ ไม่สามารถบันทึกรูปภาพได้ กรุณาเลือกรูปใหม่อีกครั้ง
                                     </p>
                                 </div>
                                 @enderror
@@ -129,61 +106,61 @@ $roles = [
 
                 <div class="h-px bg-gray-200"></div>
 
-                {{-- Body --}}
+                {{-- ส่วนที่ 1: ข้อมูลพื้นฐาน --}}
                 <div class="{{ $pad }} space-y-8">
-                    {{-- 1. Basic Info --}}
                     <div>
                         <div class="flex items-center gap-2 mb-4">
                             <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
                                 1
                             </div>
-                            <h2 class="text-base {{ $title }}">Basic Information</h2>
+                            <h2 class="text-base {{ $title }}">ข้อมูลพื้นฐาน</h2>
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-semibold text-gray-600">Full Name</label>
+                                <label class="text-sm font-semibold text-gray-600">ชื่อ-นามสกุล</label>
                                 <input name="name" type="text" class="{{ $input }} mt-2"
-                                       value="{{ old('name', $user->name ?? '') }}">
+                                       value="{{ old('name', $user->name ?? '') }}" placeholder="เช่น สมชาย ใจดี">
                                 @error('name') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-sm font-semibold text-gray-600">University Email</label>
+                                    <label class="text-sm font-semibold text-gray-600">อีเมลมหาวิทยาลัย</label>
                                     <input name="email" type="email" class="{{ $input }} mt-2"
-                                           value="{{ old('email', $user->email ?? '') }}">
+                                           value="{{ old('email', $user->email ?? '') }}" placeholder="example@ku.th">
                                     @error('email') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="text-sm font-semibold text-gray-600">Student / Staff ID</label>
+                                    <label class="text-sm font-semibold text-gray-600">รหัสประจำตัวนิสิต / เจ้าหน้าที่</label>
                                     <input name="university_id" type="text" class="{{ $input }} mt-2"
-                                           value="{{ old('university_id', $user->university_id ?? '') }}">
-                                    @error('university_id') <p
-                                            class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
+                                           value="{{ old('university_id', $user->university_id ?? '') }}" placeholder="รหัสประจำตัว">
+                                    @error('university_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- 2. Role & Access --}}
-                    {{-- Replace section 2. Role & Access with this: --}}
+                    {{-- ส่วนที่ 2: ตำแหน่งและสิทธิ์ --}}
                     <div>
                         <div class="flex items-center gap-2 mb-4">
                             <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
                                 2
                             </div>
-                            <h2 class="text-base {{ $title }}">Work Position</h2>
+                            <h2 class="text-base {{ $title }}">ตำแหน่งและบทบาท</h2>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach(\App\Models\User::getPositionRoleMap() as $pos => $role)
+                            {{-- วนลูป UserPosition Enum เพื่อแสดงภาษาไทยจาก getRole() --}}
+                            @foreach(\App\Enums\UserPosition::cases() as $pos)
                                 <label class="cursor-pointer">
-                                    <input type="radio" name="position" value="{{ $pos }}" class="sr-only peer"
-                                        {{ old('position', $user->position) === $pos ? 'checked' : '' }}>
+                                    <input type="radio" name="position" value="{{ $pos->value }}" class="sr-only peer"
+                                        {{ old('position', $isEdit ? $user->position?->value : '') === $pos->value ? 'checked' : '' }}>
                                     <div class="w-full text-left border rounded-2xl p-4 bg-white shadow-sm transition
                             border-gray-200 hover:border-primary/60
                             peer-checked:border-primary peer-checked:bg-primary/10">
-                                        <div class="text-sm font-semibold text-gray-900">{{ $pos }}</div>
-                                        <div class="text-[10px] text-gray-500 uppercase mt-1">Assigns {{ $role->value }} Role</div>
+                                        <div class="text-sm font-semibold text-gray-900">{{ $pos->label() }}</div>
+                                        <div class="text-[10px] text-gray-500 uppercase mt-1">
+                                            สิทธิ์การใช้งาน: {{ $pos->getRole()->value === 'ADMIN' ? 'ผู้ดูแลระบบ' : ($pos->getRole()->value === 'STUDENT' ? 'ผู้ใช้งานทั่วไป' : 'คณะกรรมการ') }}
+                                        </div>
                                     </div>
                                 </label>
                             @endforeach
@@ -191,32 +168,33 @@ $roles = [
                         @error('position') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- 3. Organization --}}
+                    {{-- ส่วนที่ 3: สังกัดหน่วยงาน --}}
                     <div>
                         <div class="flex items-center gap-2 mb-4">
                             <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
                                 3
                             </div>
-                            <h2 class="text-base {{ $title }}">Organization</h2>
+                            <h2 class="text-base {{ $title }}">สังกัดหน่วยงาน</h2>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="text-sm font-semibold text-gray-600">Faculty</label>
+                                <label class="text-sm font-semibold text-gray-600">คณะ</label>
                                 <select id="faculty" name="faculty" class="{{ $input }} mt-2">
-                                    <option value="">Select faculty</option>
+                                    <option value="">เลือกคณะ</option>
                                     @foreach($faculties as $f)
+                                        {{-- แสดงผลเป็น Label ภาษาไทย แต่เก็บ Value ภาษาอังกฤษ --}}
                                         <option value="{{ $f->value }}"
-                                                {{ old('faculty', $isEdit ? $user->faculty?->value : '') === $f->value ? 'selected' : '' }}>
-                                            {{ $f->value }}
+                                            {{ old('faculty', $isEdit ? $user->faculty?->value : '') === $f->value ? 'selected' : '' }}>
+                                            {{ $f->label() }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('faculty') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-gray-600">Department</label>
+                                <label class="text-sm font-semibold text-gray-600">ภาควิชา</label>
                                 <select id="department" name="department" class="{{ $input }} mt-2" disabled>
-                                    <option value="">Select faculty first</option>
+                                    <option value="">กรุณาเลือกคณะก่อน</option>
                                 </select>
                                 @error('department') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
@@ -224,11 +202,12 @@ $roles = [
                     </div>
                 </div>
 
+                {{-- ส่วนปุ่มยืนยัน --}}
                 <div class="border-t border-gray-200 bg-gray-50 px-6 py-4">
                     <div class="flex justify-end">
                         <button type="submit"
-                                class="rounded-lg bg-primary text-white px-5 py-2 text-sm font-semibold shadow-sm">
-                            {{ $isEdit ? 'Update User Profile' : 'Save User Profile' }}
+                                class="rounded-lg bg-primary text-white px-5 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition">
+                            {{ $isEdit ? 'บันทึกการแก้ไข' : 'สร้างผู้ใช้งาน' }}
                         </button>
                     </div>
                 </div>
@@ -238,25 +217,26 @@ $roles = [
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Faculty & Department Logic ---
+            // --- ระบบจัดการ คณะ และ ภาควิชา ---
             const facultySelect = document.getElementById('faculty');
             const deptSelect = document.getElementById('department');
 
             async function loadDepartments(selectedFaculty, selectedDept = '') {
                 if (!selectedFaculty) {
-                    deptSelect.innerHTML = '<option value="">Select faculty first</option>';
+                    deptSelect.innerHTML = '<option value="">กรุณาเลือกคณะก่อน</option>';
                     deptSelect.disabled = true;
                     return;
                 }
 
+                // ดึงข้อมูลภาควิชาจาก API โดยส่งคณะไปเป็น Parameter
                 const res = await fetch(`/api/departments?faculty=${encodeURIComponent(selectedFaculty)}`);
                 const data = await res.json();
 
-                deptSelect.innerHTML = '<option value="">Select department</option>';
+                deptSelect.innerHTML = '<option value="">เลือกภาควิชา</option>';
                 data.forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.value;
-                    opt.textContent = d.label;
+                    opt.textContent = d.label; // API ควรคืนค่า label เป็นภาษาไทย
                     if (selectedDept === d.value) opt.selected = true;
                     deptSelect.appendChild(opt);
                 });
@@ -265,15 +245,16 @@ $roles = [
 
             facultySelect.addEventListener('change', () => loadDepartments(facultySelect.value));
 
+            // ตรวจสอบค่าเริ่มต้นตอนโหลดหน้าเว็บ (สำหรับกรณี Edit หรือ Validation Error)
             const initialFaculty = facultySelect.value;
             const initialDept = @json(old('department', $isEdit ? $user->department?->value : ''));
             if (initialFaculty) loadDepartments(initialFaculty, initialDept);
 
-// --- Photo Preview & Remove Logic ---
+            // --- ระบบแสดงตัวอย่างรูปภาพและลบรูป ---
             const photoInput = document.getElementById('photo');
             const removeBtn = document.getElementById('remove-photo-btn');
             const deleteInput = document.getElementById('delete_photo_input');
-            const container = document.getElementById('photoPreviewBox'); // ✅ ชัวร์
+            const container = document.getElementById('photoPreviewBox');
 
             const placeholderSvg = `
     <svg class="h-8 w-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
