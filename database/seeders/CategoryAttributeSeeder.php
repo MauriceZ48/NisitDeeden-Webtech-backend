@@ -10,32 +10,30 @@ class CategoryAttributeSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get ALL categories across ALL campuses
         $allCategories = ApplicationCategory::all();
 
         foreach ($allCategories as $category) {
-            // Check the name and assign the correct attributes
-            if (str_contains($category->name, 'Activity')) {
+            if (str_contains($category->name, 'กิจกรรม')) {
                 $this->createAttributes($category->id, [
-                    ['label' => 'Organization Name', 'type' => 'text', 'is_required' => true],
-                    ['label' => 'Co-curricular Activity Transcript', 'type' => 'file', 'is_required' => true],
-                    ['label' => 'Project Documents', 'type' => 'file', 'is_required' => true],
-                    ['label' => 'Activity Photos', 'type' => 'file', 'is_required' => true],
+                    ['label' => 'ชื่อองค์กร / ชมรม / สโมสร', 'type' => 'text', 'is_required' => true],
+                    ['label' => 'ทรานสคริปต์กิจกรรมเสริมหลักสูตร (PDF)', 'type' => 'file', 'is_required' => true],
+                    ['label' => 'เอกสารสรุปโครงการที่เข้าร่วม', 'type' => 'file', 'is_required' => true],
+                    ['label' => 'ภาพถ่ายขณะปฏิบัติกิจกรรม', 'type' => 'file', 'is_required' => true],
                 ]);
             }
 
-            if (str_contains($category->name, 'Creativity')) {
+            if (str_contains($category->name, 'ความคิดสร้างสรรค์')) {
                 $this->createAttributes($category->id, [
-                    ['label' => 'Project/Innovation Name', 'type' => 'text', 'is_required' => true],
-                    ['label' => 'Evidence of Award (Certificate/Results)', 'type' => 'file', 'is_required' => true],
-                    ['label' => 'Project Portfolio', 'type' => 'textarea', 'is_required' => true],
+                    ['label' => 'ชื่อโครงการ / นวัตกรรม / ผลงาน', 'type' => 'text', 'is_required' => true],
+                    ['label' => 'หลักฐานการได้รับรางวัล (เกียรติบัตร / ผลการตัดสิน)', 'type' => 'file', 'is_required' => true],
+                    ['label' => 'แฟ้มสะสมผลงาน (Portfolio)', 'type' => 'textarea', 'is_required' => true],
                 ]);
             }
 
-            if (str_contains($category->name, 'Behavior')) {
+            if (str_contains($category->name, 'ความประพฤติ')) {
                 $this->createAttributes($category->id, [
-                    ['label' => 'Behavior Certificate Title', 'type' => 'text', 'is_required' => false],
-                    ['label' => 'Teacher Recommendation Form (Signed PDF)', 'type' => 'file', 'is_required' => true],
+                    ['label' => 'ชื่อรางวัลด้านความประพฤติที่เคยได้รับ (ถ้ามี)', 'type' => 'text', 'is_required' => false],
+                    ['label' => 'หนังสือรับรองจากอาจารย์ที่ปรึกษา (PDF พร้อมลายเซ็น)', 'type' => 'file', 'is_required' => true],
                 ]);
             }
         }

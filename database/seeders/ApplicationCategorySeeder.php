@@ -9,39 +9,35 @@ use Illuminate\Support\Str;
 
 class ApplicationCategorySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        // เปลี่ยนชื่อและคำอธิบายเป็นภาษาไทย พร้อมเพิ่ม slug_base อิงภาษาอังกฤษ
         $categories = [
             [
-                'name' => 'Activity',
-                'description' => 'Leadership, community service, and extracurricular activities.',
+                'name' => 'ด้านกิจกรรมนิสิต',
+                'description' => 'ความเป็นผู้นำ การบำเพ็ญประโยชน์ และการมีส่วนร่วมในกิจกรรมเสริมหลักสูตร',
                 'icon' => 'lucide:award',
             ],
             [
-                'name' => 'Creativity',
-                'description' => 'Arts, innovation, and creative problem-solving.',
+                'name' => 'ด้านความคิดสร้างสรรค์',
+                'description' => 'ผลงานศิลปะ นวัตกรรม และการแก้ปัญหาอย่างสร้างสรรค์',
                 'icon' => 'lucide:lightbulb',
             ],
             [
-                'name' => 'Behavior',
-                'description' => 'Ethics, discipline, and outstanding conduct.',
+                'name' => 'ด้านความประพฤติ',
+                'description' => 'จริยธรรม ระเบียบวินัย และการเป็นแบบอย่างที่ดีเด่น',
                 'icon' => 'lucide:shield-check',
             ],
         ];
 
-        // Loop through each campus
         foreach (Domain::cases() as $domain) {
             foreach ($categories as $category) {
                 ApplicationCategory::create([
                     'name'        => $category['name'],
-                    'slug'        => Str::slug($category['name'] . '-' . $domain->value),
                     'description' => $category['description'],
                     'icon'        => $category['icon'],
                     'is_active'   => true,
-                    'domain'      => $domain, // Use the Enum object directly
+                    'domain'      => $domain,
                 ]);
             }
         }

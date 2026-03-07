@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create('application_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug');
             $table->string('description')->nullable();
             $table->string('icon')->nullable();
             $table->boolean('is_active')->default(true);
@@ -23,7 +22,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->unique(['domain', 'slug']);
+            $table->unique(['domain', 'name']);
         });
     }
 

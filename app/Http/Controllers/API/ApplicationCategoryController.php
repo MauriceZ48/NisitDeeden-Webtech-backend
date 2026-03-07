@@ -68,10 +68,8 @@ class ApplicationCategoryController extends Controller
 
         // 3. Database Transaction
         return DB::transaction(function () use ($validated, $domain, $request) {
-            $customSlug = Str::slug($validated['name'] . '-' . $domain->value);
             $category = $this->categoryRepo->create([
                 'name'        => $validated['name'],
-                'slug'        => $customSlug,
                 'icon'        => $validated['icon'],
                 'description' => $validated['description'],
                 'domain'      => $domain,
@@ -99,11 +97,8 @@ class ApplicationCategoryController extends Controller
             return response()->json(['message' => 'Category already in use'], 422);
         }
 
-        $request->merge(['slug' => Str::slug($request->name)]);
-
         $validated = $request->validate([
             'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
-            'slug' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'attributes' => 'nullable|array',
@@ -114,7 +109,6 @@ class ApplicationCategoryController extends Controller
 
         $applicationCategory->update([
             'name' => $request->name,
-            'slug' => Str::slug($request->name . '-' . $applicationCategory->domain->value),
             'icon' => $request->icon,
             'description' => $request->description,
         ]);

@@ -21,12 +21,6 @@ class ApplicationCategoryRepository{
         $this->model = $model;
     }
 
-    public function findCategoryBySlug($slug) {
-        return ApplicationCategory::with('attributes')
-            ->where('slug', $slug)
-            ->where('domain', $this->getDomain())
-            ->first();
-    }
 
     public function toggleStatus(ApplicationCategory $category)
     {

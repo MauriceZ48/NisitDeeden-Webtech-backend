@@ -13,7 +13,6 @@ class ApplicationCategory extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'name',
-        'slug',
         'description',
         'icon',
         'is_active',
@@ -34,10 +33,6 @@ class ApplicationCategory extends Model
         return $this->hasMany(CategoryAttribute::class);
     }
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
 
     public function hasApplications(): bool
     {

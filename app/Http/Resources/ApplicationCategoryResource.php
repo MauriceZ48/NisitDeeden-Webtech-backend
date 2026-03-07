@@ -17,7 +17,6 @@ class ApplicationCategoryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'slug' => $this->slug,
             'description' => $this->description,
             'icon' => $this->icon,
             'is_active' => (bool) $this->is_active,
