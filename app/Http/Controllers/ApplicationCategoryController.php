@@ -38,6 +38,7 @@ class ApplicationCategoryController extends Controller
      */
     public function store(Request $request)
     {
+//        dd($request->all());
         $domain = auth()->user()->domain;
         // 1. Generate and merge the slug
         $request->merge(['slug' => Str::slug($request->name)]);
@@ -45,12 +46,6 @@ class ApplicationCategoryController extends Controller
         // 2. Strict Validation Firewall
         $validated = $request->validate([
             'name' => [
-                'required',
-                Rule::unique('application_categories')
-                    ->where('domain', $domain)
-                    ->whereNull('deleted_at')
-            ],
-            'slug' => [
                 'required',
                 Rule::unique('application_categories')
                     ->where('domain', $domain)
@@ -74,11 +69,9 @@ class ApplicationCategoryController extends Controller
 
         // 3. Database Transaction
         DB::transaction(function () use ($request, $validated, $domain) {
-            $customSlug = Str::slug($validated['name'] . '-' . $domain->value);
 
             $category = $this->categoryRepo->create([
                 'name' => $request->name,
-                'slug' => $customSlug,
                 'icon' => $request->icon,
                 'description' => $request->description,
                 'domain' => auth()->user()->domain,
@@ -96,18 +89,18 @@ class ApplicationCategoryController extends Controller
         });
 
         return redirect()->route('categories.index')
-            ->with('success', 'Category created successfully!');
+            ->with('success', 'สร้างประเภทรางวัลสำเร็จแล้ว!');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $slug)
+    public function show(ApplicationCategory $applicationCategory)
     {
-        $category = $this->categoryRepo->findCategoryBySlug($slug);
+
         return view('categories.show', [
-            'category' => $category,
-            'attributes' => $category->attributes
+            'category' => $applicationCategory,
+            'attributes' => $applicationCategory->attributes
         ]);
     }
 
@@ -116,7 +109,10 @@ class ApplicationCategoryController extends Controller
      */
     public function edit(ApplicationCategory $applicationCategory)
     {
-        //
+
+        return view('categories.edit', [
+            'category' => $applicationCategory,
+        ]);
     }
 
     /**
@@ -124,7 +120,18 @@ class ApplicationCategoryController extends Controller
      */
     public function update(Request $request, ApplicationCategory $applicationCategory)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
+            'icon' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+        $applicationCategory->update([
+            'name' => $request->name,
+            'icon' => $request->icon,
+            'description' => $request->description,
+        ]);
+        return redirect()->route('categories.show', $applicationCategory)
+            ->with('success', 'อัปเดตข้อมูลประเภทรางวัลเรียบร้อยแล้ว');
     }
 
     public function toggleStatus(ApplicationCategory $applicationCategory){
@@ -138,13 +145,12 @@ class ApplicationCategoryController extends Controller
     public function destroy(ApplicationCategory $applicationCategory)
     {
         if ($applicationCategory->hasApplications()) {
-            $applicationCategory->delete();
-            return back()->with('warning', 'Category soft-deleted . ' . $applicationCategory->countApplications() . ' applications is affected.');
+            $applicationCategory->delete(); // Soft Delete
+            return back()->with('warning', 'ลบประเภทรางวัลแบบชั่วคราว มีผู้สมัครได้รับผลกระทบ ' . $applicationCategory->countApplications() . ' รายการ');
         }
 
+        $applicationCategory->forceDelete(); // Hard Delete
 
-        $applicationCategory->forceDelete();
-
-        return redirect()->route('categories.index')->with('success', 'Category permanently removed.');
+        return redirect()->route('categories.index')->with('success', 'ลบประเภทรางวัลออกจากระบบอย่างถาวรแล้ว');
     }
 }

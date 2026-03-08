@@ -16,10 +16,8 @@ class ApplicationCategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->unique()->word();
         return [
-            'name' => $this->faker->name(),
-            'slug' => $this->faker->slug(),
+            'name' =>'รางวัลด้าน ' . $this->faker->unique()->word(),
             'description' => $this->faker->text(),
             'icon' => 'category_icons',
             'is_active' => $this->faker->boolean(),
