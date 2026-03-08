@@ -5,6 +5,7 @@ use App\Http\Controllers\API\ApplicationController;
 use App\Http\Controllers\API\ApplicationRoundController;
 use App\Http\Controllers\API\Auth\OAuthController;
 use App\Http\Controllers\API\Auth\AuthenticateController;
+use App\Http\Controllers\API\MetaController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,9 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 
     //User
     Route::get('users/all-domain', [UserController::class, 'allUsers'])->name('user.allDomain');
+    Route::get('/meta/faculties', [MetaController::class, 'faculties']);
+    Route::get('/meta/positions', [MetaController::class, 'positions']);
+    Route::get('/meta/departments', [MetaController::class, 'departments']);
 });
 
 // 2. Routes that REQUIRE authentication
