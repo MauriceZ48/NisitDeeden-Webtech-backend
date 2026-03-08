@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationController extends Controller
@@ -35,29 +36,41 @@ class ApplicationController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
-        $query = Application::with(['user', 'applicationRound', 'applicationCategory']);
+        $status = $request->query('status'); // 👈 รับค่า Filter Status
+        $domain = auth()->user()->domain;
 
+        // 1. สร้าง Query Builder
+        $query = Application::with(['user', 'applicationRound', 'applicationCategory'])
+            ->where('domain', $domain);
+
+        // 2. กรองข้อมูลตามคำค้นหา (Search)
         if ($q !== '') {
             $query->where(function ($qq) use ($q) {
                 $qq->where('id', 'like', "%{$q}%")
-                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$q}%"))
+                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%")) // 👈 เพิ่มการค้นหาด้วย Email ตรงนี้
                     ->orWhereHas('applicationCategory', fn($c) => $c->where('name', 'like', "%{$q}%"));
             });
         }
 
-        $domain = auth()->user()->domain;
-        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated();
+        // 3. กรองข้อมูลตามสถานะ (Status Filter)
+        if ($status) {
+            $query->where('status', $status);
+        }
 
+        // 4. ดึงข้อมูลแบบแบ่งหน้า เรียงตามวันที่อัปเดตล่าสุด
+        $applications = $query->latest('updated_at')->paginate(7);
 
-        // Dynamic counts based on your new multi-step logic
+        // 5. คำนวณสรุปผล (Summary)
         $totalCount = Application::where('domain', $domain)->count();
-        $pendingCount = $this->applicationRepo->countByStatus(ApplicationStatus::PENDING);
+        $pendingCount = $this->applicationRepo->countByStatus(\App\Enums\ApplicationStatus::PENDING);
         $approvedCount = Application::where('domain', $domain)
-            ->where('status', '!=', ApplicationStatus::PENDING)
-            ->where('status', '!=', ApplicationStatus::REJECTED)
+            ->where('status', '!=', \App\Enums\ApplicationStatus::PENDING)
+            ->where('status', '!=', \App\Enums\ApplicationStatus::REJECTED)
             ->count();
-        $rejectedCount = $this->applicationRepo->countByStatus(ApplicationStatus::REJECTED);
+        $rejectedCount = $this->applicationRepo->countByStatus(\App\Enums\ApplicationStatus::REJECTED);
 
+        // ถ้าเปิดหน้าเว็บปกติ (Refresh) ให้โหลดหน้าเต็ม
         return view('applications.index', compact('applications', 'totalCount', 'pendingCount', 'approvedCount', 'rejectedCount'));
     }
 
@@ -74,8 +87,20 @@ class ApplicationController extends Controller
 
         $categories = $this->categoryRepo->getActiveCategoriesInDomain();
 
+        $formattedUsers = $users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'university_id' => $user->university_id,
+                'profile_url' => $user->profile_url,
+                'faculty' => $user->faculty ? $user->faculty->label() : '-',
+                'department' => $user->department ? $user->department->label() : '-',
+            ];
+        });
+
         return view('applications.create', [
-            'users' => $users,
+            'users' => $formattedUsers,
             'categories' => $categories,
         ]);
     }
@@ -226,10 +251,11 @@ class ApplicationController extends Controller
      */
     public function update(Request $request, Application $application)
     {
+//        dd($request->all());
         Gate::authorize('update', $application);
 
         $request->validate([
-            'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
+            'status' => ['nullable', new Enum(ApplicationStatus::class)],
             'rejection_reason' => ['nullable', 'string', 'max:1000'],
             'new_attachments.*' => ['nullable', 'file', 'max:5120'],
             'delete_attachments.*' => ['nullable', 'exists:attachments,id'],
@@ -249,7 +275,7 @@ class ApplicationController extends Controller
         // 3. Update Dynamic Attributes
         if ($request->has('values')) {
             foreach ($request->values as $id => $val) {
-                    $this->applicationRepo->updateValue($application, $id, $val);
+                    $this->applicationRepo->updateValueForBackend($application, $id, $val);
             }
         }
 
@@ -260,7 +286,10 @@ class ApplicationController extends Controller
             }
         }
 
-        return redirect()->route('applications.show', ['application' => $application])->with('success', 'Updated successfully!');
+        $application->touch();
+
+        return redirect()->route('applications.show', ['application' => $application])
+            ->with('success', 'บันทึกการแก้ไขเรียบร้อยแล้ว!');
     }
 
     /**

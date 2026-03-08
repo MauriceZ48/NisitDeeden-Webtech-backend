@@ -42,13 +42,14 @@ enum ApplicationStatus: string
     public function label(): string
     {
         return match($this) {
-            self::PENDING => 'Pending',
-            self::REJECTED => 'Rejected',
-            self::APPROVED_BY_DEPARTMENT => 'Dept Approved',
-            self::APPROVED_BY_ASSOCIATE_DEAN => 'Dean Office Approved',
-            self::APPROVED_BY_COMMITTEE => 'Committee Approved',
-            self::APPROVED_BY_DEAN => 'Faculty Approved',
+            self::PENDING => 'รอดำเนินการ',
+            self::REJECTED => 'ไม่ผ่านการพิจารณา',
+            self::APPROVED_BY_DEPARTMENT => 'ผ่านการพิจารณาโดยหัวหน้าภาควิชา',
+            self::APPROVED_BY_ASSOCIATE_DEAN => 'ผ่านการพิจารณาโดยรองคณบดี',
+            self::APPROVED_BY_DEAN => 'ผ่านการพิจารณาโดยคณบดี',
+            self::APPROVED_BY_COMMITTEE => 'ผ่านการพิจารณาโดยคณะกรรมการ',
         };
     }
+
 
 }

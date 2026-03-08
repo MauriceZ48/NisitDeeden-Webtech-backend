@@ -69,6 +69,26 @@ class ApplicationRepository
         return $attributeValue->update(['value' => $newValue ?? '']);
     }
 
+    public function updateValueForBackend(Application $application, $id, $newValue)
+    {
+        $attributeValue = $application->attributeValues()
+            ->with('attribute')
+            ->findOrFail($id);
+
+        // Handle File Replacement Logic
+        if ($newValue instanceof UploadedFile) {
+            // 1. Delete old file if it exists
+            if ($attributeValue->attribute?->type === 'file' && $attributeValue->value) {
+                Storage::disk('public')->delete($attributeValue->value);
+            }
+
+            // 2. Store new file
+            $newValue = $newValue->store('applications/dynamic_submissions', 'public');
+        }
+
+        return $attributeValue->update(['value' => $newValue ?? '']);
+    }
+
     public function deleteAttachments(array $attachmentIds, int $applicationId)
     {
         $attachments = Attachment::whereIn('id', $attachmentIds)
