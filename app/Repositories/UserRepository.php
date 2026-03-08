@@ -56,4 +56,9 @@ class UserRepository
         return $this->model::query()->findOrFail($id);
     }
 
+    public function createUser(array $data): User
+    {
+        return $this->model::query()->create($data);
+    }
+
 }

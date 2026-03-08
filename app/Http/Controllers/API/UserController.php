@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Department;
+use App\Enums\UserPosition;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -15,8 +21,8 @@ class UserController extends Controller
      * Display a listing of the resource.
      */
     public function __construct(
-        private UserRepository $userRepo)
-    {}
+        private UserRepository $userRepo
+    ) {}
 
     public function index()
     {
@@ -36,12 +42,39 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users,email',
+            'university_id' => 'nullable|string|max:50|unique:users,university_id',
+            'department'    => ['required', new Enum(Department::class)],
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'photo'         => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $department = Department::from($validated['department']);
+        $position = UserPosition::from($validated['position']);
+
+        $data = [
+            'name'          => $validated['name'],
+            'email'         => $validated['email'],
+            'password'      => Hash::make('password'),
+            'university_id' => $validated['university_id'] ?? null,
+            'department'    => $department,
+            'faculty'       => $department->faculty(),
+            'position'      => $position,
+            'role'          => $position->getRole(),
+            'domain'        => auth()->user()->domain,
+        ];
+
+        if ($request->hasFile('photo')) {
+            $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
+        }
+
+        $user = $this->userRepo->createUser($data);
+
+        return (new UserResource($user))->response()->setStatusCode(201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(User $user)
     {
         if ($user->domain !== auth()->user()->domain) {

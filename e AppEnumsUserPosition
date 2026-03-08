@@ -1,0 +1,18 @@
+[90m= [39m[34;4mApp\Models\User[39;24m {#6701
+    [34mprofile_path[39m: [36mnull[39m,
+    [34mid[39m: [35m2[39m,
+    [34mname[39m: "[32mสแตมป์ พิชา[39m",
+    [34memail[39m: "[32mstamp@example.com[39m",
+    [34memail_verified_at[39m: "[32m2026-03-07 13:23:20[39m",
+    #[33mpassword[39m: "[32m$2y$12$eG5l0pDwHfaZ4g1r8ZZqIOdHdovvcTlbYWC8Aa3FV.YkCyrgFxcv.[39m",
+    [34muniversity_id[39m: "[32mID-62050[39m",
+    [34mfaculty[39m: "[32mScience[39m",
+    [34mdepartment[39m: "[32mComputer Science[39m",
+    [34mrole[39m: "[32mSTUDENT[39m",
+    [34mposition[39m: "[32mstudent[39m",
+    #[33mremember_token[39m: "[32m5JQkJhMASr[39m",
+    [34mcreated_at[39m: "[32m2026-03-07 13:23:20[39m",
+    [34mupdated_at[39m: "[32m2026-03-07 13:23:20[39m",
+    [34mdomain[39m: "[32mBangkhen[39m",
+  }
+

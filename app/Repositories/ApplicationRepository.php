@@ -156,6 +156,8 @@ class ApplicationRepository
             'applicationCategory'
         ])
             ->where('domain', $this->getDomain())
+            ->latest()
+            ->with(['applicationCategory', 'applicationRound', 'user'])
             ->where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
             ->whereHas('user', function ($query) use ($user) {
                 $query->where('faculty', $user->faculty);
