@@ -5,8 +5,9 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: nisit-deeden-nginx
+    app: nisit-deeden-laravel
   ports:
     - protocol: TCP
       port: 80
+      nodePort: 80
       targetPort: 9000

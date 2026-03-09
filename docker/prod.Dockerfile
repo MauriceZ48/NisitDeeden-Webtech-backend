@@ -1,26 +1,24 @@
 FROM composer:2 AS vendor
 
 WORKDIR /app
-
-COPY . .
+COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
-
+    --optimize-autoloader \
+    --no-scripts
 
 FROM node:20 AS frontend
 
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm install
 
 COPY . .
 RUN npm run build
 
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
     nginx \
@@ -49,7 +47,11 @@ COPY --from=frontend /app/public/build ./public/build
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 
+COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY docker/entrypoint.sh /entrypoint.sh
+
 RUN chmod +x /entrypoint.sh
+
+EXPOSE 80
 
 CMD ["/entrypoint.sh"]
