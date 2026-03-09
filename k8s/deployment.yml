@@ -17,4 +17,4 @@ spec:
           image: ${DOCKER_USERNAME}/nisit-deeden-laravel:latest
           ports:
             - containerPort: 9000
-              imagePullPolicy: Always
+          imagePullPolicy: Always
