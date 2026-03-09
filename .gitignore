@@ -278,4 +278,4 @@ dist
 **/.DS_Store
 
 # vault
-vault/file
+docker/vault/file
