@@ -68,6 +68,7 @@ jobs:
         run: |
           envsubst < k8s/deployment.yml | kubectl apply -f -
           kubectl apply -f k8s/service.yml
+          kubectl apply -f k8s/ingress.yml
 
           kubectl rollout restart deployment/nisit-deeden-laravel
           kubectl rollout status deployment/nisit-deeden-laravel
