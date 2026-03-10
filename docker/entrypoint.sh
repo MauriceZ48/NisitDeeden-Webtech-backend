@@ -1,4 +1,5 @@
 #!/bin/sh
-php artisan migrate:fresh --seed
+php artisan migrate --force
 php artisan storage:link
+
 php-fpm

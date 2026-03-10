@@ -64,6 +64,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         shell: bash
         run: |
+          kubectl apply -f k8s/nginx-config.yaml
           envsubst < k8s/deployment.yml | kubectl apply -f -
           kubectl apply -f k8s/service.yml
 
