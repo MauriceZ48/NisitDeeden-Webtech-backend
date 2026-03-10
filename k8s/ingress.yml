@@ -6,7 +6,7 @@ metadata:
   #   nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-    - host: api.nisit-deeden.k8s.local
+    - host: api.nisit-deeden.k8s.dev
       http:
         paths:
           - path: /
@@ -17,7 +17,7 @@ spec:
                 port:
                   number: 80
 
-    - host: user.nisit-deeden.k8s.local
+    - host: user.nisit-deeden.k8s.dev
       http:
         paths:
           - path: /
