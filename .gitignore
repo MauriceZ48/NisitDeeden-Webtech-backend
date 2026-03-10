@@ -279,3 +279,5 @@ dist
 
 # vault
 docker/vault/file
+
+actions-runner
