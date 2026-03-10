@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: nisit-deeden-backend
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: nisit-deeden-laravel
   ports:
