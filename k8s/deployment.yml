@@ -13,8 +13,25 @@ spec:
         app: nisit-deeden-laravel
     spec:
       containers:
-        - name: nisit-deeden-laravel
+        - name: app
           image: ${DOCKER_USERNAME}/nisit-deeden-laravel:latest
+          envFrom:
+            - secretRef:
+                name: laravel-env
           ports:
             - containerPort: 9000
           imagePullPolicy: Always
+
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config

@@ -18,6 +18,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+
 FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \

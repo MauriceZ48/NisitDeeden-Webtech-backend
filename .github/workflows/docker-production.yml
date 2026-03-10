@@ -1,7 +1,7 @@
 name: Docker Image Production
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
 
 jobs:
   build-and-push:
@@ -48,6 +48,17 @@ jobs:
           kubectl config current-context
           kubectl get nodes
 
+      - name: Setup env
+        run: |
+          echo "${{ secrets.LARAVEL_ENV }}" > .env
+
+      - name: Create k8s secret
+        run: |
+          kubectl create secret generic laravel-env \
+            --from-env-file=.env \
+            --namespace=default \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy to Kubernetes
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -58,3 +69,6 @@ jobs:
 
           kubectl rollout restart deployment/nisit-deeden-laravel
           kubectl rollout status deployment/nisit-deeden-laravel
+
+      # - name: Cleanup env
+      #   run: rm -f .env
