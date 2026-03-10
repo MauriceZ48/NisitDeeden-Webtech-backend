@@ -73,5 +73,5 @@ jobs:
           kubectl rollout restart deployment/nisit-deeden-laravel
           kubectl rollout status deployment/nisit-deeden-laravel
 
-      # - name: Cleanup env
-      #   run: rm -f .env
+      - name: Cleanup env
+        run: rm -f .env
