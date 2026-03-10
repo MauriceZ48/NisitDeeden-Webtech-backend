@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Domain;
 use App\Models\ApplicationCategory;
 use App\Enums\ApplicationStatus;
 use App\Enums\UserRole;
@@ -35,6 +36,10 @@ class ApplicationController extends Controller
      */
     public function index(Request $request)
     {
+        if (auth()->user()->domain === Domain::ALL) {
+            abort(403, 'Admin ส่วนกลาง ไม่มีสิทธิ์เข้าถึงหน้ารายการใบสมัคร');
+        }
+
         $q = trim((string) $request->query('q', ''));
         $status = $request->query('status'); // 👈 รับค่า Filter Status
         $domain = auth()->user()->domain;
@@ -85,7 +90,7 @@ class ApplicationController extends Controller
 
         $users = $this->userRepo->getStudentsForSelection();
 
-        $categories = $this->categoryRepo->getActiveCategoriesInDomain();
+        $categories = $this->categoryRepo->getActiveCategoriesInDomainAndALL();
 
         $formattedUsers = $users->map(function ($user) {
             return [

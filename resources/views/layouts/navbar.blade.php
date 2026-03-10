@@ -17,14 +17,19 @@
 
             @php
                 use App\Enums\UserRole;
+                use App\Enums\Domain; // 🌟 Import Domain เข้ามาใช้งาน
 
-                $role = auth()->check() ? auth()->user()->role : null; // enum or null
-                $isAdmin = $role === UserRole::ADMIN;
+                $user = auth()->check() ? auth()->user() : null;
+                $isAdmin = $user && $user->role === UserRole::ADMIN;
+
+                // 🌟 เช็คว่าเป็น "แอดมินวิทยาเขต" (ไม่ใช่ส่วนกลาง) ใช่หรือไม่
+                $isCampusAdmin = $isAdmin && $user->domain !== Domain::ALL;
             @endphp
 
-            {{-- Center links (แสดงเฉพาะบนจอคอมพิวเตอร์) --}}
+            {{-- Center links (แสดงเฉพาะบนจอคอมพิวเตอร์ และแสดงเฉพาะแอดมินวิทยาเขต) --}}
             <nav class="hidden md:flex items-center gap-1">
-                @if($isAdmin)
+                {{-- 🌟 เปลี่ยนจาก $isAdmin เป็น $isCampusAdmin --}}
+                @if($isCampusAdmin)
                     <a href="{{ route('applications.index') }}"
                        class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                         ใบสมัคร
@@ -106,15 +111,15 @@
                                 <div class="text-xs text-slate-500 truncate">{{ auth()->user()->email }}</div>
                             </div>
 
-                            {{-- 🌟 เมนูบนมือถือ (จะแสดงใน Dropdown เฉพาะตอนเปิดบนมือถือเท่านั้น) 🌟 --}}
-                            <div class="block md:hidden border-b border-slate-100 py-1">
-                                @if($isAdmin)
+                            {{-- 🌟 เมนูบนมือถือ (เปลี่ยนจาก $isAdmin เป็น $isCampusAdmin เช่นกัน) 🌟 --}}
+                            @if($isCampusAdmin)
+                                <div class="block md:hidden border-b border-slate-100 py-1">
                                     <a href="{{ route('applications.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition whitespace-nowrap">ใบสมัคร</a>
                                     <a href="{{ route('users.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition whitespace-nowrap">ผู้ใช้งาน</a>
                                     <a href="{{ route('rounds.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition whitespace-nowrap">รอบการรับสมัคร</a>
                                     <a href="{{ route('categories.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition whitespace-nowrap">ประเภทรางวัล</a>
-                                @endif
-                            </div>
+                                </div>
+                            @endif
 
                             {{-- ปุ่มออกจากระบบ --}}
                             <form method="POST" action="{{ route('logout') }}" class="p-2 bg-white">

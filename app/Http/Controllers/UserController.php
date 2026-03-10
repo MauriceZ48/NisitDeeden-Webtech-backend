@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Department;
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\UserPosition;
 use App\Enums\UserRole;
@@ -26,6 +27,10 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        if (auth()->user()->domain === Domain::ALL) {
+            abort(403, 'Admin ส่วนกลาง ไม่มีสิทธิ์เข้าถึงหน้ารายการใบสมัคร');
+        }
+
         $q = $request->string('q')->toString();
         $role = $request->string('role')->toString();
         $selectedId = $request->integer('selected');

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\Domain;
 use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\ApplicationCategory;
@@ -32,8 +33,7 @@ class ApplicationSeeder extends Seeder
         foreach ($students as $student) {
             // Only pick rounds that belong to the SAME domain as the student
             $matchingRounds = $rounds->where('domain', $student->domain);
-            $matchingCategories = $categories->where('domain', $student->domain);
-
+            $matchingCategories = $categories->whereIn('domain', [$student->domain, Domain::ALL]);
             if ($matchingRounds->isEmpty() || $matchingCategories->isEmpty()){
                 continue;
             }
