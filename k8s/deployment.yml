@@ -19,19 +19,5 @@ spec:
             - secretRef:
                 name: laravel-env
           ports:
-            - containerPort: 9000
-          imagePullPolicy: Always
-
-        - name: nginx
-          image: nginx:alpine
-          ports:
             - containerPort: 80
-
-          volumeMounts:
-            - name: nginx-config
-              mountPath: /etc/nginx/conf.d
-
-      volumes:
-        - name: nginx-config
-          configMap:
-            name: nginx-config
+          imagePullPolicy: Always

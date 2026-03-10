@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nisit-deeden-nginx
+  name: nisit-deeden-backend
 spec:
   type: NodePort
   selector:
