@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,5 +36,7 @@ class AppServiceProvider extends ServiceProvider
                 ($this->year + 543) . ', ' .
                 $this->format('H:i') . ' น.';
         });
+
+        URL::forceScheme('https');
     }
 }
