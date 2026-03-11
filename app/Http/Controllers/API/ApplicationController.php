@@ -89,15 +89,18 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
-    public function applicationsPendingForCommitteePosition()
+    public function applicationsPendingForCommitteePosition(Request $request)
     {
         $user = auth()->user();
+        $categoryId = $request->input('category_id');
+        $department = $request->input('department');
+        $faculty = $request->input('faculty');
 
         $applications = match ($user->position) {
-            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment(),
-            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean(),
-            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean(),
-            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee(),
+            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment($categoryId),
+            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean($categoryId,  $department),
+            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean($categoryId,  $department),
+            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee($categoryId, $department, $faculty),
 
             default => collect(),
         };

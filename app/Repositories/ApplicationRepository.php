@@ -146,7 +146,7 @@ class ApplicationRepository
         ]);
     }
 
-    public function getPendingForHeadOfDepartment()
+    public function getPendingForHeadOfDepartment(?int $categoryId = null)
     {
         $user = auth()->user();
 
@@ -163,10 +163,13 @@ class ApplicationRepository
                 $query->where('department', $user->department);
             })
             ->latest()
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
             ->get();
     }
 
-    public function getPendingForAssociateDean()
+    public function getPendingForAssociateDean(?int $categoryId = null, ?string $department = null)
     {
         $user = auth()->user();
 
@@ -179,14 +182,21 @@ class ApplicationRepository
             ->latest()
             ->with(['applicationCategory', 'applicationRound', 'user'])
             ->where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
-            ->whereHas('user', function ($query) use ($user) {
+            ->whereHas('user', function ($query) use ($user, $department) {
                 $query->where('faculty', $user->faculty);
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
             })
             ->latest()
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
             ->get();
     }
 
-    public function getPendingForDean()
+    public function getPendingForDean(?int $categoryId = null, ?string $department = null)
     {
         $user = auth()->user();
 
@@ -197,16 +207,41 @@ class ApplicationRepository
         ])
             ->where('domain', $this->getDomain())
             ->where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)
-            ->whereHas('user', function ($query) use ($user) {
+            ->whereHas('user', function ($query) use ($user, $department) {
                 $query->where('faculty', $user->faculty);
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
+
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
             })
             ->get();
     }
 
-    public function getPendingForCommittee()
+    public function getPendingForCommittee(?int $categoryId = null, ?string $department = null, ?string $faculty = null)
     {
-        return Application::where('status', ApplicationStatus::APPROVED_BY_DEAN)
+        return Application::with([
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
+            ->where('status', ApplicationStatus::APPROVED_BY_DEAN)
             ->where('domain', $this->getDomain())
+            ->whereHas('user', function ($query) use ($department, $faculty) {
+                if ($faculty) {
+                    $query->where('faculty', $faculty);
+                }
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
             ->get();
     }
 

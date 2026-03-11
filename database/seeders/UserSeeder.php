@@ -173,6 +173,14 @@ class UserSeeder extends Seeder
             'domain' => Domain::BANGKHEN,
         ]);
 
+        User::factory()->create([
+            'name' => 'เมฆ ฮยุนฮยอง',
+            'email' => 'committee@example.com',
+            'role' => UserRole::COMMITTEE,
+            'position' => UserPosition::COMMITTEE_MEMBER,
+            'domain' => Domain::BANGKHEN,
+        ]);
+
         // แอดมินกองพัฒนานิสิตวิทยาเขตอื่นๆ
         User::factory()->create([
             'name' => 'กองพัฒนานิสิต วิทยาเขตกำแพงแสน',

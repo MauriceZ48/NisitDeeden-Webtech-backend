@@ -36,6 +36,8 @@ class AuthenticateController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'position' => $user->position,
+                'department' => $user->department,
+                'faculty' => $user->faculty,
             ]
         ]);
     }

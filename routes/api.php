@@ -37,6 +37,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
     Route::get('/meta/faculties', [MetaController::class, 'faculties']);
     Route::get('/meta/positions', [MetaController::class, 'positions']);
     Route::get('/meta/departments', [MetaController::class, 'departments']);
+    Route::get('/meta/faculties/{faculty}/departments', [MetaController::class, 'departmentsByFaculty']);
 });
 
 // 2. Routes that REQUIRE authentication
