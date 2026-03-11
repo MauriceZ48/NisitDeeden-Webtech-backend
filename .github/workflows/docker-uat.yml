@@ -1,12 +1,12 @@
-name: Docker Image Production
+name: Docker Image UAT
 on:
   push:
-    branches: ["main"]
+    branches: ["uat"]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    environment: production
+    environment: uat
     permissions:
       id-token: write
       contents: read
@@ -33,7 +33,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/nisit-deeden-laravel:latest
+            ${{ secrets.DOCKER_USERNAME }}/nisit-deeden-laravel-uat:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
   deploy:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Create k8s secret
         run: |
-          kubectl create secret generic laravel-env \
+          kubectl create secret generic laravel-env-uat \
             --from-env-file=.env \
             --namespace=default \
             --dry-run=client -o yaml | kubectl apply -f -
@@ -67,12 +67,12 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         shell: bash
         run: |
-          envsubst < k8s/deployment.yml | kubectl apply -f -
-          kubectl apply -f k8s/service.yml
-          kubectl apply -f k8s/ingress.yml
+          envsubst < k8s/uat-deployment.yml | kubectl apply -f -
+          kubectl apply -f k8s/uat-service.yml
+          kubectl apply -f k8s/uat-ingress.yml
 
-          kubectl rollout restart deployment/nisit-deeden-laravel
-          kubectl rollout status deployment/nisit-deeden-laravel
+          kubectl rollout restart deployment/nisit-deeden-laravel-uat
+          kubectl rollout status deployment/nisit-deeden-laravel-uat
 
       - name: Cleanup env
         run: rm -f .env
