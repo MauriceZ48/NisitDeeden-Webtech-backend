@@ -6,6 +6,19 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <style>
+        .laravel-pagination nav p {
+            display: none;
+        }
+
+        .laravel-pagination nav {
+            display: flex;
+            justify-content: flex-end;
+        }
+    </style>
 </head>
 <div class="h-screen flex overflow-hidden bg-gray-200">
     @include('layouts.sidebar')

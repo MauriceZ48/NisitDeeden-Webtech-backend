@@ -272,3 +272,12 @@ dist
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/laravel,jetbrains+all,visualstudiocode,node
+
+# macOS metadata files
+.DS_Store
+**/.DS_Store
+
+# vault
+docker/vault/file
+
+actions-runner

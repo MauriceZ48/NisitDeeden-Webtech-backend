@@ -2,11 +2,14 @@
 
 namespace Database\Factories;
 
+use App\Enums\Domain;
 use App\Enums\Faculty;
 use App\Enums\Department;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -27,22 +30,33 @@ class UserFactory extends Factory
     public function definition(): array
     {
 
-        $department = fake()->randomElement(Department::cases());
-
-        $faculty = $department->faculty();
 
         return [
             'profile_path' => null,
-            'name' => fake()->name(),
+            'name' => fake('th_TH')->firstName() . ' ' . fake('th_TH')->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'university_id' => fake()->unique()->bothify('ID-#####'),
-            'department' => $department,
-            'faculty' => $faculty,
-            'role' => UserRole::USER,
+            'role' => UserRole::STUDENT,
+            'position' => UserPosition::STUDENT,
+            'domain' => Domain::BANGKHEN,
+
+            'department' => null,
+            'faculty' => null,
         ];
+    }
+
+    public function withAcademicInfo(): static
+    {
+        return $this->state(function (array $attributes) {
+            $dept = fake()->randomElement(Department::cases());
+            return [
+                'department' => $dept,
+                'faculty' => $dept->faculty(),
+            ];
+        });
     }
 
     public function withImage(): static
@@ -59,12 +73,21 @@ class UserFactory extends Factory
 
             if ($image) {
                 // 3. Save it to your local storage
-                \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $image);
+                Storage::disk('public')->put($filename, $image);
                 return ['profile_path' => $filename];
             }
 
             return ['profile_path' => null];
         });
+    }
+
+    public function committee(Domain $domain, UserPosition $position = UserPosition::COMMITTEE_MEMBER): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::COMMITTEE,
+            'position' => $position,
+            'domain' => $domain,
+        ]);
     }
 
     /**

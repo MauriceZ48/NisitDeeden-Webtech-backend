@@ -2,8 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Enums\ApplicationCategory;
+use App\Enums\Domain;
+use App\Models\ApplicationCategory;
 use App\Enums\ApplicationStatus;
+use App\Models\ApplicationRound;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,9 +22,14 @@ class ApplicationFactory extends Factory
     public function definition(): array
     {
         return [
-            'category' => $this->faker->randomElement(ApplicationCategory::cases()),
             'user_id' => User::factory(),
+            'application_round_id' => ApplicationRound::inRandomOrder()->first()
+                ?? ApplicationRound::factory(),
+            'application_category_id' => ApplicationCategory::inRandomOrder()->first()
+                ?? ApplicationCategory::factory(),
             'status' => fake()->randomElement(ApplicationStatus::cases()),
+            'rejection_reason' => null,
+            'domain' => Domain::BANGKHEN,
         ];
     }
 }

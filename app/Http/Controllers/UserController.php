@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Department;
+use App\Enums\Domain;
 use App\Enums\Faculty;
+use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
@@ -17,7 +19,7 @@ use Illuminate\Validation\Rules\Enum;
 class UserController extends Controller
 {
     public function __construct(
-        private UserRepository $userRepository
+        private UserRepository $userRepo
     ) {}
 
     /**
@@ -25,47 +27,52 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $q          = $request->string('q')->toString();
-        $role       = $request->string('role')->toString();
+        if (auth()->user()->domain === Domain::ALL) {
+            abort(403, 'Admin ส่วนกลาง ไม่มีสิทธิ์เข้าถึงหน้ารายการใบสมัคร');
+        }
+
+        $q = $request->string('q')->toString();
+        $role = $request->string('role')->toString();
         $selectedId = $request->integer('selected');
 
-        $query = User::query();
+        // Get current user's domain
+        $domain = auth()->user()->domain;
+
+        // 1. Filter main query by domain
+        $query = User::query()->where('domain', $domain);
 
         if ($q !== '') {
             $query->where(function ($qq) use ($q) {
                 $qq->where('name', 'like', "%{$q}%")
-                    ->orWhere('university_id', 'like', "%{$q}%");
+                    ->orWhere('university_id', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
             });
         }
 
         if ($role !== '') {
-            $query->where('role', $role); // <-- change column name if yours is different
+            $query->where('role', $role);
         }
 
-        $users = $query->orderBy('name')->paginate(10)->appends($request->query());
-        $count = $this->userRepository->count();
+        $users = $query->orderBy('name')->paginate(7)->appends($request->query());
 
-        $selectedUser = $selectedId ? User::find($selectedId) : null;
+        // 2. Filter total count and summary counts by domain
+        $count = User::where('domain', $domain)->count();
 
-        $userCount  = $this->userRepository->countByRole('USER');
-        $adminCount = $this->userRepository->countByRole('ADMIN');
+        $userCount = User::where('domain', $domain)->where('role', UserRole::STUDENT)->count();
+        $adminCount = User::where('domain', $domain)->where('role', UserRole::ADMIN)->count();
+        $committeeCount = User::where('domain', $domain)->where('role', UserRole::COMMITTEE)->count();
 
-        $roles = User::query()
-            ->whereNotNull('role')
-            ->distinct()
-            ->orderBy('role')
-            ->pluck('role');
+        // 3. Ensure selected user is in the same domain (Security check)
+        $selectedUser = $selectedId
+            ? User::where('domain', $domain)->find($selectedId)
+            : null;
 
-        return view('users.index', [
-            'users'        => $users,
-            'count'        => $count,
-            'selectedUser' => $selectedUser,
-            'q'            => $q,
-            'role'         => $role,
-            'roles'        => $roles,
-            'userCount'    => $userCount,
-            'adminCount'   => $adminCount,
-        ]);
+        $roles = UserRole::cases();
+
+        return view('users.index', compact(
+            'users', 'count', 'selectedUser', 'q', 'role', 'roles',
+            'userCount', 'adminCount', 'committeeCount'
+        ));
     }
 
 
@@ -98,9 +105,23 @@ class UserController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create', User::class);
-        $data = $this->validated($request);
 
-        // Logic for profile_path during creation
+        $data = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'university_id' => 'required|string|unique:users,university_id',
+
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'faculty'       => ['nullable', new Enum(Faculty::class)],
+            'department'    => ['nullable', new Enum(Department::class)],
+
+            'photo'         => 'nullable|image|max:2048'
+        ]);
+
+        $positionEnum = UserPosition::from($request->position);
+        $data['role'] = $positionEnum->getRole();
+        $data['domain'] = auth()->user()->domain;
+
         if ($request->hasFile('photo')) {
             $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
         }
@@ -109,29 +130,8 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('users.index')->with('success', 'User created.');
-    }
-
-    /**
-     * Centralized validation logic
-     */
-    private function validated(Request $request, ?int $userId = null): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required', 'email', 'max:255',
-                Rule::unique('users', 'email')->ignore($userId),
-            ],
-            'university_id' => [
-                'required', 'string', 'max:50',
-                Rule::unique('users', 'university_id')->ignore($userId),
-            ],
-            'role' => ['required', new Enum(UserRole::class)],
-            'faculty' => ['nullable', new Enum(Faculty::class)],
-            'department' => ['nullable', new Enum(Department::class)],
-            'photo' => ['nullable', 'image', 'max:2048'], // Added photo validation
-        ]);
+        return redirect()->route('users.index')
+            ->with('success', 'เพิ่มผู้ใช้งานตำแหน่ง ' . $positionEnum->label() . ' เรียบร้อยแล้ว');
     }
 
     /**
@@ -139,6 +139,11 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+
+        if ($user->domain !== auth()->user()->domain) {
+            abort(403, 'You cannot view users from other campuses.');
+        }
+
         return view('users.show', [
             'user' => $user->load('applications')
         ]);
@@ -152,6 +157,10 @@ class UserController extends Controller
         Gate::authorize('update', $user);
         $faculties = Faculty::cases();
 
+        if ($user->domain !== auth()->user()->domain) {
+            abort(403, 'You cannot edit users from other campuses.');
+        }
+
         return view('users.form', [
             'user' => $user,
             'faculties' => $faculties,
@@ -164,32 +173,62 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        Gate::authorize('update', $user);
-        $validated = $this->validated($request, $user->id);
 
-        // Handle the Remove Button
-        if ($request->delete_photo == "1") {
+        if ($user->domain !== auth()->user()->domain) {
+            abort(403, 'You cannot update users from other campuses.');
+        }
+
+        // 1. Validate including the new 'position' field
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => [
+                'required',
+                'email',
+                Rule::unique('users')->ignore($user->id)
+            ],
+            'university_id' => [
+                'required',
+                Rule::unique('users')->ignore($user->id)
+            ],
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'faculty'       => ['nullable', new Enum(Faculty::class)],
+            'department'    => ['nullable', new Enum(Department::class)],
+            'photo'         => 'nullable|image|max:2048',
+            'delete_photo'  => 'nullable|string'
+        ]);
+
+        // 2. Handle Photo Removal
+        if ($request->delete_photo === "1") {
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
                 $user->profile_path = null;
             }
         }
 
+        // 3. Handle New Photo Upload
         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
             }
-
-            // Store new photo under standardized name profile_path
             $user->profile_path = $request->file('photo')->store('profile-photos', 'public');
+        }
+
+        $positionEnum = UserPosition::from($request->position);
+        $user->role = $positionEnum->getRole();
+
+        if (in_array($positionEnum, [UserPosition::STAFF, UserPosition::COMMITTEE_MEMBER])) {
+            $validated['faculty'] = null;
+            $validated['department'] = null;
+        }
+        elseif (in_array($positionEnum, [UserPosition::DEAN, UserPosition::ASSOCIATE_DEAN])) {
+            $validated['department'] = null;
         }
 
         $user->fill($validated);
         $user->save();
 
         return redirect()->route('users.index')
-            ->with('success', 'User updated successfully!');
+            ->with('success', "อัปเดตข้อมูลผู้ใช้งานตำแหน่ง " . $positionEnum->label() . " เรียบร้อยแล้ว");
     }
 
     /**
@@ -200,6 +239,10 @@ class UserController extends Controller
         Gate::authorize('delete', $user);
         if (auth()->id() === $user->id) {
             return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        if ($user->domain !== auth()->user()->domain) {
+            back()->with('You cannot delete users from other campuses.');
         }
 
         // Clean up the storage when user is deleted
@@ -216,7 +259,7 @@ class UserController extends Controller
     public function departmentsByFaculty(Request $request)
     {
         $request->validate([
-            'faculty' => ['required', new \Illuminate\Validation\Rules\Enum(Faculty::class)],
+            'faculty' => ['required', new Enum(Faculty::class)],
         ]);
 
         $faculty = Faculty::from($request->faculty);
@@ -224,7 +267,7 @@ class UserController extends Controller
         $departments = array_values(array_map(
             fn (Department $d) => [
                 'value' => $d->value,
-                'label' => $d->value,
+                'label' => $d->label(),
             ],
             array_filter(
                 Department::cases(),

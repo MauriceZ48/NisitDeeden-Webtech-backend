@@ -23,7 +23,11 @@ class DatabaseSeeder extends Seeder
 //        ]);
         $this->call([
             UserSeeder::class,
+            ApplicationCategorySeeder::class,
+            CategoryAttributeSeeder::class,
+            ApplicationRoundSeeder::class,
             ApplicationSeeder::class,
+            ApplicationAttributeValueSeeder::class,
             AttachmentSeeder::class,
         ]);
     }

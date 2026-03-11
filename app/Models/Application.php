@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\ApplicationCategory;
 use App\Enums\ApplicationStatus;
+use App\Enums\Domain;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,14 +15,16 @@ class Application extends Model
     use HasFactory,SoftDeletes;
 
     protected $fillable = [
-        'category',
+        'application_category_id',
         'status',
         'user_id',
+        'application_round_id',
         'rejection_reason',
+        'domain',
     ];
     protected $casts = [
-        'category' => ApplicationCategory::class,
         'status' => ApplicationStatus::class,
+        'domain' => Domain::class,
     ];
 
     public function user(): BelongsTo
@@ -33,5 +35,20 @@ class Application extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);
+    }
+
+    public function applicationRound(): BelongsTo
+    {
+        return $this->belongsTo(ApplicationRound::class);
+    }
+
+    public function applicationCategory(): BelongsTo
+    {
+        return $this->belongsTo(ApplicationCategory::class);
+    }
+
+    public function attributeValues(): HasMany
+    {
+        return $this->hasMany(ApplicationAttributeValue::class);
     }
 }
