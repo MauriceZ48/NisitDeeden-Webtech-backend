@@ -37,6 +37,8 @@ class AppServiceProvider extends ServiceProvider
                 $this->format('H:i') . ' น.';
         });
 
-        URL::forceScheme('https');
+        if (app()->isProduction()) {
+            URL::forceScheme('https');
+        }
     }
 }
