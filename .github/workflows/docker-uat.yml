@@ -6,7 +6,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    environment: uat
     permissions:
       id-token: write
       contents: read
@@ -29,7 +28,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/prod.Dockerfile
+          file: ./docker/uat.Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
@@ -39,7 +38,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: self-hosted # self-hosted runner in your machine
-    environment: production
+    environment: uat
 
     steps:
       - uses: actions/checkout@v4
