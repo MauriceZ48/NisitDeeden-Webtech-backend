@@ -6,7 +6,7 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   rules:
-    - host: api.nisit-deeden.k8s.dev
+    - host: admin.nisit-deeden.k8s.dev
       http:
         paths:
           - path: /
