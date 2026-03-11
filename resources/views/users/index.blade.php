@@ -168,8 +168,18 @@
                                         $initials = collect(explode(' ', trim($selectedUser->name)))
                                             ->filter()->take(2)->map(fn($p) => mb_substr($p, 0, 1))->join('');
                                     @endphp
-                                    <div class="h-14 w-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-extrabold text-slate-600">
-                                        {{ $initials ?: 'U' }}
+
+                                    {{-- กรอบรูปโปรไฟล์ --}}
+                                    <div class="h-14 w-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        @if($selectedUser->profile_url)
+                                            {{-- แสดงรูปภาพ ถ้ามี profile_url --}}
+                                            <img src="{{ $selectedUser->profile_url }}"
+                                                 alt="{{ $selectedUser->name }}"
+                                                 class="h-full w-full object-cover">
+                                        @else
+                                            {{-- แสดงตัวอักษรย่อ ถ้าไม่มีรูปภาพ --}}
+                                            <span class="text-sm font-extrabold text-slate-600">{{ $initials ?: 'U' }}</span>
+                                        @endif
                                     </div>
                                     <div>
                                         <div class="text-lg font-extrabold text-slate-900">{{ $selectedUser->name }}</div>
@@ -203,6 +213,13 @@
                                 </div>
 
                                 <div class="mt-5 flex flex-col gap-2">
+                                    <a href="{{ route('users.edit', $selectedUser) }}"
+                                       class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary/20 transition">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm18-11.5a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75z"/>
+                                        </svg>
+                                        แก้ไขข้อมูล
+                                    </a>
                                     <form method="POST" action="{{ route('users.destroy', $selectedUser) }}" onsubmit="return confirm('ยืนยันการลบผู้ใช้งานนี้?');">
                                         @csrf
                                         @method('DELETE')
