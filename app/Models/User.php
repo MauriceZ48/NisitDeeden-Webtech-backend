@@ -74,7 +74,7 @@ class User extends Authenticatable
     public function getProfileUrlAttribute(): string
     {
         if ($this->profile_path) {
-            return asset(Storage::url($this->profile_path));
+            return Storage::url($this->profile_path);
         }
 
         // Return a default UI-Avatar
