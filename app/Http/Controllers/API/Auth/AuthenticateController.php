@@ -38,6 +38,7 @@ class AuthenticateController extends Controller
                 'position' => $user->position,
                 'department' => $user->department,
                 'faculty' => $user->faculty,
+                'profile_url'  => $user->profile_url,
             ]
         ]);
     }
