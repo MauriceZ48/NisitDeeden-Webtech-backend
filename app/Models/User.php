@@ -71,10 +71,14 @@ class User extends Authenticatable
         ];
     }
 
+    protected $appends = [
+        'profile_url', 
+    ];
+
     public function getProfileUrlAttribute(): string
     {
         if ($this->profile_path) {
-            return Storage::url($this->profile_path);
+            return asset(Storage::url($this->profile_path));
         }
 
         // Return a default UI-Avatar
