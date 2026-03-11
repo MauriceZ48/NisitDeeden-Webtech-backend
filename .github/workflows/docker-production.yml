@@ -67,9 +67,9 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         shell: bash
         run: |
-          envsubst < k8s/deployment.yml | kubectl apply -f -
-          kubectl apply -f k8s/service.yml
-          kubectl apply -f k8s/ingress.yml
+          envsubst < k8s/production-deployment.yml | kubectl apply -f -
+          kubectl apply -f k8s/production-service.yml
+          kubectl apply -f k8s/production-ingress.yml
 
           kubectl rollout restart deployment/nisit-deeden-laravel
           kubectl rollout status deployment/nisit-deeden-laravel
