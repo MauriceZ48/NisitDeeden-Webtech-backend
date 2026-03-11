@@ -10,6 +10,7 @@ enum Domain : string
     case KAMPHAENG_SEAN = 'Kamphaeng Saen';
     case SRIRACHA = 'Sriracha';
     case CHALERMPHRAKIAT = 'Chalermphrakiat';
+    case ALL = 'All domain';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum Domain : string
             self::KAMPHAENG_SEAN => 'กำแพงแสน',
             self::SRIRACHA => 'ศรีราชา',
             self::CHALERMPHRAKIAT => 'เฉลิมพระเกียรติ',
+            self::ALL => 'ทุกวิทยาเขต',
         };
     }
 

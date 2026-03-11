@@ -11,11 +11,10 @@ class ApplicationCategorySeeder extends Seeder
 {
     public function run(): void
     {
-        // เปลี่ยนชื่อและคำอธิบายเป็นภาษาไทย พร้อมเพิ่ม slug_base อิงภาษาอังกฤษ
         $categories = [
             [
                 'name' => 'ด้านกิจกรรมนิสิต',
-                'description' => 'ความเป็นผู้นำ การบำเพ็ญประโยชน์ และการมีส่วนร่วมในกิจกรรมเสริมหลักสูตร',
+                'description' => 'ความเป็นผู้นำ การบำเพ็ญประโยชน์ และการมีส่วนร่วมในกิจกรรม',
                 'icon' => 'lucide:award',
             ],
             [
@@ -31,15 +30,25 @@ class ApplicationCategorySeeder extends Seeder
         ];
 
         foreach (Domain::cases() as $domain) {
-            foreach ($categories as $category) {
-                ApplicationCategory::create([
-                    'name'        => $category['name'],
-                    'description' => $category['description'],
-                    'icon'        => $category['icon'],
-                    'is_active'   => true,
-                    'domain'      => $domain,
-                ]);
+            if ($domain !== Domain::ALL) {
+                foreach ($categories as $category) {
+                    ApplicationCategory::create([
+                        'name'        => $category['name'],
+                        'description' => $category['description'],
+                        'icon'        => $category['icon'],
+                        'is_active'   => true,
+                        'domain'      => $domain,
+                    ]);
+                }
             }
         }
+
+        ApplicationCategory::create([
+            'name'        => 'รางวัลนิสิตพระราชทาน (ระดับมหาวิทยาลัย)',
+            'description' => 'รางวัลเกียรติยศสูงสุดสำหรับนิสิต',
+            'icon'        => 'lucide:crown',
+            'is_active'   => true,
+            'domain'      => Domain::ALL,
+        ]);
     }
 }

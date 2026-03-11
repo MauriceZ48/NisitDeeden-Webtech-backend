@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Domain;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
@@ -29,6 +30,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
         $user = Auth::user();
+
+        if($user->domain === Domain::ALL){
+            return redirect()->route('categories.index');
+        }
 
         return match ($user->role) {
             UserRole::ADMIN => redirect()->route('applications.index'),

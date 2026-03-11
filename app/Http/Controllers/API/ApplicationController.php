@@ -89,27 +89,19 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
-    public function applicationsForHeadOfDepartment()
+    public function applicationsPendingForCommitteePosition()
     {
-        $applications = $this->applicationRepo->getPendingForHeadOfDepartment();
-        return ApplicationResource::collection($applications);
-    }
+        $user = auth()->user();
 
-    public function applicationsForAssociateDean()
-    {
-        $applications = $this->applicationRepo->getPendingForAssociateDean();
-        return ApplicationResource::collection($applications);
-    }
+        $applications = match ($user->position) {
+            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment(),
+            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean(),
+            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean(),
+            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee(),
 
-    public function applicationsForDean()
-    {
-        $applications = $this->applicationRepo->getPendingForDean();
-        return ApplicationResource::collection($applications);
-    }
+            default => collect(),
+        };
 
-    public function applicationsForCommittee()
-    {
-        $applications = $this->applicationRepo->getPendingForCommittee();
         return ApplicationResource::collection($applications);
     }
 

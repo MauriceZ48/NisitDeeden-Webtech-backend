@@ -11,7 +11,7 @@
                         <svg class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                         </svg>
-                        <h3 class="text-sm font-bold text-red-800">Please fix the following errors:</h3>
+                        <h3 class="text-sm font-bold text-red-800">กรุณาแก้ไขข้อผิดพลาดต่อไปนี้:</h3>
                     </div>
                     <ul class="mt-2 list-inside list-disc text-sm text-red-700">
                         @foreach ($errors->all() as $error)
@@ -23,11 +23,11 @@
 
             <div class="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Apply for Excellence Award</h1>
-                    <p class="mt-2 text-slate-500">Step 2: Fill in the specific details for the selected award.</p>
+                    <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">ส่งใบสมัครรางวัลนิสิตดีเด่น</h1>
+                    <p class="mt-2 text-slate-500">ขั้นตอนที่ 2: กรอกข้อมูลเฉพาะสำหรับประเภทรางวัลที่เลือก</p>
                 </div>
                 <a href="{{ route('applications.create') }}" class="text-sm font-semibold text-primary hover:underline">
-                    &larr; Back to Selection
+                    &larr; กลับไปหน้าเลือกผู้สมัคร
                 </a>
             </div>
 
@@ -42,24 +42,23 @@
 
                 {{-- ===================== 1) SUMMARY (READ-ONLY) ===================== --}}
                 <div class="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Application Summary</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">สรุปข้อมูลใบสมัคร</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {{-- Student Summary --}}
                         <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200">
                             <img src="{{ $student->profile_url }}" class="h-12 w-12 rounded-lg object-cover border border-slate-200">
                             <div>
-                                <p class="text-xs text-slate-500 font-semibold">Applicant</p>
+                                <p class="text-xs text-slate-500 font-semibold">ผู้สมัคร</p>
                                 <p class="font-bold text-slate-900">{{ $student->name }}</p>
-                                <p class="text-sm text-slate-500">{{ $student->university_id }} • {{ $student->faculty }}</p>
+                                <p class="text-sm text-slate-500">คณะ{{ $student->faculty?->label() ?? $student->faculty }}</p>
                             </div>
                         </div>
 
                         {{-- Category Summary --}}
                         <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200">
-
                             <div>
-                                <p class="text-xs text-slate-500 font-semibold">Category</p>
+                                <p class="text-xs text-slate-500 font-semibold">ประเภทรางวัล</p>
                                 <p class="font-bold text-slate-900">{{ $category->name }}</p>
                                 <p class="text-sm text-slate-500 truncate">{{ $category->description }}</p>
                             </div>
@@ -72,8 +71,8 @@
                     <div class="flex items-center gap-3 mb-6">
                         <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">1</span>
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900">Award Specific Details</h2>
-                            <p class="text-sm text-slate-500">Please provide the required information for the {{ $category->name }} category.</p>
+                            <h2 class="text-lg font-semibold text-slate-900">ข้อมูลเฉพาะสำหรับประเภทรางวัล</h2>
+                            <p class="text-sm text-slate-500">กรุณากรอกข้อมูลที่จำเป็นสำหรับ {{ $category->name }}</p>
                         </div>
                     </div>
 
@@ -110,19 +109,19 @@
                             </div>
                         @empty
                             <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-slate-500">
-                                This category does not require any specific details. Proceed to attach documents.
+                                ประเภทรางวัลนี้ไม่ต้องใช้ข้อมูลเฉพาะเพิ่มเติม กรุณาดำเนินการแนบเอกสารในส่วนถัดไป
                             </div>
                         @endforelse
                     </div>
                 </div>
 
-                {{-- ===================== 3) SUPPORTING DOCUMENTS (From Old Form) ===================== --}}
+                {{-- ===================== 3) SUPPORTING DOCUMENTS ===================== --}}
                 <div class="p-6 md:p-8">
                     <div class="flex items-center gap-3 mb-6">
                         <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">2</span>
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900">Supporting Documents</h2>
-                            <p class="text-sm text-slate-500">Upload any general files to support this nomination.</p>
+                            <h2 class="text-lg font-semibold text-slate-900">เอกสารแนบประกอบการพิจารณา</h2>
+                            <p class="text-sm text-slate-500">อัปโหลดไฟล์เอกสารทั่วไปเพื่อประกอบการพิจารณา</p>
                         </div>
                     </div>
 
@@ -133,17 +132,17 @@
                             <svg class="h-6 w-6 text-slate-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 15v4H5v-4H3v6h18v-6h-2zM11 3h2v10h3l-4 4-4-4h3V3z"/></svg>
                         </div>
 
-                        <p class="mt-4 text-sm text-slate-800 font-semibold">Upload New Documents</p>
-                        <p class="mt-1 text-xs text-slate-500">PDF, PNG, JPG (Max. 5MB each)</p>
+                        <p class="mt-4 text-sm text-slate-800 font-semibold">อัปโหลดเอกสารใหม่</p>
+                        <p class="mt-1 text-xs text-slate-500">รองรับไฟล์ PDF, PNG, JPG (ขนาดไม่เกิน 5MB ต่อไฟล์)</p>
 
                         <button type="button" @click="$refs.fileInput.click()" class="mt-5 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90">
-                            Choose files
+                            เลือกไฟล์
                         </button>
                     </div>
 
                     {{-- File Preview --}}
                     <div class="mt-5 space-y-2" x-show="files.length > 0" x-cloak>
-                        <p class="text-xs font-bold uppercase tracking-wider text-primary">Selected Files:</p>
+                        <p class="text-xs font-bold uppercase tracking-wider text-primary">ไฟล์ที่เลือก:</p>
                         <template x-for="(f, idx) in files" :key="idx">
                             <div class="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
                                 <div class="flex items-center gap-3">
@@ -165,9 +164,9 @@
 
                 {{-- Action Buttons --}}
                 <div class="p-6 md:p-8 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50 rounded-b-2xl">
-                    <a href="{{ route('applications.create') }}" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">Cancel</a>
+                    <a href="{{ route('applications.create') }}" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">ยกเลิก</a>
                     <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90">
-                        Submit Application
+                        ส่งใบสมัคร
                     </button>
                 </div>
             </form>
@@ -183,7 +182,6 @@
                 },
                 removeFile(idx) {
                     this.files.splice(idx, 1);
-                    // Reset the input so the user can re-select the same file if needed
                     const dt = new DataTransfer();
                     this.files.forEach(file => dt.items.add(file));
                     this.$refs.fileInput.files = dt.files;

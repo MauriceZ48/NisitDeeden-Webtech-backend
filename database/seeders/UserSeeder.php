@@ -19,7 +19,9 @@ class UserSeeder extends Seeder
 
         // 2. รันระบบสร้างข้อมูลตามลำดับขั้นสำหรับทุกวิทยาเขต
         foreach (Domain::cases() as $domain) {
-            $this->seedDomainHierarchy($domain);
+            if($domain !== Domain::ALL) {
+                $this->seedDomainHierarchy($domain);
+            }
         }
     }
 
@@ -131,6 +133,17 @@ class UserSeeder extends Seeder
 
     private function seedSpecificUsers(): void
     {
+        // User กลางสำหรับสร้าง category ส่วนกลาง
+        User::factory()->create([
+            'name' => 'ผู้สร้าง category ส่วนกลาง',
+            'email' => 'all@example.com',
+            'role' => UserRole::ADMIN,
+            'position' => UserPosition::STAFF,
+            'domain' => Domain::ALL,
+            'faculty' => null,
+            'department' => null,
+        ]);
+
         // ข้อมูลเฉพาะสำหรับบางเขน
         User::factory()->create([
             'name' => 'ผู้ดูแลระบบ กองพัฒนานิสิต',

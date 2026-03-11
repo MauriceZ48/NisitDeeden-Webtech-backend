@@ -54,10 +54,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
 
     //Application
     Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
-    Route::get('applications/head-of-dept', [ApplicationController::class, 'applicationsForHeadOfDepartment']);
-    Route::get('applications/associate-dean', [ApplicationController::class, 'applicationsForAssociateDean']);
-    Route::get('applications/dean', [ApplicationController::class, 'applicationsForDean']);
-    Route::get('applications/committee', [ApplicationController::class, 'applicationsForCommittee']);
+    Route::get('applications/by-position' , [ApplicationController::class, 'applicationsPendingForCommitteePosition']);
     Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
     Route::get('applications/rejected', [ApplicationController::class, 'applicationsRejected']);
     Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);

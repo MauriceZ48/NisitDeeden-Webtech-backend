@@ -24,6 +24,10 @@ class ApplicationRoundController extends Controller
 
     public function index()
     {
+        if (auth()->user()->domain === \App\Enums\Domain::ALL) {
+            abort(403, 'Admin ส่วนกลาง ไม่มีสิทธิ์เข้าถึงหน้ารายการใบสมัคร');
+        }
+
         $rounds = $this->roundRepo->getAllOrderedInDomain();
 
         return view('rounds.index', ['rounds' => $rounds]);

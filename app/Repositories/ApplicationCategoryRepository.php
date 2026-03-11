@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Domain;
 use App\Http\Controllers\ApplicationCategoryController;
 use App\Models\ApplicationCategory;
 use App\Repositories\Traits\SimpleCRUD;
@@ -15,6 +16,13 @@ class ApplicationCategoryRepository{
     private function getDomain()
     {
         return auth()->user()?->domain;
+    }
+
+    private function getVisibleDomains(): array
+    {
+        $userDomain = $this->getDomain();
+
+        return [$userDomain, Domain::ALL];
     }
 
     public function __construct(ApplicationCategory $model) {
@@ -31,10 +39,26 @@ class ApplicationCategoryRepository{
         return $category;
     }
 
-    public function getActiveCategoriesInDomain()
-    {
+    // For admin in seperate domain
+    public function getActiveCategoriesInDomain(){
         return ApplicationCategory::with('attributes')
             ->where('domain', $this->getDomain())
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getAllWithAttributes(){
+        return ApplicationCategory::with('attributes')
+            ->where('domain', $this->getDomain())
+            ->get();
+    }
+
+    // For applications to see its domain and global domain
+    public function getActiveCategoriesInDomainAndALL()
+    {
+        return ApplicationCategory::with('attributes')
+            ->whereIn('domain', $this->getVisibleDomains())
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -43,13 +67,9 @@ class ApplicationCategoryRepository{
     public function getWithAttributes(int $id): ApplicationCategory
     {
         return ApplicationCategory::with('attributes')
-            ->where('domain', $this->getDomain())
+            ->whereIn('domain', $this->getVisibleDomains())
             ->findOrFail($id);
     }
 
-    public function getAllWithAttributes(){
-        return ApplicationCategory::with('attributes')
-            ->where('domain', $this->getDomain())
-            ->get();
-    }
+
 }

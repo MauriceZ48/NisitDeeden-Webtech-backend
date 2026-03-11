@@ -23,21 +23,19 @@ class ApplicationCategoryController extends Controller
     }
 
 
-    public function show(string $slug)
+    public function show(ApplicationCategory $applicationCategory)
     {
-        $category = $this->categoryRepo->findCategoryBySlug($slug);
-
-        if (!$category) {
+        if (!$applicationCategory) {
             return response()->json([
                 'message' => 'Category not found.',
                 'error_code' => 'CATEGORY_NOT_FOUND'
             ], 404);
         }
 
-        $category->load('attributes');
+        $applicationCategory->load('attributes');
 
 
-        return new ApplicationCategoryResource($category);
+        return new ApplicationCategoryResource($applicationCategory);
     }
 
     public function store(Request $request)
