@@ -482,7 +482,34 @@ class ApplicationRepository
             ->paginate($perPage);
     }
 
-    public function getApplicationsByUserIdInActiveRound($userId)
+    public function getApplicationsByUserIdInActiveRound($userId, int $perPage = 10)
+    {
+        return Application::query()
+            ->where('domain', $this->getDomain())
+            ->where('user_id', $userId)
+            ->with(['attributeValues.attribute',
+                'applicationRound',
+                'user',
+                'applicationCategory'
+            ])
+            ->whereHas('applicationRound', function ($query) {
+                $query->inactive();
+            })
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.created_at')
+            ->paginate($perPage);
+    }
+
+    public function getApplicationByUserIdActiveRound($userId)
     {
         return Application::query()
             ->where('domain', $this->getDomain())

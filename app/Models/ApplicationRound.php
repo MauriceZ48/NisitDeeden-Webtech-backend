@@ -36,11 +36,15 @@ class ApplicationRound extends Model
     {
         return $this->hasMany(Application::class);
     }
-// In ApplicationRound Model
     public function scopeActive($query)
     {
         return $query->where('status', RoundStatus::OPEN);
 
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('status', RoundStatus::CLOSED);
     }
 
     public function isAcceptingSubmissions(): bool
