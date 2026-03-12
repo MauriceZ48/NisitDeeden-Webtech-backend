@@ -13,11 +13,8 @@ require __DIR__ . '/auth.php'; // provides /login, /register, etc.
 
 
 Route::middleware(['auth'])->group(function () {
-
-    Route::redirect('/', '/index')->name('home');
-    Route::view('/index', 'index')->name('index');
-
-    Route::view('/dashboard', 'dashboard')->middleware('verified')->name('dashboard');
+    Route::redirect('/', '/applications')->name('home');
+    Route::redirect('/dashboard', '/applications')->middleware(['auth', 'verified'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
