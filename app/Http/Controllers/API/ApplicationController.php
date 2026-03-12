@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\RoundStatus;
 use App\Enums\UserPosition;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
@@ -288,6 +289,15 @@ class ApplicationController extends Controller
 
     public function update(Request $request, Application $application)
     {
+        if (
+            $application->applicationRound->status !== RoundStatus::OPEN ||
+            $application->status !== ApplicationStatus::PENDING
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถแก้ไขข้อมูลได้ เนื่องจากรอบการรับสมัครไม่ได้เปิดอยู่ หรือใบสมัครของคุณกำลังอยู่ระหว่างการพิจารณา'
+            ], 403);
+        }
 
         $request->validate([
             'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],

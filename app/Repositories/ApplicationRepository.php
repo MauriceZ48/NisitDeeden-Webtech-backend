@@ -468,7 +468,17 @@ class ApplicationRepository
                 'user',
                 'applicationCategory'
             ])
-            ->latest()
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.created_at')
             ->paginate($perPage);
     }
 }
