@@ -4,6 +4,7 @@ metadata:
   name: nisit-deeden-combined-ingress
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "30m"
 spec:
   rules:
     - host: admin.nisit-deeden.k8s.dev

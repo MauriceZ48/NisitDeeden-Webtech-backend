@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\RoundStatus;
 use App\Enums\UserPosition;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
@@ -71,6 +72,34 @@ class ApplicationController extends Controller
         }
 
         return ApplicationResource::collection($applications);
+    }
+
+    public function applicationInActiveRoundByUserId($user_id)
+    {
+        if (!$user_id) {
+            return response()->json(['message' => 'User ID is required'], 400);
+        }
+
+        $targetUser = $this->userRepo->getUserById($user_id);
+
+        if (!$targetUser || $targetUser->domain !== auth()->user()->domain) {
+            return response()->json(
+                [
+                    'message' => 'Unauthorized or user not found'
+                ],
+                403
+            );
+        }
+
+        $application = $this->applicationRepo->getApplicationsByUserIdInActiveRound($user_id);
+
+        if (!$application) {
+            return response()->json([
+                'message' => 'No applications found for user ID: ' . $user_id,
+                'data' => []
+            ], 404);
+        }
+        return new ApplicationResource($application);
     }
 
     public function myApplications()
@@ -288,6 +317,15 @@ class ApplicationController extends Controller
 
     public function update(Request $request, Application $application)
     {
+        if (
+            $application->applicationRound->status !== RoundStatus::OPEN ||
+            $application->status !== ApplicationStatus::PENDING
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถแก้ไขข้อมูลได้ เนื่องจากรอบการรับสมัครไม่ได้เปิดอยู่ หรือใบสมัครของคุณกำลังอยู่ระหว่างการพิจารณา'
+            ], 403);
+        }
 
         $request->validate([
             'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
@@ -325,6 +363,15 @@ class ApplicationController extends Controller
 
     public function destroy(Application $application)
     {
+        if (
+            $application->applicationRound->status !== RoundStatus::OPEN ||
+            $application->status !== ApplicationStatus::PENDING
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถลบข้อมูลได้ เนื่องจากรอบการรับสมัครไม่ได้เปิดอยู่ หรือใบสมัครของคุณกำลังอยู่ระหว่างการพิจารณา'
+            ], 403);
+        }
         if ($application->domain !== auth()->user()->domain) {
             return response()->json([
                 'message' => 'Unauthorized domain access.',

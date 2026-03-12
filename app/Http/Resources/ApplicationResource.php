@@ -15,19 +15,12 @@ class ApplicationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $statusTranslations = [
-            'PENDING'                        => 'รอดำเนินการ',
-            'APPROVED_BY_DEPARTMENT'         => 'ผ่านการพิจารณาโดยหัวหน้าภาควิชา',
-            'APPROVED_BY_ASSOCIATE_DEAN'     => 'ผ่านการพิจารณาโดยรองคณบดี',
-            'APPROVED_BY_DEAN'               => 'ผ่านการพิจารณาโดยคณบดี (รอเสนออธิการบดี)',
-            'APPROVED_BY_COMMITTEE'          => 'ผ่านการพิจารณาโดยคณะกรรมการ',
-            'REJECTED'                       => 'ไม่ผ่านการพิจารณา',
-        ];
+
 
         return [
             'id' => $this->id,
             'status' => $this->status,
-            'status_th' => $statusTranslations[$this->status->value] ?? $this->status->value,
+            'status_th' => $this->status->label(),
 //            'created_at' => $this->created_at,
             'rejection_reason' => $this->rejection_reason,
 
