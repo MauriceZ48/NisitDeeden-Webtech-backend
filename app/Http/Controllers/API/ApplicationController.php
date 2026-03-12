@@ -108,6 +108,32 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
+    public function applicationsApprovedAndRejectedByPosition(Request $request)
+    {
+        $user = auth()->user();
+        $categoryId = $request->input('category_id');
+        $department = $request->input('department');
+        $faculty = $request->input('faculty');
+
+        $applications = match ($user->position) {
+            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo
+                ->getApprovedAndRejectedForHeadOfDepartment($categoryId),
+
+            UserPosition::ASSOCIATE_DEAN => $this->applicationRepo
+                ->getApprovedAndRejectedForAssociateDean($categoryId, $department),
+
+            UserPosition::DEAN => $this->applicationRepo
+                ->getApprovedAndRejectedForDean($categoryId, $department),
+
+            UserPosition::COMMITTEE_MEMBER => $this->applicationRepo
+                ->getApprovedAndRejectedForCommittee($categoryId, $department, $faculty),
+
+            default => collect(),
+        };
+
+        return ApplicationResource::collection($applications);
+    }
+
     public function applicationsApprovedByCommittee()
     {
         $applications = $this->applicationRepo->getApprovedFormCommittee();

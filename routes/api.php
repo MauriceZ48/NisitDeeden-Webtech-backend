@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
     Route::get('applications/rejected', [ApplicationController::class, 'applicationsRejected']);
     Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
+    Route::get('/applications/approved-rejected/by-position', [ApplicationController::class, 'applicationsApprovedAndRejectedByPosition']);
 
     Route::apiResource('applications', ApplicationController::class)->withTrashed();
 

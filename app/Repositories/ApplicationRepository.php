@@ -168,6 +168,34 @@ class ApplicationRepository
             ->paginate($perPage);
     }
 
+    public function getApprovedAndRejectedForHeadOfDepartment(?int $categoryId = null, int $perPage = 10)
+    {
+        $user = auth()->user();
+
+        return Application::with([
+            'attributeValues.attribute',
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
+            ->where('domain', $this->getDomain())
+            ->whereIn('status', [
+                ApplicationStatus::APPROVED_BY_DEPARTMENT,
+                ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
+                ApplicationStatus::APPROVED_BY_DEAN,
+                ApplicationStatus::APPROVED_BY_COMMITTEE,
+                ApplicationStatus::REJECTED,
+            ])
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('department', $user->department);
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
+            ->latest()
+            ->paginate($perPage);
+    }
+
     public function getPendingForAssociateDean(?int $categoryId = null, ?string $department = null, int $perPage = 10)
     {
         $user = auth()->user();
@@ -180,6 +208,40 @@ class ApplicationRepository
         ])
             ->where('domain', $this->getDomain())
             ->where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
+            ->whereHas('user', function ($query) use ($user, $department) {
+                $query->where('faculty', $user->faculty);
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function getApprovedAndRejectedForAssociateDean(
+        ?int $categoryId = null,
+        ?string $department = null,
+        int $perPage = 10
+    ) {
+        $user = auth()->user();
+
+        return Application::with([
+            'attributeValues.attribute',
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
+            ->where('domain', $this->getDomain())
+            ->whereIn('status', [
+                ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN,
+                ApplicationStatus::APPROVED_BY_DEAN,
+                ApplicationStatus::APPROVED_BY_COMMITTEE,
+                ApplicationStatus::REJECTED,
+            ])
             ->whereHas('user', function ($query) use ($user, $department) {
                 $query->where('faculty', $user->faculty);
 
@@ -220,6 +282,39 @@ class ApplicationRepository
             ->paginate($perPage);
     }
 
+    public function getApprovedAndRejectedForDean(
+        ?int $categoryId = null,
+        ?string $department = null,
+        int $perPage = 10
+    ) {
+        $user = auth()->user();
+
+        return Application::with([
+            'attributeValues.attribute',
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
+            ->where('domain', $this->getDomain())
+            ->whereIn('status', [
+                ApplicationStatus::APPROVED_BY_DEAN,
+                ApplicationStatus::APPROVED_BY_COMMITTEE,
+                ApplicationStatus::REJECTED,
+            ])
+            ->whereHas('user', function ($query) use ($user, $department) {
+                $query->where('faculty', $user->faculty);
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
+            ->latest()
+            ->paginate($perPage);
+    }
+
     public function getPendingForCommittee(?int $categoryId = null, ?string $department = null, ?string $faculty = null, int $perPage = 10)
     {
         return Application::with([
@@ -230,6 +325,39 @@ class ApplicationRepository
         ])
             ->where('status', ApplicationStatus::APPROVED_BY_DEAN)
             ->where('domain', $this->getDomain())
+            ->whereHas('user', function ($query) use ($department, $faculty) {
+                if ($faculty) {
+                    $query->where('faculty', $faculty);
+                }
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function getApprovedAndRejectedForCommittee(
+        ?int $categoryId = null,
+        ?string $department = null,
+        ?string $faculty = null,
+        int $perPage = 10
+    ) {
+        return Application::with([
+            'attributeValues.attribute',
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
+            ->where('domain', $this->getDomain())
+            ->whereIn('status', [
+                ApplicationStatus::APPROVED_BY_COMMITTEE,
+                ApplicationStatus::REJECTED,
+            ])
             ->whereHas('user', function ($query) use ($department, $faculty) {
                 if ($faculty) {
                     $query->where('faculty', $faculty);
