@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\ApplicationAttributeValue;
+use App\Models\ApplicationRound;
 use App\Models\Attachment;
 use App\Models\User;
 use App\Repositories\Traits\SimpleCRUD;
@@ -195,7 +196,17 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.created_at')
             ->paginate($perPage);
     }
 
@@ -258,7 +269,17 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.created_at')
             ->paginate($perPage);
     }
 
@@ -320,7 +341,17 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.created_at')
             ->paginate($perPage);
     }
 
@@ -382,7 +413,17 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.created_at')
             ->paginate($perPage);
     }
 
