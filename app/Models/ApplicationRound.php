@@ -39,9 +39,8 @@ class ApplicationRound extends Model
 // In ApplicationRound Model
     public function scopeActive($query)
     {
-        return $query->where('status', RoundStatus::OPEN)
-            ->where('start_time', '<=', now())
-            ->where('end_time', '>=', now());
+        return $query->where('status', RoundStatus::OPEN);
+
     }
 
     public function isAcceptingSubmissions(): bool

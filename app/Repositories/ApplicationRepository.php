@@ -158,6 +158,9 @@ class ApplicationRepository
         ])
             ->where('domain', $this->getDomain())
             ->where('status', ApplicationStatus::PENDING)
+            ->whereHas('applicationRound', function ($query) {
+                $query->active();
+            })
             ->whereHas('user', function ($query) use ($user) {
                 $query->where('department', $user->department);
             })
@@ -208,6 +211,9 @@ class ApplicationRepository
         ])
             ->where('domain', $this->getDomain())
             ->where('status', ApplicationStatus::APPROVED_BY_DEPARTMENT)
+            ->whereHas('applicationRound', function ($query) {
+                $query->active();
+            })
             ->whereHas('user', function ($query) use ($user, $department) {
                 $query->where('faculty', $user->faculty);
 
@@ -268,6 +274,9 @@ class ApplicationRepository
         ])
             ->where('domain', $this->getDomain())
             ->where('status', ApplicationStatus::APPROVED_BY_ASSOCIATE_DEAN)
+            ->whereHas('applicationRound', function ($query) {
+                $query->active();
+            })
             ->whereHas('user', function ($query) use ($user, $department) {
                 $query->where('faculty', $user->faculty);
 
@@ -325,6 +334,9 @@ class ApplicationRepository
         ])
             ->where('status', ApplicationStatus::APPROVED_BY_DEAN)
             ->where('domain', $this->getDomain())
+            ->whereHas('applicationRound', function ($query) {
+                $query->active();
+            })
             ->whereHas('user', function ($query) use ($department, $faculty) {
                 if ($faculty) {
                     $query->where('faculty', $faculty);
@@ -384,6 +396,9 @@ class ApplicationRepository
         ])
             ->where('status', ApplicationStatus::APPROVED_BY_COMMITTEE)
             ->where('domain', $this->getDomain())
+            ->whereHas('applicationRound', function ($query) {
+                $query->active();
+            })
             ->latest()
             ->paginate($perPage);
     }
