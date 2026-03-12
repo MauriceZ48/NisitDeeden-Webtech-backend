@@ -168,7 +168,7 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
@@ -235,7 +235,7 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
@@ -308,7 +308,7 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
@@ -380,7 +380,7 @@ class ApplicationRepository
             ->when($categoryId, function ($query) use ($categoryId) {
                 $query->where('application_category_id', $categoryId);
             })
-            ->latest()
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
