@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => 'Access denied. Only administrators can log in to this system.',
+                'email' => 'ไม่สามารถเข้าสู่ระบบได้ ระบบนี้สงวนสิทธิ์การเข้าใช้งานเฉพาะผู้ดูแลระบบเท่านั้น',
             ]);
         }
 
