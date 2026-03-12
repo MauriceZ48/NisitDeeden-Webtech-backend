@@ -97,10 +97,10 @@ class ApplicationController extends Controller
         $faculty = $request->input('faculty');
 
         $applications = match ($user->position) {
-            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment($categoryId),
-            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean($categoryId,  $department),
-            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean($categoryId,  $department),
-            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee($categoryId, $department, $faculty),
+            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment($categoryId, 5),
+            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean($categoryId,  $department, 5),
+            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean($categoryId,  $department, 5),
+            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee($categoryId, $department, $faculty, 5),
 
             default => collect(),
         };
@@ -117,16 +117,16 @@ class ApplicationController extends Controller
 
         $applications = match ($user->position) {
             UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo
-                ->getApprovedAndRejectedForHeadOfDepartment($categoryId),
+                ->getApprovedAndRejectedForHeadOfDepartment($categoryId, 5),
 
             UserPosition::ASSOCIATE_DEAN => $this->applicationRepo
-                ->getApprovedAndRejectedForAssociateDean($categoryId, $department),
+                ->getApprovedAndRejectedForAssociateDean($categoryId, $department, 5),
 
             UserPosition::DEAN => $this->applicationRepo
-                ->getApprovedAndRejectedForDean($categoryId, $department),
+                ->getApprovedAndRejectedForDean($categoryId, $department, 5),
 
             UserPosition::COMMITTEE_MEMBER => $this->applicationRepo
-                ->getApprovedAndRejectedForCommittee($categoryId, $department, $faculty),
+                ->getApprovedAndRejectedForCommittee($categoryId, $department, $faculty, 5),
 
             default => collect(),
         };
