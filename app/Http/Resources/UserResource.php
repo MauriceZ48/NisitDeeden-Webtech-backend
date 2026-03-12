@@ -28,7 +28,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'position_en' => $this->position,
             'position_th' => $this->position_thai,
-            'profile_path' => $this->profile_url,
+            'profile_url' => asset($this->profile_url),
         ];
     }
 }
