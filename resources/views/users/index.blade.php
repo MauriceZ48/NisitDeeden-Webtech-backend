@@ -77,17 +77,20 @@
                             <table class="min-w-full">
                                 <thead class="bg-slate-50">
                                 <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                    <th class="px-4 py-3">ผู้ใช้งาน</th>
-                                    <th class="px-4 py-3">รหัสประจำตัว</th>
-                                    <th class="px-4 py-3">สิทธิ์</th>
-                                    <th class="px-4 py-3">ตำแหน่ง</th>
-                                    <th class="px-4 py-3">คณะ/ภาควิชา</th>
+                                    {{-- 🌟 1. ใส่ whitespace-nowrap ที่หัวตารางทุกช่อง --}}
+                                    <th class="px-4 py-3 whitespace-nowrap">ผู้ใช้งาน</th>
+                                    <th class="px-4 py-3 whitespace-nowrap">รหัสประจำตัว</th>
+                                    <th class="px-4 py-3 whitespace-nowrap">สิทธิ์</th>
+                                    <th class="px-4 py-3 whitespace-nowrap">ตำแหน่ง</th>
+                                    <th class="px-4 py-3 whitespace-nowrap">คณะ/ภาควิชา</th>
                                 </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-200 text-sm">
                                 @foreach($users as $u)
                                     <tr class="hover:bg-slate-50">
-                                        <td class="px-4 py-4">
+
+                                        {{-- 🌟 2. ใส่ whitespace-nowrap ที่ข้อมูลทุกช่อง --}}
+                                        <td class="px-4 py-4 whitespace-nowrap">
                                             <a href="{{ route('users.index', array_merge(request()->query(), ['selected' => $u->id])) }}"
                                                hx-get="{{ route('users.index', array_merge(request()->query(), ['selected' => $u->id])) }}"
                                                hx-target="#main-content-area"
@@ -98,8 +101,12 @@
                                                 <div class="font-semibold text-slate-900">{{ $u->name }}</div>
                                             </a>
                                         </td>
-                                        <td class="px-4 py-4 text-slate-700">{{ $u->university_id }}</td>
-                                        <td class="px-4 py-4">
+
+                                        <td class="px-4 py-4 text-slate-700 whitespace-nowrap">
+                                            {{ $u->university_id }}
+                                        </td>
+
+                                        <td class="px-4 py-4 whitespace-nowrap">
                                             @php
                                                 // Get the value from the Enum or string
                                                 $roleValue = $u->role instanceof \UnitEnum ? $u->role->value : $u->role;
@@ -112,16 +119,17 @@
                                                 };
                                             @endphp
                                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold border {{ $roleStyles }}">
-                                                {{-- Use your Enum label() method if it exists, otherwise fallback to the value --}}
                                                 {{ method_exists($u->role, 'label') ? $u->role->label() : $u->role->name }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-4">
+
+                                        <td class="px-4 py-4 whitespace-nowrap">
                                             @if($u->role == \App\Enums\UserRole::COMMITTEE)
                                                 <div>{{ $u->position->label() }}</div>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-4">
+
+                                        <td class="px-4 py-4 whitespace-nowrap">
                                             @if($u->faculty)
                                                 <div class="text-slate-900">{{ $u->faculty->label() }}</div>
                                             @endif
