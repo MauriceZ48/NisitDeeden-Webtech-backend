@@ -206,7 +206,7 @@ class ApplicationRepository
                     ->whereColumn('application_rounds.id', 'applications.application_round_id')
                     ->limit(1)
             )
-            ->latest('applications.created_at')
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
@@ -279,7 +279,7 @@ class ApplicationRepository
                     ->whereColumn('application_rounds.id', 'applications.application_round_id')
                     ->limit(1)
             )
-            ->latest('applications.created_at')
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
@@ -351,7 +351,7 @@ class ApplicationRepository
                     ->whereColumn('application_rounds.id', 'applications.application_round_id')
                     ->limit(1)
             )
-            ->latest('applications.created_at')
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
@@ -423,7 +423,7 @@ class ApplicationRepository
                     ->whereColumn('application_rounds.id', 'applications.application_round_id')
                     ->limit(1)
             )
-            ->latest('applications.created_at')
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
