@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     Route::apiResource('users', UserController::class);
 
     //Application
+    Route::get('applications/user/{id}/active', [ApplicationController::class, 'applicationInActiveRoundByUserId']);
     Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
     Route::get('applications/by-position' , [ApplicationController::class, 'applicationsPendingForCommitteePosition']);
     Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);

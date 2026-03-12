@@ -481,4 +481,21 @@ class ApplicationRepository
             ->latest('applications.created_at')
             ->paginate($perPage);
     }
+
+    public function getApplicationsByUserIdInActiveRound($userId)
+    {
+        return Application::query()
+            ->where('domain', $this->getDomain())
+            ->where('user_id', $userId)
+            ->with(['attributeValues.attribute',
+                'applicationRound',
+                'user',
+                'applicationCategory'
+            ])
+            ->whereHas('applicationRound', function ($query) {
+                $query->active();
+            })
+            ->first();
+
+    }
 }

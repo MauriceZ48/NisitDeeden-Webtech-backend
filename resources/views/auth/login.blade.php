@@ -25,20 +25,21 @@
         </div>
 
         <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+{{--        <div class="block mt-4">--}}
+{{--            <label for="remember_me" class="inline-flex items-center">--}}
+{{--                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">--}}
+{{--                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>--}}
+{{--            </label>--}}
+{{--        </div>--}}
 
         <div class="flex flex-col space-y-4 mt-6">
             <div class="flex items-center justify-between">
-                @if (Route::has('password.request'))
+{{--                @if (Route::has('password.request'))
                     <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md" href="{{ route('password.request') }}">
                         {{ __('Forgot your password?') }}
                     </a>
-                @endif
+                @endif--}}
+                <div></div>
 
                 <x-primary-button class="px-6">
                     {{ __('Log in') }}
@@ -52,7 +53,6 @@
             </div>
 
             <div class="text-center">
-                <p class="text-sm text-gray-600 mb-2">New to the program?</p>
                 <a href="{{ route('register') }}"
                    class="inline-flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     {{ __('Create an Account') }}
