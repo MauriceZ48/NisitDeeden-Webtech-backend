@@ -7,6 +7,7 @@ use App\Http\Controllers\API\Auth\OAuthController;
 use App\Http\Controllers\API\Auth\AuthenticateController;
 use App\Http\Controllers\API\MetaController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,7 +44,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 // 2. Routes that REQUIRE authentication
 Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return new UserResource($request->user());
     })->name('me');
 
     Route::get('/my-applications', [ApplicationController::class, 'myApplications']);
