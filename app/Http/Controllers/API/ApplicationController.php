@@ -71,7 +71,7 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
-    public function applicationInActiveRoundOfUser()
+    public function activeRoundApplicationOfUser()
     {
 
         $targetUser = auth()->user();
@@ -85,7 +85,7 @@ class ApplicationController extends Controller
             );
         }
 
-        $application = $this->applicationRepo->getApplicationsByUserIdInActiveRound($targetUser->id);
+        $application = $this->applicationRepo->getApplicationByUserIdActiveRound($targetUser->id);
 
         if (!$application) {
             return response()->json([
@@ -94,6 +94,31 @@ class ApplicationController extends Controller
             ], 404);
         }
         return new ApplicationResource($application);
+    }
+
+    public function inActiveRoundApplicationsOfUser()
+    {
+
+        $targetUser = auth()->user();
+
+        if (!$targetUser ) {
+            return response()->json(
+                [
+                    'message' => 'Unauthorized or user not found'
+                ],
+                403
+            );
+        }
+
+        $applications = $this->applicationRepo->getApplicationsByUserIdInActiveRound($targetUser->id);
+
+        if ($applications->isEmpty()) {
+            return response()->json([
+                'message' => 'No applications found for this user.',
+                'data' => []
+            ], 200);
+        }
+        return ApplicationResource::collection($applications);
     }
 
     public function myApplications()
