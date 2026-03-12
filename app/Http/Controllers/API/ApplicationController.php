@@ -44,16 +44,13 @@ class ApplicationController extends Controller
         return new ApplicationResource($application);
     }
 
-    public function applicationsByUserId($user_id)
+    public function applicationsOfUser()
     {
 
-        if (!$user_id) {
-            return response()->json(['message' => 'User ID is required'], 400);
-        }
 
-        $targetUser = $this->userRepo->getUserById($user_id);
+        $targetUser = auth()->user();
 
-        if (!$targetUser || $targetUser->domain !== auth()->user()->domain) {
+        if (!$targetUser ) {
             return response()->json(
                 [
                     'message' => 'Unauthorized or user not found'
@@ -62,11 +59,11 @@ class ApplicationController extends Controller
             );
         }
 
-        $applications = $this->applicationRepo->getApplicationsByUserId($user_id);
+        $applications = $this->applicationRepo->getApplicationsByUserId($targetUser->id);
 
         if ($applications->isEmpty()) {
             return response()->json([
-                'message' => 'No applications found for user ID: ' . $user_id,
+                'message' => 'No applications found for this user',
                 'data' => []
             ], 404);
         }
@@ -74,15 +71,12 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
-    public function applicationInActiveRoundByUserId($user_id)
+    public function applicationInActiveRoundOfUser()
     {
-        if (!$user_id) {
-            return response()->json(['message' => 'User ID is required'], 400);
-        }
 
-        $targetUser = $this->userRepo->getUserById($user_id);
+        $targetUser = auth()->user();
 
-        if (!$targetUser || $targetUser->domain !== auth()->user()->domain) {
+        if (!$targetUser ) {
             return response()->json(
                 [
                     'message' => 'Unauthorized or user not found'
@@ -91,11 +85,11 @@ class ApplicationController extends Controller
             );
         }
 
-        $application = $this->applicationRepo->getApplicationsByUserIdInActiveRound($user_id);
+        $application = $this->applicationRepo->getApplicationsByUserIdInActiveRound($targetUser->id);
 
         if (!$application) {
             return response()->json([
-                'message' => 'No applications found for user ID: ' . $user_id,
+                'message' => 'No applications found for this user.',
                 'data' => []
             ], 404);
         }
