@@ -4,13 +4,13 @@
         <div class="flex h-16 md:h-20 items-center justify-between gap-4">
 
             <div  class="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                <div class="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/15 flex-shrink-0">
-                    <span class="text-primary font-extrabold">N</span>
-                </div>
-                <div class="leading-tight flex-shrink-0">
-                    <div class="text-lg font-extrabold text-slate-900 whitespace-nowrap">NisitDeeden</div>
-                    <div class="text-[10px] md:text-xs text-slate-500 -mt-0.5 hidden sm:block whitespace-nowrap">ระบบพิจารณารางวัลนิสิตดีเด่น</div>
-                </div>
+                <img src="{{ asset('images/logo.png') }}"
+                     alt="KU Nisit Deeden Logo"
+                     class="h-10 w-auto object-contain">
+{{--                <div class="leading-tight flex-shrink-0">--}}
+{{--                    <div class="text-lg font-extrabold text-slate-900 whitespace-nowrap">NisitDeeden</div>--}}
+{{--                    <div class="text-[10px] md:text-xs text-slate-500 -mt-0.5 hidden sm:block whitespace-nowrap">ระบบพิจารณารางวัลนิสิตดีเด่น</div>--}}
+{{--                </div>--}}
             </div>
 
             @php
