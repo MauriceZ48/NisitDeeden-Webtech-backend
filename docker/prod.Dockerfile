@@ -49,6 +49,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
+COPY docker/php/uploads.ini $PHP_INI_DIR/conf.d/docker-php-ext-uploads.ini
 COPY docker/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
