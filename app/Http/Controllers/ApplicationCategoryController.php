@@ -61,10 +61,10 @@ class ApplicationCategoryController extends Controller
             // Whitelist the exact input types you support in your dynamic form
             'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
         ], [
-            'name.required' => 'Need category name',
-            'name.unique' => 'This category name is already taken (even in trash)',
-            'attributes.*.label.required_with' => 'Every attribute needs a label',
-            'attributes.*.type.in' => 'Invalid input type selected.',
+            'name.required' => 'กรุณาระบุชื่อประเภทรางวัล',
+            'name.unique' => 'ชื่อประเภทรางวัลนี้มีอยู่ในระบบแล้ว (หรือเคยถูกลบไปแล้ว)',
+            'attributes.*.label.required_with' => 'กรุณาระบุชื่อฟิลด์ (Label) ให้ครบทุกช่อง',
+            'attributes.*.type.in' => 'ประเภทข้อมูลที่เลือกไม่ถูกต้อง',
         ]);
 
         // 3. Database Transaction
@@ -124,6 +124,9 @@ class ApplicationCategoryController extends Controller
             'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
+        ], [
+            'name.required' => 'กรุณาระบุชื่อประเภทรางวัล',
+            'name.unique' => 'ชื่อประเภทรางวัลนี้มีอยู่ในระบบแล้ว',
         ]);
         $applicationCategory->update([
             'name' => $request->name,

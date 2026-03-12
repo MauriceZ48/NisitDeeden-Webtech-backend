@@ -229,7 +229,7 @@ class ApplicationController extends Controller
                     ]);
                 } else {
                     throw ValidationException::withMessages([
-                        'error' => 'An active application already exists for this user in this round.'
+                        'error' => 'คุณได้ส่งใบสมัครในรอบการรับสมัครนี้ไปแล้ว'
                     ]);
                 }
             } else {

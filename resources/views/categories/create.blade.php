@@ -66,9 +66,9 @@
 
                 {{-- ส่วนที่ 2: สร้างฟอร์มแบบไดนามิก (Alpine.js) --}}
                 <div x-data="{
-                    attributes: {{ json_encode(old('attributes', [])) }},
+                    attributes: {{ Js::from(old('attributes', [])) }},
+                    errors: {{ Js::from($errors->toArray()) }}, // 🌟 1. Added errors object
                     init() {
-                        // ดักจับการเปลี่ยนแปลง ถ้าเลือกอัปโหลดไฟล์ ให้บังคับเป็น required ทันที
                         this.$watch('attributes', (value) => {
                             value.forEach(attr => {
                                 if (attr.type === 'file') {
@@ -76,6 +76,13 @@
                                 }
                             });
                         }, { deep: true });
+                    },
+                    // 🌟 2. Added clearError function
+                    clearError(field, index) {
+                        let key = `attributes.${index}.${field}`;
+                        if (this.errors[key]) {
+                            delete this.errors[key];
+                        }
                     }
                 }">
                     <div class="mb-4">
@@ -83,49 +90,59 @@
                     </div>
 
                     <template x-for="(attr, index) in attributes" :key="index">
-                        <div class="flex flex-wrap md:flex-nowrap gap-4 items-end bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 transition-all hover:border-slate-300">
+                        <div class="grid grid-cols-12 gap-4 items-start bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 w-full">
 
-                            {{-- ชื่อฟิลด์ --}}
-                            <div class="flex-1 w-full">
-                                <label class="block text-sm font-medium text-slate-700">ชื่อฟิลด์ (Label)</label>
-                                <input type="text" :name="`attributes[${index}][label]`" x-model="attr.label"
-                                       class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-primary focus:ring-primary/20"
+                            {{-- 1. ชื่อฟิลด์ --}}
+                            <div class="col-span-12 md:col-span-6">
+                                <label class="flex items-center gap-1 text-sm font-medium text-slate-700 mb-1">
+                                    <span class="whitespace-nowrap">ชื่อฟิลด์ (Label)</span>
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text"
+                                       :name="`attributes[${index}][label]`"
+                                       x-model="attr.label"
+                                       @input="clearError('label', index)"
+                                       class="w-full px-4 h-11 rounded-lg shadow-sm focus:border-primary focus:ring-primary/20 outline-none transition-all"
+                                       :class="errors[`attributes.${index}.label`] ? 'border-red-500' : 'border-slate-300'"
                                        placeholder="เช่น ทรานสคริปต์, เกรดเฉลี่ย">
                             </div>
 
-                            {{-- ประเภทข้อมูล --}}
-                            <div class="w-full md:w-1/4">
-                                <label class="block text-sm font-medium text-slate-700">ประเภทข้อมูล</label>
-                                <select :name="`attributes[${index}][type]`" x-model="attr.type"
-                                        class="mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-primary focus:ring-primary/20">
+                            {{-- 2. ประเภทข้อมูล --}}
+                            <div class="col-span-12 md:col-span-4">
+                                <label class="block text-sm font-medium text-slate-700 mb-1 whitespace-nowrap">ประเภทข้อมูล</label>
+                                <select :name="`attributes[${index}][type]`"
+                                        x-model="attr.type"
+                                        @change="clearError('type', index)"
+                                        class="w-full px-3 h-11 rounded-lg shadow-sm focus:border-primary focus:ring-primary/20 outline-none transition-all"
+                                        :class="errors[`attributes.${index}.type`] ? 'border-red-500' : 'border-slate-300'">
                                     <option value="text">ข้อความสั้น</option>
                                     <option value="textarea">ข้อความยาว</option>
                                     <option value="file">อัปโหลดไฟล์</option>
                                 </select>
                             </div>
 
-                            {{-- บังคับกรอก --}}
-                            <div class="flex flex-col items-center px-2">
-                                <label class="text-xs font-bold text-slate-500 mb-2">จำเป็น?</label>
-                                <input type="checkbox"
-                                       :name="`attributes[${index}][is_required]`"
-                                       x-model="attr.is_required"
-                                       :disabled="attr.type === 'file'"
-                                       class="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                       value="1">
-
-                                {{-- ซ่อน input ไว้ส่งค่ากลับไปหลังบ้าน ในกรณีที่ปุ่ม Checkbox ถูก disabled (ไฟล์อัปโหลด) --}}
-                                <template x-if="attr.type === 'file'">
-                                    <input type="hidden" :name="`attributes[${index}][is_required]`" value="1">
-                                </template>
+                            {{-- 3. บังคับกรอก --}}
+                            <div class="col-span-6 md:col-span-1 flex flex-col items-center">
+                                <label class="block text-[11px] font-bold text-slate-500 mb-1 whitespace-nowrap">จำเป็น?</label>
+                                <div class="h-11 flex items-center justify-center">
+                                    <input type="checkbox"
+                                           :name="`attributes[${index}][is_required]`"
+                                           x-model="attr.is_required"
+                                           :disabled="attr.type === 'file'"
+                                           class="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary/50 disabled:opacity-50"
+                                           value="1">
+                                </div>
                             </div>
 
-                            {{-- ปุ่มลบฟิลด์ --}}
-                            <button type="button" @click="attributes.splice(index, 1)" class="text-red-400 hover:text-red-600 mb-1 transition-colors bg-red-50 p-2 rounded-lg" title="ลบฟิลด์นี้">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
+                            {{-- 4. ปุ่มลบฟิลด์ --}}
+                            <div class="col-span-6 md:col-span-1 mt-5">
+                                <button type="button" @click="attributes.splice(index, 1)"
+                                        class="w-full h-11 flex items-center justify-center text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </template>
 
