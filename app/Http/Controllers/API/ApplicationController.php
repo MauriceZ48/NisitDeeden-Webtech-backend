@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Enums\ApplicationStatus;
 use App\Enums\RoundStatus;
 use App\Enums\UserPosition;
+use App\Enums\UserRole;
 use App\Events\ApplicationStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
@@ -441,6 +442,27 @@ class ApplicationController extends Controller
             ], 403);
         }
         $application->delete();
+        return response()->json(null, 204);
+    }
+
+    public function adminDestroy(Application $application)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== UserRole::ADMIN) {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        if ($application->domain !== $user->domain) {
+            return response()->json([
+                'message' => 'Unauthorized domain access.',
+            ], 403);
+        }
+
+        $application->delete();
+
         return response()->json(null, 204);
     }
 }
