@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Enums\ApplicationStatus;
 use App\Enums\RoundStatus;
 use App\Enums\UserPosition;
+use App\Events\ApplicationStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
 use App\Jobs\SendApprovalEmailJob;
@@ -39,7 +40,7 @@ class ApplicationController extends Controller
 
         if ($applications->isEmpty()) {
             return response()->json([
-                'message' => 'No applications found or no active round currently.',
+                'message' => 'ไม่พบข้อมูลใบสมัคร หรือไม่มีรอบการรับสมัครที่เปิดใช้งานอยู่ในขณะนี้',
                 'data' => []
             ], 200);
         }
@@ -51,7 +52,7 @@ class ApplicationController extends Controller
     {
         if ($application->domain !== auth()->user()->domain) {
             return response()->json([
-                'message' => 'Unauthorized domain access.',
+                'message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น',
             ], 403);
         }
         $application->load('attributeValues.attribute', 'applicationRound', 'attachments', 'user', 'applicationCategory');
@@ -67,7 +68,7 @@ class ApplicationController extends Controller
         if (!$targetUser ) {
             return response()->json(
                 [
-                    'message' => 'Unauthorized or user not found'
+                    'message' => 'ไม่พบข้อมูลผู้ใช้งาน หรือเซสชันหมดอายุ'
                 ],
                 403
             );
@@ -77,7 +78,7 @@ class ApplicationController extends Controller
 
         if ($applications->isEmpty()) {
             return response()->json([
-                'message' => 'No applications found for this user',
+                'message' => 'ไม่พบข้อมูลใบสมัครของผู้ใช้งานรายนี้',
                 'data' => []
             ], 404);
         }
@@ -93,7 +94,7 @@ class ApplicationController extends Controller
         if (!$targetUser ) {
             return response()->json(
                 [
-                    'message' => 'Unauthorized or user not found'
+                    'message' => 'ไม่พบข้อมูลผู้ใช้งาน หรือเซสชันหมดอายุ'
                 ],
                 403
             );
@@ -103,7 +104,7 @@ class ApplicationController extends Controller
 
         if (!$application) {
             return response()->json([
-                'message' => 'No applications found for this user.',
+                'message' => 'ไม่พบใบสมัครในรอบปัจจุบันสำหรับผู้ใช้งานรายนี้',
                 'data' => []
             ], 404);
         }
@@ -118,7 +119,7 @@ class ApplicationController extends Controller
         if (!$targetUser ) {
             return response()->json(
                 [
-                    'message' => 'Unauthorized or user not found'
+                    'message' => 'ไม่พบข้อมูลผู้ใช้งาน หรือเซสชันหมดอายุ'
                 ],
                 403
             );
@@ -128,7 +129,7 @@ class ApplicationController extends Controller
 
         if ($applications->isEmpty()) {
             return response()->json([
-                'message' => 'No applications found for this user.',
+                'message' => 'ไม่พบข้อมูลใบสมัครในรอบปัจจุบันสำหรับผู้ใช้งานรายนี้',
                 'data' => []
             ], 200);
         }
@@ -141,7 +142,7 @@ class ApplicationController extends Controller
 
         if (!$user) {
             return response()->json([
-                'message' => 'Unauthenticated'
+                'message' => 'กรุณาเข้าสู่ระบบก่อนดำเนินการ'
             ], 401);
         }
 
@@ -215,7 +216,7 @@ class ApplicationController extends Controller
 
         if ($application->domain !== auth()->user()->domain) {
             return response()->json([
-                'message' => 'Cross-domain approval denied.'
+                'message' => 'คุณไม่สามารถข้ามวิทยาเขตเพื่อดำเนินการอนุมัติได้'
             ], 403);
         }
 
@@ -228,7 +229,7 @@ class ApplicationController extends Controller
         };
 
         if (!$canApprove) {
-            return response()->json(['message' => 'Not authorized for this stage.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์ดำเนินการในขั้นตอนการพิจารณานี้'], 403);
         }
 
         if ($action === 'rejected') {
@@ -236,7 +237,16 @@ class ApplicationController extends Controller
                 'status' => ApplicationStatus::REJECTED,
                 'rejection_reason' => $request->rejection_reason,
             ]);
-            return response()->json(['message' => 'Application rejected']);
+
+            $application->load([
+                'attributeValues.attribute',
+                'attachments',
+                'applicationRound',
+                'user',
+                'applicationCategory']);
+            broadcast(new ApplicationStatusUpdated($application))->toOthers();
+
+            return response()->json(['message' => 'ปฏิเสธใบสมัครเรียบร้อยแล้ว']);
         }
 
         $nextStatus = match ($user->position) {
@@ -253,7 +263,15 @@ class ApplicationController extends Controller
             SendApprovalEmailJob::dispatch($application);
         }
 
-        return response()->json(['message' => 'Status updated to ' . $nextStatus->value]);
+        $application->load([
+            'attributeValues.attribute',
+            'attachments',
+            'applicationRound',
+            'user',
+            'applicationCategory']);
+        broadcast(new ApplicationStatusUpdated($application))->toOthers();
+
+        return response()->json(['message' => 'อัปเดตสถานะเป็น ' . $nextStatus->label() . ' เรียบร้อยแล้ว']);
     }
 
 
@@ -266,7 +284,7 @@ class ApplicationController extends Controller
         $currentRound = $this->RoundRepo->getActive();
         if (!$currentRound) {
             return response()->json([
-                'message' => 'No active application round found.',
+                'message' => 'ไม่พบรอบการรับสมัครที่เปิดใช้งานอยู่ในขณะนี้',
                 'error_code' => 'NO_ACTIVE_ROUND'
             ], 422);
         }

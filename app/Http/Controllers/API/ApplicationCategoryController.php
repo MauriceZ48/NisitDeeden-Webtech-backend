@@ -16,7 +16,7 @@ class ApplicationCategoryController extends Controller
 {
     public function __construct(
         private ApplicationCategoryRepository $categoryRepo
-){}
+    ) {}
 
     private function getDomainCacheKey(): string
     {
@@ -29,8 +29,8 @@ class ApplicationCategoryController extends Controller
         return "categories.global";
     }
 
-    public function index(){
-
+    public function index()
+    {
         $categories = Cache::remember($this->getDomainCacheKey(), 60 * 60 * 24, function () {
             return $this->categoryRepo->getAllWithAttributes();
         });
@@ -53,18 +53,16 @@ class ApplicationCategoryController extends Controller
         return ApplicationCategoryResource::collection($activeCategories);
     }
 
-
     public function show(ApplicationCategory $applicationCategory)
     {
         if (!$applicationCategory) {
             return response()->json([
-                'message' => 'Category not found.',
+                'message' => 'ไม่พบข้อมูลประเภทรางวัล',
                 'error_code' => 'CATEGORY_NOT_FOUND'
             ], 404);
         }
 
         $applicationCategory->load('attributes');
-
 
         return new ApplicationCategoryResource($applicationCategory);
     }
@@ -73,7 +71,6 @@ class ApplicationCategoryController extends Controller
     {
         $domain = auth()->user()->domain;
 
-        // 1. Validate only what the user SENDS
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -89,13 +86,12 @@ class ApplicationCategoryController extends Controller
             'attributes.*.label' => 'required_with:attributes|string|max:255',
             'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
         ], [
-            'name.required' => 'Need category name',
-            'name.unique' => 'This category name is already taken (even in trash)',
-            'attributes.*.label.required_with' => 'Every attribute needs a label',
-            'attributes.*.type.in' => 'Invalid input type selected.',
+            'name.required' => 'กรุณาระบุชื่อประเภทรางวัล',
+            'name.unique' => 'ชื่อประเภทรางวัลนี้ถูกใช้งานแล้ว (รวมถึงในถังขยะ)',
+            'attributes.*.label.required_with' => 'คุณลักษณะ (Attribute) ทุกรายการจำเป็นต้องมีชื่อเรียก (Label)',
+            'attributes.*.type.in' => 'ประเภทข้อมูลที่เลือกไม่ถูกต้อง',
         ]);
 
-        // 3. Database Transaction
         return DB::transaction(function () use ($validated, $domain, $request) {
             $category = $this->categoryRepo->create([
                 'name'        => $validated['name'],
@@ -115,26 +111,30 @@ class ApplicationCategoryController extends Controller
                     ]);
                 }
             }
+
             if ($category->isGlobal()) {
                 Cache::forget($this->getGlobalCacheKey());
             } else {
                 Cache::forget($this->getDomainCacheKey());
             }
+
             return new ApplicationCategoryResource($category);
         });
     }
 
     public function update(Request $request, ApplicationCategory $applicationCategory)
     {
-
-        if($applicationCategory->applications()->count() > 0){
-            return response()->json(['message' => 'Category already in use'], 422);
+        if ($applicationCategory->applications()->count() > 0) {
+            return response()->json(['message' => 'ไม่สามารถแก้ไขได้ เนื่องจากประเภทรางวัลนี้ถูกนำไปใช้ในใบสมัครแล้ว'], 422);
         }
 
         $validated = $request->validate([
             'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
+        ], [
+            'name.required' => 'กรุณาระบุชื่อประเภทรางวัล',
+            'name.unique' => 'ชื่อประเภทรางวัลนี้ถูกใช้งานแล้ว',
         ]);
 
         $applicationCategory->update([
@@ -148,8 +148,9 @@ class ApplicationCategoryController extends Controller
         } else {
             Cache::forget($this->getDomainCacheKey());
         }
+
         return response()->json([
-            'message' => 'Category updated',
+            'message' => 'อัปเดตข้อมูลประเภทรางวัลเรียบร้อยแล้ว',
             'category' => $applicationCategory->load('attributes')
         ]);
     }
@@ -157,22 +158,24 @@ class ApplicationCategoryController extends Controller
     public function toggleStatus(ApplicationCategory $applicationCategory)
     {
         if ($applicationCategory->domain !== auth()->user()->domain) {
-            return response()->json(['message' => 'Unauthorized domain access.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น'], 403);
         }
 
         $this->categoryRepo->toggleStatus($applicationCategory);
+
         if ($applicationCategory->isGlobal()) {
             Cache::forget($this->getGlobalCacheKey());
         } else {
             Cache::forget($this->getDomainCacheKey());
         }
+
         return new ApplicationCategoryResource($applicationCategory);
     }
 
     public function destroy(ApplicationCategory $applicationCategory)
     {
         if ($applicationCategory->domain !== auth()->user()->domain) {
-            return response()->json(['message' => 'Unauthorized domain access.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น'], 403);
         }
 
         if ($applicationCategory->hasApplications()) {
@@ -181,22 +184,24 @@ class ApplicationCategoryController extends Controller
             } else {
                 Cache::forget($this->getDomainCacheKey());
             }
+
             $applicationCategory->delete();
 
             return response()->json([
-                'message' => 'Category soft-deleted .' . $applicationCategory->countApplications() . ' applications is affected.',
+                'message' => 'ย้ายประเภทรางวัลลงถังขยะแล้ว จากมีใบสมัครที่เกี่ยวข้องจำนวน ' . $applicationCategory->countApplications() . ' รายการ',
                 'type' => 'warning',
                 'soft_deleted' => true
             ], 200);
         }
 
         $applicationCategory->forceDelete();
+
         if ($applicationCategory->isGlobal()) {
             Cache::forget($this->getGlobalCacheKey());
         } else {
             Cache::forget($this->getDomainCacheKey());
         }
+
         return response()->json(null, 204);
     }
-
 }

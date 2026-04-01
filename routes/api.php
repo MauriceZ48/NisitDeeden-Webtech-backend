@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         ->parameters(['rounds' => 'applicationRound']);
 
     //Category
+    Route::get('categories/for-app', [ApplicationCategoryController::class, 'indexForApplication']);
     Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
         ->name('categories.toggleStatus');
     Route::apiResource('categories', ApplicationCategoryController::class)

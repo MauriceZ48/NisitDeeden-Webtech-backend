@@ -10,6 +10,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Enum;
@@ -36,34 +37,40 @@ class UserController extends Controller
         return UserResource::collection($users);
     }
 
-
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'required|email|max:255|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
             'university_id' => 'nullable|string|max:50|unique:users,university_id',
-            'department'    => ['required', new Enum(Department::class)],
-            'position'      => ['required', new Enum(UserPosition::class)],
-            'photo'         => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'department' => ['required', new Enum(Department::class)],
+            'position' => ['required', new Enum(UserPosition::class)],
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'name.required' => 'กรุณาระบุชื่อ-นามสกุล',
+            'email.required' => 'กรุณาระบุอีเมล',
+            'email.unique' => 'อีเมลนี้ถูกใช้งานในระบบแล้ว',
+            'university_id.unique' => 'รหัสนิสิต/บุคลากรนี้มีอยู่ในระบบแล้ว',
+            'department.required' => 'กรุณาระบุภาควิชา',
+            'position.required' => 'กรุณาระบุตำแหน่ง',
         ]);
 
         $department = Department::from($validated['department']);
         $position = UserPosition::from($validated['position']);
 
         $data = [
-            'name'          => $validated['name'],
-            'email'         => $validated['email'],
-            'password'      => Hash::make('password'),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make('password'), // รหัสผ่านเริ่มต้น
             'university_id' => $validated['university_id'] ?? null,
-            'department'    => $department,
-            'faculty'       => $department->faculty(),
-            'position'      => $position,
-            'role'          => $position->getRole(),
-            'domain'        => auth()->user()->domain,
+            'department' => $department,
+            'faculty' => $department->faculty(),
+            'position' => $position,
+            'role' => $position->getRole(),
+            'domain' => auth()->user()->domain,
         ];
 
         if ($request->hasFile('photo')) {
@@ -79,7 +86,7 @@ class UserController extends Controller
     {
         if ($user->domain !== auth()->user()->domain) {
             return response()->json([
-                'message' => 'Cannot inspect user in other domain.',
+                'message' => 'ไม่สามารถเรียกดูข้อมูลผู้ใช้งานข้ามวิทยาเขตได้',
             ], 422);
         }
         return new UserResource($user);
@@ -92,22 +99,22 @@ class UserController extends Controller
     {
         if ($user->domain !== auth()->user()->domain) {
             return response()->json([
-                'message' => 'Invalid authorization: Domain mismatch.',
+                'message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น',
             ], 403);
         }
 
         if ($user->id !== auth()->id()) {
             return response()->json([
-                'message' => 'Cannot update other users.',
+                'message' => 'คุณไม่สามารถแก้ไขข้อมูลของผู้ใช้งานรายอื่นได้',
             ], 403);
         }
 
         $request->validate([
-            'photo'         => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'delete_photo'  => 'nullable'
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'delete_photo' => 'nullable'
         ]);
 
-        //Handle Photo Removal
+        // Handle Photo Removal
         if ($request->boolean('delete_photo')) {
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
@@ -133,6 +140,27 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        //
+        if (auth()->id() === $user->id) {
+            return response()->json([
+                'message' => 'คุณไม่สามารถลบบัญชีผู้ใช้งานของตนเองได้'
+            ], 422);
+        }
+
+        if ($user->domain !== auth()->user()->domain) {
+            return response()->json([
+                'message' => 'คุณไม่มีสิทธิ์ลบข้อมูลผู้ใช้งานข้ามวิทยาเขต'
+            ], 403);
+        }
+
+        // Clean up the storage when user is deleted
+        if ($user->profile_path) {
+            Storage::disk('public')->delete($user->profile_path);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'ลบข้อมูลผู้ใช้งานเรียบร้อยแล้ว'
+        ], 200);
     }
 }
