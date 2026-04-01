@@ -27,6 +27,7 @@ class ApplicationRoundResource extends JsonResource
             'status' => $this->status,
             'domain_en' => $this->domain,
             'domain_th' => $this->domain->label(),
+            'applications_count' => $this->applications_count
         ];
     }
 }
