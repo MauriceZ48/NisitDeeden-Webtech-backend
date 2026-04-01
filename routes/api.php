@@ -7,7 +7,6 @@ use App\Http\Controllers\API\Auth\OAuthController;
 use App\Http\Controllers\API\Auth\AuthenticateController;
 use App\Http\Controllers\API\MetaController;
 use App\Http\Controllers\API\UserController;
-use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -44,7 +43,7 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 // 2. Routes that REQUIRE authentication
 Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function () {
     Route::get('/user', function (Request $request) {
-        return new UserResource($request->user());
+        return $request->user();
     })->name('me');
 
     Route::get('/my-applications', [ApplicationController::class, 'myApplications']);
@@ -55,8 +54,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     Route::apiResource('users', UserController::class);
 
     //Application
+    Route::get('applications/active', [ApplicationController::class, 'activeRoundApplications']);
     Route::get('applications/user/inactive', [ApplicationController::class, 'inActiveRoundApplicationsOfUser']);
-    Route::get('applications/user/active', [ApplicationController::class, 'activeRoundApplicationOfUser']);
+    Route::get('applications/user/active', [ApplicationController::class, 'ActiveRoundApplicationOfUser']);
     Route::get('applications/user', [ApplicationController::class, 'applicationsOfUser']);
     Route::get('applications/by-position' , [ApplicationController::class, 'applicationsPendingForCommitteePosition']);
     Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     //Round
     Route::get('/rounds/next-expected', [ApplicationRoundController::class, 'getNextExpectedRound'])
         ->name('rounds.nextExpected');
+    Route::get('rounds/active', [ApplicationRoundController::class, 'getActiveRound']);
     Route::apiResource('rounds', ApplicationRoundController::class)
         ->parameters(['rounds' => 'applicationRound']);
 

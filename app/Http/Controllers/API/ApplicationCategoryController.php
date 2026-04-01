@@ -7,6 +7,7 @@ use App\Http\Resources\ApplicationCategoryResource;
 use App\Models\ApplicationCategory;
 use App\Repositories\ApplicationCategoryRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -17,9 +18,39 @@ class ApplicationCategoryController extends Controller
         private ApplicationCategoryRepository $categoryRepo
 ){}
 
+    private function getDomainCacheKey(): string
+    {
+        $domain = auth()->user()->domain?->value ?? 'default';
+        return "categories.domain.{$domain}";
+    }
+
+    private function getGlobalCacheKey(): string
+    {
+        return "categories.global";
+    }
+
     public function index(){
-        $categories = $this->categoryRepo->getAllWithAttributes();
+
+        $categories = Cache::remember($this->getDomainCacheKey(), 60 * 60 * 24, function () {
+            return $this->categoryRepo->getAllWithAttributes();
+        });
         return ApplicationCategoryResource::collection($categories);
+    }
+
+    public function indexForApplication()
+    {
+        $globalCategories = Cache::remember($this->getGlobalCacheKey(), 60 * 60 * 24, function () {
+            return $this->categoryRepo->getGlobalCategoriesWithAttributes();
+        });
+
+        $domainCategories = Cache::remember($this->getDomainCacheKey(), 60 * 60 * 24, function () {
+            return $this->categoryRepo->getAllWithAttributes();
+        });
+
+        $mergedCategories = $globalCategories->merge($domainCategories);
+        $activeCategories = $mergedCategories->where('is_active', true);
+
+        return ApplicationCategoryResource::collection($activeCategories);
     }
 
 
@@ -84,6 +115,11 @@ class ApplicationCategoryController extends Controller
                     ]);
                 }
             }
+            if ($category->isGlobal()) {
+                Cache::forget($this->getGlobalCacheKey());
+            } else {
+                Cache::forget($this->getDomainCacheKey());
+            }
             return new ApplicationCategoryResource($category);
         });
     }
@@ -99,60 +135,19 @@ class ApplicationCategoryController extends Controller
             'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'attributes' => 'nullable|array',
-            'attributes.*.id' => 'nullable|exists:category_attributes,id',
-            'attributes.*.label' => 'required_with:attributes|string|max:255',
-            'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
         ]);
 
         $applicationCategory->update([
-            'name' => $request->name,
-            'icon' => $request->icon,
-            'description' => $request->description,
+            'name' => $validated['name'],
+            'icon' => $validated['icon'],
+            'description' => $validated['description'],
         ]);
 
-        if ($request->has('attributes')) {
-            $attributes = $request->attributes; // Standard PHP array
-
-            // 1. Identify which IDs to keep
-            $idsToKeep = [];
-            foreach ($attributes as $attr) {
-                if (!empty($attr['id'])) {
-                    $idsToKeep[] = $attr['id'];
-                }
-            }
-
-            // 2. DELETE: Remove attributes not in the "keep" list
-            $applicationCategory->attributes()->whereNotIn('id', $idsToKeep)->delete();
-
-            // 3. UPDATE & CREATE: Loop through all sent data
-            foreach ($attributes as $attrData) {
-                try {
-                    if (!empty($attrData['id'])) {
-                        // It has an ID, so UPDATE
-                        $applicationCategory->attributes()
-                            ->where('id', $attrData['id'])
-                            ->update([
-                                'label' => $attrData['label'],
-                                'type'  => $attrData['type']
-                            ]);
-                    } else {
-                        // No ID, so CREATE
-                        $applicationCategory->attributes()->create([
-                            'label' => $attrData['label'],
-                            'type'  => $attrData['type']
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    // If the database rejects it, you will get a helpful message
-                    return response()->json([
-                        'error' => 'Database failure: ' . $e->getMessage(),
-                        'data'  => $attrData
-                    ], 500);
-                }
-            }
+        if ($applicationCategory->isGlobal()) {
+            Cache::forget($this->getGlobalCacheKey());
+        } else {
+            Cache::forget($this->getDomainCacheKey());
         }
-
         return response()->json([
             'message' => 'Category updated',
             'category' => $applicationCategory->load('attributes')
@@ -166,6 +161,11 @@ class ApplicationCategoryController extends Controller
         }
 
         $this->categoryRepo->toggleStatus($applicationCategory);
+        if ($applicationCategory->isGlobal()) {
+            Cache::forget($this->getGlobalCacheKey());
+        } else {
+            Cache::forget($this->getDomainCacheKey());
+        }
         return new ApplicationCategoryResource($applicationCategory);
     }
 
@@ -176,6 +176,11 @@ class ApplicationCategoryController extends Controller
         }
 
         if ($applicationCategory->hasApplications()) {
+            if ($applicationCategory->isGlobal()) {
+                Cache::forget($this->getGlobalCacheKey());
+            } else {
+                Cache::forget($this->getDomainCacheKey());
+            }
             $applicationCategory->delete();
 
             return response()->json([
@@ -186,7 +191,11 @@ class ApplicationCategoryController extends Controller
         }
 
         $applicationCategory->forceDelete();
-
+        if ($applicationCategory->isGlobal()) {
+            Cache::forget($this->getGlobalCacheKey());
+        } else {
+            Cache::forget($this->getDomainCacheKey());
+        }
         return response()->json(null, 204);
     }
 

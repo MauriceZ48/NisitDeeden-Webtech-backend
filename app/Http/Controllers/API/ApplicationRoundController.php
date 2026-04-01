@@ -8,6 +8,7 @@ use App\Http\Requests\ApplicationRoundRequest;
 use App\Http\Resources\ApplicationRoundResource;
 use App\Models\ApplicationRound;
 use App\Repositories\ApplicationRoundRepository;
+use Illuminate\Support\Facades\Cache;
 
 class ApplicationRoundController extends Controller
 {
@@ -15,13 +16,37 @@ class ApplicationRoundController extends Controller
     public function __construct(
         private ApplicationRoundRepository $roundRepo
     ){}
-    /**
-     * Display a listing of the resource.
-     */
+
+
+    private function getActiveRoundCacheKey(): string
+    {
+        $domain = auth()->user()->domain?->value ?? 'default';
+        return "application_round.active.domain.{$domain}";
+    }
     public function index()
     {
         $rounds = $this->roundRepo->getAllOrderedInDomain();
         return ApplicationRoundResource::collection($rounds);
+    }
+
+    public function getActiveRound()
+    {
+        $cacheKey = $this->getActiveRoundCacheKey();
+
+        $activeRound = Cache::remember($cacheKey, 60 * 60, function () {
+            return $this->roundRepo->getActive();
+        });
+
+        if (!$activeRound) {
+            return response()->json(['message' => 'No active application round at the moment.'], 404);
+        }
+
+        if (now()->gt($activeRound->end_time)) {
+            Cache::forget($cacheKey);
+            return response()->json(['message' => 'No active application round at the moment.'], 404);
+        }
+
+        return new ApplicationRoundResource($activeRound);
     }
 
     public function getNextExpectedRound()
@@ -93,6 +118,7 @@ class ApplicationRoundController extends Controller
         $data['domain'] = auth()->user()->domain;
 
         $round = $this->roundRepo->create($data);
+        Cache::forget($this->getActiveRoundCacheKey());
         return new ApplicationRoundResource($round);
     }
 
@@ -148,6 +174,7 @@ class ApplicationRoundController extends Controller
         }
 
         $applicationRound->update($request->validated());
+        Cache::forget($this->getActiveRoundCacheKey());
         return new ApplicationRoundResource($applicationRound);
     }
 
@@ -162,7 +189,7 @@ class ApplicationRoundController extends Controller
 
         if ($applicationRound->applications()->count() > 0) {
             $applicationRound->delete();
-
+            Cache::forget($this->getActiveRoundCacheKey());
             return response()->json([
                 'message' => 'Round is soft-deleted. ' . $applicationRound->countApplications() . ' applications is affected.',
                 'type' => 'warning',
@@ -171,7 +198,7 @@ class ApplicationRoundController extends Controller
         }
 
         $applicationRound->forceDelete();
-
+        Cache::forget($this->getActiveRoundCacheKey());
         return response()->json(null, 204);
     }
 }

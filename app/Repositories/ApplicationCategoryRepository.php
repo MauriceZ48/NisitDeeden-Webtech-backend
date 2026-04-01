@@ -54,6 +54,13 @@ class ApplicationCategoryRepository{
             ->get();
     }
 
+    public function getGlobalCategoriesWithAttributes()
+    {
+        return ApplicationCategory::with('attributes')
+            ->where('domain', Domain::ALL)
+            ->get();
+    }
+
     // For applications to see its domain and global domain
     public function getActiveCategoriesInDomainAndALL()
     {

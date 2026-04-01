@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Repositories\Traits\SimpleCRUD;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 
 class ApplicationRepository
@@ -18,6 +19,10 @@ class ApplicationRepository
     use SimpleCRUD;
 
     private string $model = Application::class;
+
+    public function __construct(
+        private ApplicationRoundRepository $roundRepo
+    ){}
 
     private function getDomain()
     {
@@ -41,6 +46,25 @@ class ApplicationRepository
             'applicationCategory'
         ])
             ->where('domain', $this->getDomain())
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function getFullApplicationsInActiveRoundPaginated(int $perPage = 10)
+    {
+        $current_active_round = $this->roundRepo->getActive();
+
+        if (!$current_active_round) {
+            return new LengthAwarePaginator([], 0, $perPage);
+        }
+
+        return $current_active_round->applications()->with([
+            'attributeValues.attribute',
+            'attachments',
+            'applicationRound',
+            'user',
+            'applicationCategory'
+        ])
             ->latest()
             ->paginate($perPage);
     }

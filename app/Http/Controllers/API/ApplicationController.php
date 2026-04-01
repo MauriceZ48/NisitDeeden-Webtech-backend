@@ -7,6 +7,7 @@ use App\Enums\RoundStatus;
 use App\Enums\UserPosition;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
+use App\Jobs\SendApprovalEmailJob;
 use App\Models\Application;
 use App\Models\ApplicationCategory;
 use App\Repositories\ApplicationCategoryRepository;
@@ -30,6 +31,19 @@ class ApplicationController extends Controller
     public function index()
     {
         $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated();
+        return ApplicationResource::collection($applications);
+    }
+
+    public function activeRoundApplications(){
+        $applications = $this->applicationRepo->getFullApplicationsInActiveRoundPaginated();
+
+        if ($applications->isEmpty()) {
+            return response()->json([
+                'message' => 'No applications found or no active round currently.',
+                'data' => []
+            ], 200);
+        }
+
         return ApplicationResource::collection($applications);
     }
 
@@ -234,6 +248,10 @@ class ApplicationController extends Controller
         };
 
         $application->update(['status' => $nextStatus]);
+
+        if ($nextStatus === ApplicationStatus::APPROVED_BY_COMMITTEE) {
+            SendApprovalEmailJob::dispatch($application);
+        }
 
         return response()->json(['message' => 'Status updated to ' . $nextStatus->value]);
     }
