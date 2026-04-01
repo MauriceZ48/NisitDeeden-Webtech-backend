@@ -42,44 +42,32 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
-            'university_id' => 'nullable|string|max:50|unique:users,university_id',
-            'department' => ['required', new Enum(Department::class)],
-            'position' => ['required', new Enum(UserPosition::class)],
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ], [
-            'name.required' => 'กรุณาระบุชื่อ-นามสกุล',
-            'email.required' => 'กรุณาระบุอีเมล',
-            'email.unique' => 'อีเมลนี้ถูกใช้งานในระบบแล้ว',
-            'university_id.unique' => 'รหัสนิสิต/บุคลากรนี้มีอยู่ในระบบแล้ว',
-            'department.required' => 'กรุณาระบุภาควิชา',
-            'position.required' => 'กรุณาระบุตำแหน่ง',
+
+        $data = $request->validate([
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email',
+            'university_id' => 'required|string|unique:users,university_id',
+
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'faculty'       => ['nullable', new Enum(Faculty::class)],
+            'department'    => ['nullable', new Enum(Department::class)],
+
+            'photo'         => 'nullable|image|max:2048'
         ]);
 
-        $department = Department::from($validated['department']);
-        $position = UserPosition::from($validated['position']);
-
-        $data = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make('password'), // รหัสผ่านเริ่มต้น
-            'university_id' => $validated['university_id'] ?? null,
-            'department' => $department,
-            'faculty' => $department->faculty(),
-            'position' => $position,
-            'role' => $position->getRole(),
-            'domain' => auth()->user()->domain,
-        ];
+        $positionEnum = UserPosition::from($request->position);
+        $data['role'] = $positionEnum->getRole();
+        $data['domain'] = auth()->user()->domain;
 
         if ($request->hasFile('photo')) {
             $data['profile_path'] = $request->file('photo')->store('profile-photos', 'public');
         }
 
-        $user = $this->userRepo->createUser($data);
+        $data['password'] = Hash::make('12345678');
 
-        return (new UserResource($user))->response()->setStatusCode(201);
+        $user = User::create($data);
+
+        return new UserResource($user);
     }
 
     public function show(User $user)
