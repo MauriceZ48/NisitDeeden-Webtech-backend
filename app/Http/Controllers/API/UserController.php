@@ -31,6 +31,22 @@ class UserController extends Controller
         return UserResource::collection($users);
     }
 
+    public function me()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // load relations if needed
+//        $user->load(['faculty', 'department']);
+
+        return new UserResource($user);
+    }
+
     public function allUsers()
     {
         $users = $this->userRepo->getAllUsers();

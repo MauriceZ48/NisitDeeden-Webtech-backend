@@ -9,6 +9,7 @@ use App\Http\Controllers\API\MetaController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
 
 Route::middleware(['throttle:api'])->as('api.')->group(function () {
@@ -42,9 +43,11 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 
 // 2. Routes that REQUIRE authentication
 Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('me');
+//    Route::get('/user', function (Request $request) {
+//        return $request->user();
+//    })->name('me');
+
+    Route::get('/me', [UserController::class, 'me']);
 
     Route::get('/my-applications', [ApplicationController::class, 'myApplications']);
     // Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
@@ -87,3 +90,5 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         })->name('dashboard');
     });
 });
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
