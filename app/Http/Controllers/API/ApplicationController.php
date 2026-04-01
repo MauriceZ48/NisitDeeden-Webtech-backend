@@ -30,9 +30,15 @@ class ApplicationController extends Controller
         private UserRepository $userRepo,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated();
+        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated(
+            $request->input('category_id'),
+            $request->input('department'),
+            $request->input('faculty'),
+            5
+        );
+
         return ApplicationResource::collection($applications);
     }
 

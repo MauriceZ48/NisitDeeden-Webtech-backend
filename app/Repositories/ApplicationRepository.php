@@ -36,8 +36,12 @@ class ApplicationRepository
             ->count();
     }
 
-    public function getFullApplicationsInDomainPaginated(int $perPage = 10)
-    {
+    public function getFullApplicationsInDomainPaginated(
+        ?int $categoryId = null,
+        ?string $department = null,
+        ?string $faculty = null,
+        int $perPage = 10
+    ) {
         return Application::with([
             'attributeValues.attribute',
             'attachments',
@@ -46,7 +50,29 @@ class ApplicationRepository
             'applicationCategory'
         ])
             ->where('domain', $this->getDomain())
-            ->latest()
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('application_category_id', $categoryId);
+            })
+            ->whereHas('user', function ($query) use ($department, $faculty) {
+                if ($faculty) {
+                    $query->where('faculty', $faculty);
+                }
+
+                if ($department) {
+                    $query->where('department', $department);
+                }
+            })
+            ->orderByDesc(
+                ApplicationRound::select('academic_year')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->orderByDesc(
+                ApplicationRound::select('semester')
+                    ->whereColumn('application_rounds.id', 'applications.application_round_id')
+                    ->limit(1)
+            )
+            ->latest('applications.updated_at')
             ->paginate($perPage);
     }
 
