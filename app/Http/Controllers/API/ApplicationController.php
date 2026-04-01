@@ -9,6 +9,7 @@ use App\Events\ApplicationStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
 use App\Jobs\SendApprovalEmailJob;
+use App\Jobs\SendRejectionEmailJob;
 use App\Models\Application;
 use App\Models\ApplicationCategory;
 use App\Repositories\ApplicationCategoryRepository;
@@ -245,6 +246,7 @@ class ApplicationController extends Controller
                 'user',
                 'applicationCategory']);
             broadcast(new ApplicationStatusUpdated($application))->toOthers();
+            SendRejectionEmailJob::dispatch($application);
 
             return response()->json(['message' => 'ปฏิเสธใบสมัครเรียบร้อยแล้ว']);
         }
