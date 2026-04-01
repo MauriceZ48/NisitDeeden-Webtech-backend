@@ -16,7 +16,9 @@ class ApplicationCategoryController extends Controller
 {
     public function __construct(
         private ApplicationCategoryRepository $categoryRepo
-    ) {}
+    )
+    {
+    }
 
     private function getDomainCacheKey(): string
     {
@@ -94,10 +96,10 @@ class ApplicationCategoryController extends Controller
 
         return DB::transaction(function () use ($validated, $domain, $request) {
             $category = $this->categoryRepo->create([
-                'name'        => $validated['name'],
-                'icon'        => $validated['icon'],
+                'name' => $validated['name'],
+                'icon' => $validated['icon'],
                 'description' => $validated['description'],
-                'domain'      => $domain,
+                'domain' => $domain,
             ]);
 
             $attributes = $request->input('attributes', []);
@@ -122,37 +124,114 @@ class ApplicationCategoryController extends Controller
         });
     }
 
-    public function update(Request $request, ApplicationCategory $applicationCategory)
+    public function update(Request $request, $id)
     {
+        // 1. ค้นหาข้อมูลตาม ID และ Domain (ความปลอดภัย)
+        $applicationCategory = ApplicationCategory::where('id', $id)
+            ->where('domain', auth()->user()->domain)
+            ->firstOrFail();
+
+        // 2. ตรวจสอบว่ามีการใช้งานไปหรือยัง
         if ($applicationCategory->applications()->count() > 0) {
-            return response()->json(['message' => 'ไม่สามารถแก้ไขได้ เนื่องจากประเภทรางวัลนี้ถูกนำไปใช้ในใบสมัครแล้ว'], 422);
+            return response()->json([
+                'message' => 'ไม่สามารถแก้ไขได้ เนื่องจากประเภทรางวัลนี้ถูกนำไปใช้ในใบสมัครแล้ว'
+            ], 422);
         }
 
+        // 3. Validation ตามโครงสร้างที่ Frontend ต้องการ
         $validated = $request->validate([
-            'name' => ['required', Rule::unique('application_categories')->ignore($applicationCategory->id)->whereNull('deleted_at')],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('application_categories')
+                    ->ignore($applicationCategory->id)
+                    ->where('domain', auth()->user()->domain)
+                    ->whereNull('deleted_at')
+            ],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
+            'attributes' => 'nullable|array',
+            'attributes.*.id' => 'nullable|integer',
+            'attributes.*.label' => 'required_with:attributes|string|max:255',
+            'attributes.*.type' => 'required_with:attributes|string|in:text,textarea,file',
+            'attributes.*.is_required' => 'nullable'
         ], [
             'name.required' => 'กรุณาระบุชื่อประเภทรางวัล',
             'name.unique' => 'ชื่อประเภทรางวัลนี้ถูกใช้งานแล้ว',
+            'attributes.*.label.required_with' => 'กรุณาระบุชื่อเรียกคุณลักษณะ (Label)',
         ]);
 
-        $applicationCategory->update([
-            'name' => $validated['name'],
-            'icon' => $validated['icon'],
-            'description' => $validated['description'],
-        ]);
+        return DB::transaction(function () use ($applicationCategory, $validated) {
+            // Update ข้อมูลหลัก
+            $applicationCategory->update([
+                'name' => $validated['name'],
+                'icon' => $validated['icon'] ?? null,
+                'description' => $validated['description'] ?? null,
+            ]);
 
-        if ($applicationCategory->isGlobal()) {
-            Cache::forget($this->getGlobalCacheKey());
-        } else {
-            Cache::forget($this->getDomainCacheKey());
-        }
+            // 4. Logic การจัดการ Attributes (Syncing)
+            if (array_key_exists('attributes', $validated)) {
+                $attributes = $validated['attributes'] ?? [];
 
-        return response()->json([
-            'message' => 'อัปเดตข้อมูลประเภทรางวัลเรียบร้อยแล้ว',
-            'category' => $applicationCategory->load('attributes')
-        ]);
+                // ตรวจสอบ ID ของ Attribute เดิมที่มีอยู่
+                $existingAttributeIds = $applicationCategory->attributes()
+                    ->pluck('id')
+                    ->map(fn($id) => (int)$id)
+                    ->toArray();
+
+                $idsToKeep = collect($attributes)
+                    ->pluck('id')
+                    ->filter()
+                    ->map(fn($id) => (int)$id)
+                    ->values()
+                    ->toArray();
+
+                // ป้องกันการส่ง ID ของหมวดหมู่อื่นมามั่ว
+                foreach ($idsToKeep as $attrId) {
+                    if (!in_array($attrId, $existingAttributeIds, true)) {
+                        return response()->json([
+                            'message' => 'ข้อมูลคุณลักษณะไม่ถูกต้อง',
+                            'errors' => ['attributes' => ['คุณลักษณะบางรายการไม่ได้อยู่ในประเภทรางวัลนี้']]
+                        ], 422);
+                    }
+                }
+
+                // ลบตัวที่ไม่อยู่ในรายการส่งมาใหม่ (ลบออกจาก DB)
+                $applicationCategory->attributes()
+                    ->whereNotIn('id', $idsToKeep)
+                    ->delete();
+
+                // สร้างใหม่ หรือ อัปเดตตัวเดิม
+                foreach ($attributes as $attrData) {
+                    $payload = [
+                        'label' => $attrData['label'],
+                        'type' => $attrData['type'],
+                        'is_required' => filter_var($attrData['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                    ];
+
+                    if (!empty($attrData['id'])) {
+                        $applicationCategory->attributes()
+                            ->where('id', $attrData['id'])
+                            ->update($payload);
+                    } else {
+                        $applicationCategory->attributes()->create($payload);
+                    }
+                }
+            }
+
+            // 5. เคลียร์ Cache หลังจากแก้ไขสำเร็จ
+            if ($applicationCategory->isGlobal()) {
+                Cache::forget($this->getGlobalCacheKey());
+            } else {
+                Cache::forget($this->getDomainCacheKey());
+            }
+
+            return response()->json([
+                'message' => 'อัปเดตประเภทรางวัลเรียบร้อยแล้ว',
+                'category' => $applicationCategory->load('attributes')
+            ]);
+        });
     }
 
     public function toggleStatus(ApplicationCategory $applicationCategory)
@@ -172,36 +251,38 @@ class ApplicationCategoryController extends Controller
         return new ApplicationCategoryResource($applicationCategory);
     }
 
-    public function destroy(ApplicationCategory $applicationCategory)
+    public function destroy($id)
     {
-        if ($applicationCategory->domain !== auth()->user()->domain) {
-            return response()->json(['message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น'], 403);
-        }
+        // ค้นหาข้อมูลตาม Domain
+        $applicationCategory = ApplicationCategory::where('domain', auth()->user()->domain)
+            ->findOrFail($id);
 
         if ($applicationCategory->hasApplications()) {
-            if ($applicationCategory->isGlobal()) {
-                Cache::forget($this->getGlobalCacheKey());
-            } else {
-                Cache::forget($this->getDomainCacheKey());
-            }
-
+            // Soft Delete และเคลียร์ Cache
+            $this->clearCategoryCache($applicationCategory);
             $applicationCategory->delete();
 
             return response()->json([
-                'message' => 'ย้ายประเภทรางวัลลงถังขยะแล้ว จากมีใบสมัครที่เกี่ยวข้องจำนวน ' . $applicationCategory->countApplications() . ' รายการ',
+                'message' => 'ย้ายประเภทรางวัลลงถังขยะแล้ว เนื่องจากมีใบสมัครที่เกี่ยวข้องจำนวน ' . $applicationCategory->countApplications() . ' รายการ',
                 'type' => 'warning',
                 'soft_deleted' => true
             ], 200);
         }
 
+        // Force Delete และเคลียร์ Cache
+        $this->clearCategoryCache($applicationCategory);
         $applicationCategory->forceDelete();
 
-        if ($applicationCategory->isGlobal()) {
+        return response()->json(null, 204);
+    }
+
+    // Helper Function สำหรับเคลียร์ Cache เพื่อไม่ให้เขียนโค้ดซ้ำ
+    private function clearCategoryCache(ApplicationCategory $category)
+    {
+        if ($category->isGlobal()) {
             Cache::forget($this->getGlobalCacheKey());
         } else {
             Cache::forget($this->getDomainCacheKey());
         }
-
-        return response()->json(null, 204);
     }
 }

@@ -106,7 +106,7 @@ class ApplicationController extends Controller
             return response()->json([
                 'message' => 'ไม่พบใบสมัครในรอบปัจจุบันสำหรับผู้ใช้งานรายนี้',
                 'data' => []
-            ], 404);
+            ], 200);
         }
         return new ApplicationResource($application);
     }
