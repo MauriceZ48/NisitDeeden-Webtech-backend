@@ -109,18 +109,19 @@ class UserController extends Controller
             ], 403);
         }
 
-        if ($user->id !== auth()->id()) {
-            return response()->json([
-                'message' => 'คุณไม่สามารถแก้ไขข้อมูลของผู้ใช้งานรายอื่นได้',
-            ], 403);
-        }
+        $data = $request->validate([
+            'university_id' => 'required|string|unique:users,university_id,' . $user->id,
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|unique:users,email,' . $user->id,
 
-        $request->validate([
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'delete_photo' => 'nullable'
+            'position'      => ['required', new Enum(UserPosition::class)],
+            'faculty'       => ['nullable', new Enum(Faculty::class)],
+            'department'    => ['nullable', new Enum(Department::class)],
+
+            'photo'         => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'delete_photo'  => 'nullable'
         ]);
 
-        // Handle Photo Removal
         if ($request->boolean('delete_photo')) {
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
@@ -128,13 +129,23 @@ class UserController extends Controller
             }
         }
 
-        // Handle New Photo Upload
         if ($request->hasFile('photo')) {
             if ($user->profile_path) {
                 Storage::disk('public')->delete($user->profile_path);
             }
+
             $user->profile_path = $request->file('photo')->store('profile-photos', 'public');
         }
+
+        $positionEnum = UserPosition::from($data['position']);
+
+        $user->university_id = $data['university_id'];
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->position = $data['position'];
+        $user->role = $positionEnum->getRole();
+        $user->faculty = $data['faculty'] ?? null;
+        $user->department = $data['department'] ?? null;
 
         $user->save();
 
