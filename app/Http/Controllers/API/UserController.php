@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\Department;
+use App\Enums\Domain;
+use App\Enums\Faculty;
 use App\Enums\UserPosition;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
@@ -166,5 +168,25 @@ class UserController extends Controller
         return response()->json([
             'message' => 'ลบข้อมูลผู้ใช้งานเรียบร้อยแล้ว'
         ], 200);
+    }
+
+
+    public function showUserForAdmin(Request $request)
+    {
+        $q = $request->string('q')->toString(); // name, email, university_id
+        $role = $request->string('role')->toString();
+        $faculty = $request->string('faculty')->toString();
+        $department = $request->string('department')->toString();
+        $position = $request->string('position')->toString();
+
+        $users = $this->userRepo->getPaginatedUsersInDomain(
+            q: $q,
+            role: $role,
+            faculty: $faculty,
+            department: $department,
+            position: $position,
+        );
+
+        return UserResource::collection($users);
     }
 }

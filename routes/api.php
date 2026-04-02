@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
 
     //User
     Route::apiResource('users', UserController::class);
+    Route::get('/admin/users', [UserController::class, 'showUserForAdmin']);
+
 
     //Application
     Route::get('applications/active', [ApplicationController::class, 'activeRoundApplications']);
@@ -67,6 +69,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
     Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
     Route::get('/applications/approved-rejected/by-position', [ApplicationController::class, 'applicationsApprovedAndRejectedByPosition']);
     Route::delete('/admin/applications/{application}', [ApplicationController::class, 'adminDestroy']);
+
 
     Route::apiResource('applications', ApplicationController::class)->withTrashed();
 
