@@ -39,11 +39,48 @@ class UserRepository
             ->append('profile_url');
     }
 
-    public function getPaginatedUsersInDomain(int $perPage = 10)
-    {
-        return $this->model::query()
-            ->where('domain', $this->getDomain())
-            ->paginate($perPage);
+    public function getPaginatedUsersInDomain(
+        ?string $q = null,
+        ?string $role = null,
+        ?string $faculty = null,
+        ?string $department = null,
+        ?string $position = null,
+        int $perPage = 7
+    ) {
+        $authUser = auth()->user();
+        $domain = $authUser->domain;
+
+        $query = User::query()
+            ->where('domain', $domain);
+
+        if (!empty($q)) {
+            $query->where(function ($subQuery) use ($q) {
+                $subQuery->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('university_id', 'like', "%{$q}%");
+            });
+        }
+
+        if (!empty($role)) {
+            $query->where('role', $role);
+        }
+
+        if (!empty($position)) {
+            $query->where('position', $position);
+        }
+
+        if (!empty($faculty)) {
+            $query->where('faculty', $faculty);
+        }
+
+        if (!empty($department)) {
+            $query->where('department', $department);
+        }
+
+        return $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function getAllUsers(int $perPage = 10)

@@ -145,7 +145,7 @@ class UserSeeder extends Seeder
         ]);
 
         // ข้อมูลเฉพาะสำหรับบางเขน
-        User::factory()->create([
+        User::factory()->withImage()->create([
             'name' => 'ผู้ดูแลระบบ กองพัฒนานิสิต',
             'email' => 'admin@example.com',
             'role' => UserRole::ADMIN,
@@ -155,7 +155,7 @@ class UserSeeder extends Seeder
             'department' => null,
         ]);
 
-        User::factory()->create([
+        User::factory()->withImage()->create([
             'name' => 'สแตมป์ พิชา',
             'email' => 'stamp@example.com',
             'role' => UserRole::STUDENT,
@@ -164,7 +164,7 @@ class UserSeeder extends Seeder
             'domain' => Domain::BANGKHEN,
         ]);
 
-        User::factory()->create([
+        User::factory()->withImage()->create([
             'name' => 'ฟาร์ฮาน่า มาเล็ม',
             'email' => 'hana@example.com',
             'role' => UserRole::STUDENT,
@@ -173,7 +173,7 @@ class UserSeeder extends Seeder
             'domain' => Domain::BANGKHEN,
         ]);
 
-        User::factory()->create([
+        User::factory()->withImage()->create([
             'name' => 'เมฆ ฮยุนฮยอง',
             'email' => 'committee@example.com',
             'role' => UserRole::COMMITTEE,

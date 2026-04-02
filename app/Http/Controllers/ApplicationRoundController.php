@@ -71,14 +71,14 @@ class ApplicationRoundController extends Controller
             // A. TIME GATE: now() must be within the period
             if ($now->lt($startTime) || $now->gt($endTime)) {
                 return back()->withErrors([
-                    'status' => "Cannot create an OPEN round: current time must be between the start and end period."
+                    'status' => "ไม่สามารถเปิดรอบรับสมัครได้: เวลาปัจจุบันต้องอยู่ระหว่างวันที่เริ่มต้นและสิ้นสุดที่กำหนดไว้"
                 ])->withInput();
             }
 
             // B. CONCURRENCY: Only one active round allowed
             if ($this->roundRepo->anotherRoundIsActive()) {
                 return back()->withErrors([
-                    'status' => 'Cannot create an open round while another is already active.'
+                    'status' => 'ไม่สามารถเปิดรอบรับสมัครได้ เนื่องจากมีรอบการรับสมัครอื่นที่กำลังเปิดใช้งานอยู่'
                 ]);
             }
         }
@@ -86,7 +86,7 @@ class ApplicationRoundController extends Controller
         // 3. OVERLAP GUARD: Always check this for all rounds (including drafts)
         if ($this->roundRepo->isOverlapping($startTime, $endTime)) {
             return back()->withErrors([
-                'start_time' => 'These dates overlap with an existing application round.'
+                'start_time' => 'ช่วงเวลาที่กำหนดทับซ้อนกับรอบการรับสมัครอื่นที่มีอยู่ในระบบ'
             ])->withInput();
         }
 
@@ -94,7 +94,7 @@ class ApplicationRoundController extends Controller
         $data['domain'] = auth()->user()->domain;
 
         $this->roundRepo->create($data);
-        return redirect()->route('rounds.index')->with('success', 'Round created!');
+        return redirect()->route('rounds.index')->with('success', 'สร้างรอบการรับสมัครเรียบร้อยแล้ว!');
     }
 
     /**
@@ -144,21 +144,20 @@ class ApplicationRoundController extends Controller
             // 1. TIME GATE: Use variables
             if ($now->lt($startTime) || $now->gt($endTime)) {
                 return back()->withErrors([
-                    'status' => "Cannot open: current time must be between the start and end period."
+                    'status' => "ไม่สามารถเปิดรอบรับสมัครได้: เวลาปัจจุบันต้องอยู่ระหว่างวันที่เริ่มต้นและสิ้นสุดที่กำหนดไว้"
                 ])->withInput();
             }
 
             // 2. CONCURRENCY: One at a time
             if ($this->roundRepo->anotherRoundIsActive($applicationRound->id)) {
-
-                return back()->withErrors(['status' => 'Another round is already open.']);
+                return back()->withErrors(['status' => 'ไม่สามารถเปิดรอบรับสมัครได้ เนื่องจากมีรอบการรับสมัครอื่นเปิดใช้งานอยู่แล้ว']);
             }
         }
 
         // 3. NO OVERLAP: Reuse the same variables here!
         if ($this->roundRepo->isOverlapping($startTime, $endTime, $applicationRound->id)) {
             return back()->withErrors([
-                'start_time' => 'These dates overlap with another existing round.'
+                'start_time' => 'ช่วงเวลาที่กำหนดทับซ้อนกับรอบการรับสมัครอื่นที่มีอยู่ในระบบ'
             ])->withInput();
         }
 
@@ -173,11 +172,11 @@ class ApplicationRoundController extends Controller
     {
         if ($applicationRound->applications()->count() > 0) {
             $applicationRound->delete();
-            return redirect()->route('rounds.index')->with('warning', 'Round is soft-deleted. ' . $applicationRound->countApplications() . ' applications is affected.');
+            return redirect()->route('rounds.index')->with('warning', 'ลบรอบการรับสมัครแบบชั่วคราว มีใบสมัครที่ได้รับผลกระทบ ' . $applicationRound->countApplications() . ' รายการ');
         }
 
         $applicationRound->forceDelete();
 
-        return redirect()->route('rounds.index')->with('success', 'Round removed completely.');
+        return redirect()->route('rounds.index')->with('success', 'ลบรอบการรับสมัครออกจากระบบอย่างถาวรแล้ว');
     }
 }

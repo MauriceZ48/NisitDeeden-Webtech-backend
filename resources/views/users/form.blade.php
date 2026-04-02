@@ -179,10 +179,10 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-sm font-semibold text-gray-600">คณะ</label>
-                                <select id="faculty" name="faculty" class="{{ $input }} mt-2">
+                                {{-- 🌟 เพิ่ม disabled styling --}}
+                                <select id="faculty" name="faculty" class="{{ $input }} mt-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors">
                                     <option value="">เลือกคณะ</option>
                                     @foreach($faculties as $f)
-                                        {{-- แสดงผลเป็น Label ภาษาไทย แต่เก็บ Value ภาษาอังกฤษ --}}
                                         <option value="{{ $f->value }}"
                                             {{ old('faculty', $isEdit ? $user->faculty?->value : '') === $f->value ? 'selected' : '' }}>
                                             {{ $f->label() }}
@@ -193,7 +193,8 @@
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-gray-600">ภาควิชา</label>
-                                <select id="department" name="department" class="{{ $input }} mt-2" disabled>
+                                {{-- 🌟 เพิ่ม disabled styling --}}
+                                <select id="department" name="department" class="{{ $input }} mt-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors" disabled>
                                     <option value="">กรุณาเลือกคณะก่อน</option>
                                 </select>
                                 @error('department') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -217,18 +218,64 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- ระบบจัดการ คณะ และ ภาควิชา ---
+            // --- ระบบจัดการ คณะ และ ภาควิชา ตามตำแหน่ง ---
             const facultySelect = document.getElementById('faculty');
             const deptSelect = document.getElementById('department');
+            const positionRadios = document.querySelectorAll('input[name="position"]');
 
+            // 🌟 ฟังก์ชันหลัก: อัปเดตสถานะการล็อกของ Dropdown
+            function updateDropdownState() {
+                const selectedPosition = document.querySelector('input[name="position"]:checked')?.value;
+
+                // 🌟 อัปเดตชื่อให้ตรงกับ Enum ของคุณเป๊ะๆ
+                const disableBoth = ['committee_member', 'staff'].includes(selectedPosition); // คณะกรรมการ, กองพัฒนานิสิต
+                const disableDeptOnly = ['associate_dean', 'dean'].includes(selectedPosition); // รองคณบดี, คณบดี
+
+                if (disableBoth) {
+                    // ล็อกทั้งคู่
+                    facultySelect.value = '';
+                    facultySelect.disabled = true;
+
+                    deptSelect.innerHTML = '<option value="">ไม่ต้องระบุ</option>';
+                    deptSelect.disabled = true;
+
+                } else if (disableDeptOnly) {
+                    // ล็อกแค่ภาควิชา แต่เปิดให้เลือกคณะได้
+                    facultySelect.disabled = false;
+
+                    deptSelect.innerHTML = '<option value="">ไม่ต้องระบุภาควิชา</option>';
+                    deptSelect.disabled = true;
+
+                } else {
+                    // ปกติ ('student', 'head_of_department') -> เปิดทั้งคู่
+                    facultySelect.disabled = false;
+
+                    if (facultySelect.value) {
+                        // ถ้าเลือกคณะไว้แล้ว ให้โหลดภาควิชา
+                        loadDepartments(facultySelect.value, deptSelect.value);
+                    } else {
+                        deptSelect.innerHTML = '<option value="">กรุณาเลือกคณะก่อน</option>';
+                        deptSelect.disabled = true;
+                    }
+                }
+            }
+
+            // ฟังก์ชันโหลดข้อมูลภาควิชาจาก API
             async function loadDepartments(selectedFaculty, selectedDept = '') {
+                const selectedPosition = document.querySelector('input[name="position"]:checked')?.value;
+
+                // 🌟 อัปเดตดักไว้: ถ้าตำแหน่งถูกล็อกภาควิชาอยู่ ไม่ต้องไปยิง API
+                if (['committee_member', 'staff', 'associate_dean', 'dean'].includes(selectedPosition)) {
+                    return;
+                }
+
                 if (!selectedFaculty) {
                     deptSelect.innerHTML = '<option value="">กรุณาเลือกคณะก่อน</option>';
                     deptSelect.disabled = true;
                     return;
                 }
 
-                // ดึงข้อมูลภาควิชาจาก API โดยส่งคณะไปเป็น Parameter
+                // ดึงข้อมูลภาควิชา
                 const res = await fetch(`/api/departments?faculty=${encodeURIComponent(selectedFaculty)}`);
                 const data = await res.json();
 
@@ -236,19 +283,29 @@
                 data.forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.value;
-                    opt.textContent = d.label; // API ควรคืนค่า label เป็นภาษาไทย
+                    opt.textContent = d.label;
                     if (selectedDept === d.value) opt.selected = true;
                     deptSelect.appendChild(opt);
                 });
                 deptSelect.disabled = false;
             }
 
+            // จับ Event เมื่อผู้ใช้เปลี่ยนตำแหน่ง หรือเปลี่ยนคณะ
+            positionRadios.forEach(radio => radio.addEventListener('change', updateDropdownState));
             facultySelect.addEventListener('change', () => loadDepartments(facultySelect.value));
 
-            // ตรวจสอบค่าเริ่มต้นตอนโหลดหน้าเว็บ (สำหรับกรณี Edit หรือ Validation Error)
+            // ตั้งค่าเริ่มต้นตอนโหลดหน้าเว็บ
             const initialFaculty = facultySelect.value;
             const initialDept = @json(old('department', $isEdit ? $user->department?->value : ''));
-            if (initialFaculty) loadDepartments(initialFaculty, initialDept);
+
+            if (initialFaculty) {
+                // รอโหลดข้อมูลภาควิชาเสร็จ แล้วค่อยอัปเดตสถานะล็อก เผื่อข้อมูลโดนทับ
+                loadDepartments(initialFaculty, initialDept).then(() => {
+                    updateDropdownState();
+                });
+            } else {
+                updateDropdownState();
+            }
 
             // --- ระบบแสดงตัวอย่างรูปภาพและลบรูป ---
             const photoInput = document.getElementById('photo');
@@ -257,11 +314,11 @@
             const container = document.getElementById('photoPreviewBox');
 
             const placeholderSvg = `
-    <svg class="h-8 w-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
-    </svg>`;
+            <svg class="h-8 w-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>`;
 
             photoInput?.addEventListener('change', function () {
                 const file = this.files?.[0];

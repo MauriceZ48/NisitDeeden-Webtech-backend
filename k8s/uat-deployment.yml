@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nisit-deeden-laravel-uat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nisit-deeden-laravel-uat
+  template:
+    metadata:
+      labels:
+        app: nisit-deeden-laravel-uat
+    spec:
+      containers:
+        - name: app
+          image: ${DOCKER_USERNAME}/nisit-deeden-laravel-uat:latest
+          envFrom:
+            - secretRef:
+                name: laravel-env-uat
+          ports:
+            - containerPort: 80
+          imagePullPolicy: Always

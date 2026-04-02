@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -27,19 +28,26 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
-        $request->session()->regenerate();
         $user = Auth::user();
 
-        if($user->domain === Domain::ALL){
+        if ($user->role !== UserRole::ADMIN) {
+
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'ไม่สามารถเข้าสู่ระบบได้ ระบบนี้สงวนสิทธิ์การเข้าใช้งานเฉพาะผู้ดูแลระบบเท่านั้น',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        if ($user->domain === Domain::ALL) {
             return redirect()->route('categories.index');
         }
 
-        return match ($user->role) {
-            UserRole::ADMIN => redirect()->route('applications.index'),
-            UserRole::STUDENT  => redirect()->route('index'),
-            default => redirect()->route('home'),
-        };
+        return redirect()->route('applications.index');
     }
 
     /**

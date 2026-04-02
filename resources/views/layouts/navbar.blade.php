@@ -3,21 +3,19 @@
     <div class="container mx-auto px-4">
         <div class="flex h-16 md:h-20 items-center justify-between gap-4">
 
-            {{-- Brand (หดไม่ได้ และห้ามตัดคำ) --}}
-            <a href="{{ url('/') }}" class="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                <div class="h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/15 flex-shrink-0">
-                    <span class="text-primary font-extrabold">N</span>
-                </div>
-                <div class="leading-tight flex-shrink-0">
-                    <div class="text-lg font-extrabold text-slate-900 whitespace-nowrap">NisitDeeden</div>
-                    {{-- ซ่อนคำอธิบายยาวๆ ในหน้าจอมือถือเพื่อประหยัดพื้นที่ --}}
-                    <div class="text-[10px] md:text-xs text-slate-500 -mt-0.5 hidden sm:block whitespace-nowrap">ระบบพิจารณารางวัลนิสิตดีเด่น</div>
-                </div>
-            </a>
+            <div  class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <img src="{{ asset('images/logo.png') }}"
+                     alt="KU Nisit Deeden Logo"
+                     class="h-10 w-auto object-contain">
+{{--                <div class="leading-tight flex-shrink-0">--}}
+{{--                    <div class="text-lg font-extrabold text-slate-900 whitespace-nowrap">NisitDeeden</div>--}}
+{{--                    <div class="text-[10px] md:text-xs text-slate-500 -mt-0.5 hidden sm:block whitespace-nowrap">ระบบพิจารณารางวัลนิสิตดีเด่น</div>--}}
+{{--                </div>--}}
+            </div>
 
             @php
                 use App\Enums\UserRole;
-                use App\Enums\Domain; // 🌟 Import Domain เข้ามาใช้งาน
+                use App\Enums\Domain;
 
                 $user = auth()->check() ? auth()->user() : null;
                 $isAdmin = $user && $user->role === UserRole::ADMIN;
@@ -49,7 +47,7 @@
                 @endif
             </nav>
 
-            {{-- Right actions (หดไม่ได้) --}}
+            {{-- Right actions --}}
             <div class="flex items-center gap-2 flex-shrink-0">
                 @guest
                     <a href="{{ url('login') }}"
@@ -79,7 +77,6 @@
                                 {{ $initials ?: 'U' }}
                             </div>
 
-                            {{-- ซ่อนชื่อยาวๆ บนมือถือ ให้เห็นแค่รูปโปรไฟล์และลูกศร --}}
                             <div class="hidden sm:block text-left">
                                 <div class="text-sm font-extrabold text-slate-900 leading-4 truncate max-w-[120px]">
                                     {{ auth()->user()->name }}
@@ -111,7 +108,6 @@
                                 <div class="text-xs text-slate-500 truncate">{{ auth()->user()->email }}</div>
                             </div>
 
-                            {{-- 🌟 เมนูบนมือถือ (เปลี่ยนจาก $isAdmin เป็น $isCampusAdmin เช่นกัน) 🌟 --}}
                             @if($isCampusAdmin)
                                 <div class="block md:hidden border-b border-slate-100 py-1">
                                     <a href="{{ route('applications.index') }}" class="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition whitespace-nowrap">ใบสมัคร</a>

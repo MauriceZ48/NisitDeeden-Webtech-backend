@@ -23,12 +23,14 @@ class UserResource extends JsonResource
             'university_id' => $this->university_id,
             'domain_en' => $this->domain,
             'domain_th' => $this->domain->label(),
-            'faculty' => $this->faculty,
-            'department' => $this->department,
+            'faculty_en' => $this->faculty,
+            'faculty_th' => $this->faculty?->label(),
+            'department_en' => $this->department,
+            'department_th' => $this->department?->label(),
             'role' => $this->role,
             'position_en' => $this->position,
             'position_th' => $this->position_thai,
-            'profile_path' => $this->profile_url,
+            'profile_url' => $this->profile_url,
         ];
     }
 }

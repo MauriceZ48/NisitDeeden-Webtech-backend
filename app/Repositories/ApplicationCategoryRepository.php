@@ -7,7 +7,8 @@ use App\Http\Controllers\ApplicationCategoryController;
 use App\Models\ApplicationCategory;
 use App\Repositories\Traits\SimpleCRUD;
 
-class ApplicationCategoryRepository{
+class ApplicationCategoryRepository
+{
 
     use SimpleCRUD;
 
@@ -25,7 +26,8 @@ class ApplicationCategoryRepository{
         return [$userDomain, Domain::ALL];
     }
 
-    public function __construct(ApplicationCategory $model) {
+    public function __construct(ApplicationCategory $model)
+    {
         $this->model = $model;
     }
 
@@ -40,7 +42,8 @@ class ApplicationCategoryRepository{
     }
 
     // For admin in seperate domain
-    public function getActiveCategoriesInDomain(){
+    public function getActiveCategoriesInDomain()
+    {
         return ApplicationCategory::with('attributes')
             ->where('domain', $this->getDomain())
             ->where('is_active', true)
@@ -48,9 +51,18 @@ class ApplicationCategoryRepository{
             ->get();
     }
 
-    public function getAllWithAttributes(){
+    public function getAllWithAttributes()
+    {
         return ApplicationCategory::with('attributes')
+            ->withCount('applications')
             ->where('domain', $this->getDomain())
+            ->get();
+    }
+
+    public function getGlobalCategoriesWithAttributes()
+    {
+        return ApplicationCategory::with('attributes')
+            ->where('domain', Domain::ALL)
             ->get();
     }
 
@@ -70,6 +82,4 @@ class ApplicationCategoryRepository{
             ->whereIn('domain', $this->getVisibleDomains())
             ->findOrFail($id);
     }
-
-
 }

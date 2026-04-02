@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nisit-deeden-combined-ingress-uat
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "30m"
+spec:
+  rules:
+    - host: uat.admin.nisit-deeden.k8s.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nisit-deeden-backend-uat
+                port:
+                  number: 80
+
+    - host: uat.user.nisit-deeden.k8s.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nisit-deeden-frontend-uat
+                port:
+                  number: 80

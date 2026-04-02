@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 
 use App\Enums\RoundStatus;
+use App\Enums\Semester;
 use App\Models\ApplicationRound;
 use App\Repositories\Traits\SimpleCRUD;
 
@@ -66,18 +67,18 @@ class ApplicationRoundRepository{
             ->first();
 
         if (!$lastRound) {
-            return ['year' => now()->year, 'semester' => \App\Enums\Semester::FIRST];
+            return ['year' => now()->year, 'semester' => Semester::FIRST];
         }
 
-        if ($lastRound->semester === \App\Enums\Semester::FIRST) {
+        if ($lastRound->semester === Semester::FIRST) {
             return [
                 'year' => $lastRound->academic_year,
-                'semester' => \App\Enums\Semester::SECOND
+                'semester' => Semester::SECOND
             ];
         } else {
             return [
                 'year' => $lastRound->academic_year + 1,
-                'semester' => \App\Enums\Semester::FIRST
+                'semester' => Semester::FIRST
             ];
         }
 

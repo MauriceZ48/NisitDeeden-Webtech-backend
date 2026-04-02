@@ -8,6 +8,7 @@ use App\Http\Requests\ApplicationRoundRequest;
 use App\Http\Resources\ApplicationRoundResource;
 use App\Models\ApplicationRound;
 use App\Repositories\ApplicationRoundRepository;
+use Illuminate\Support\Facades\Cache;
 
 class ApplicationRoundController extends Controller
 {
@@ -15,13 +16,38 @@ class ApplicationRoundController extends Controller
     public function __construct(
         private ApplicationRoundRepository $roundRepo
     ){}
-    /**
-     * Display a listing of the resource.
-     */
+
+
+    private function getActiveRoundCacheKey(): string
+    {
+        $domain = auth()->user()->domain?->value ?? 'default';
+        return "application_round.active.domain.{$domain}";
+    }
+
     public function index()
     {
         $rounds = $this->roundRepo->getAllOrderedInDomain();
         return ApplicationRoundResource::collection($rounds);
+    }
+
+    public function getActiveRound()
+    {
+        $cacheKey = $this->getActiveRoundCacheKey();
+
+        $activeRound = Cache::remember($cacheKey, 60 * 60, function () {
+            return $this->roundRepo->getActive();
+        });
+
+        if (!$activeRound) {
+            return response()->json(['message' => 'ในขณะนี้ไม่มีรอบการรับสมัครที่เปิดใช้งานอยู่'], 404);
+        }
+
+        if (now()->gt($activeRound->end_time)) {
+            Cache::forget($cacheKey);
+            return response()->json(['message' => 'รอบการรับสมัครปัจจุบันสิ้นสุดเวลาการรับสมัครแล้ว'], 404);
+        }
+
+        return new ApplicationRoundResource($activeRound);
     }
 
     public function getNextExpectedRound()
@@ -30,7 +56,7 @@ class ApplicationRoundController extends Controller
 
         if (!$expected) {
             return response()->json([
-                'message' => 'Could not determine the next expected round.'
+                'message' => 'ไม่สามารถระบุรอบการรับสมัครถัดไปได้'
             ], 404);
         }
 
@@ -47,45 +73,44 @@ class ApplicationRoundController extends Controller
      */
     public function store(ApplicationRoundRequest $request)
     {
-        // Define variables once at the top
         $startTime = $request->date('start_time');
         $endTime = $request->date('end_time');
         $now = now();
 
-        // 1. SEQUENTIAL GUARD: Must be the correct next Year/Semester
+        // 1. SEQUENTIAL GUARD: ตรวจสอบความถูกต้องของปีการศึกษา/ภาคการศึกษาถัดไป
         $expected = $this->roundRepo->getNextExpectedRound();
         if ($request->academic_year != $expected['year'] ||
             $request->semester != $expected['semester']->value) {
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['academic_year' => ["Next round must be {$expected['year']} Semester {$expected['semester']->value}."]]
+                'message' => 'ข้อมูลที่ระบุไม่ถูกต้อง',
+                'errors' => ['academic_year' => ["รอบถัดไปต้องเป็นปีการศึกษา {$expected['year']} ภาคการศึกษาที่ {$expected['semester']->value} เท่านั้น"]]
             ], 422);
         }
 
-        // 2. OPEN-SPECIFIC GUARDS: Only run these if status is OPEN
+        // 2. OPEN-SPECIFIC GUARDS: ตรวจสอบเฉพาะกรณีที่จะเปิดรอบทันที (OPEN)
         if ($request->status === RoundStatus::OPEN->value) {
 
-            // A. TIME GATE: now() must be within the period
+            // A. TIME GATE: เวลาปัจจุบันต้องอยู่ระหว่างช่วงที่กำหนด
             if ($now->lt($startTime) || $now->gt($endTime)) {
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['status' => ["Cannot create an OPEN round: current time must be between the start and end period."]]
+                    'message' => 'ข้อมูลที่ระบุไม่ถูกต้อง',
+                    'errors' => ['status' => ["ไม่สามารถสร้างรอบที่ 'เปิดใช้งาน' ได้: เวลาปัจจุบันต้องอยู่ระหว่างวันเริ่มและสิ้นสุดการรับสมัคร"]]
                 ], 422);
             }
 
-            // B. CONCURRENCY: Only one active round allowed
+            // B. CONCURRENCY: เปิดได้แค่รอบเดียวต่อวิทยาเขต
             if ($this->roundRepo->anotherRoundIsActive()) {
                 return response()->json([
-                    'message' => "Cannot create an open round while another is already active.",
+                    'message' => "ไม่สามารถสร้างรอบใหม่ได้เนื่องจากมีรอบการรับสมัครอื่นกำลังเปิดใช้งานอยู่",
                 ], 422);
             }
         }
 
-        // 3. OVERLAP GUARD: Always check this for all rounds (including drafts)
+        // 3. OVERLAP GUARD: ตรวจสอบการทับซ้อนของเวลา
         if ($this->roundRepo->isOverlapping($startTime, $endTime)) {
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['start_time' => 'These dates overlap with an existing application round.']
+                'message' => 'ข้อมูลที่ระบุไม่ถูกต้อง',
+                'errors' => ['start_time' => 'ช่วงเวลาที่เลือกทับซ้อนกับรอบการรับสมัครที่มีอยู่แล้ว']
             ], 422);
         }
 
@@ -93,6 +118,7 @@ class ApplicationRoundController extends Controller
         $data['domain'] = auth()->user()->domain;
 
         $round = $this->roundRepo->create($data);
+        Cache::forget($this->getActiveRoundCacheKey());
         return new ApplicationRoundResource($round);
     }
 
@@ -102,7 +128,7 @@ class ApplicationRoundController extends Controller
     public function show(ApplicationRound $applicationRound)
     {
         if ($applicationRound->domain !== auth()->user()->domain) {
-            return response()->json(['message' => 'Unauthorized campus access.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น'], 403);
         }
         return new ApplicationRoundResource($applicationRound);
     }
@@ -114,7 +140,7 @@ class ApplicationRoundController extends Controller
     public function update(ApplicationRoundRequest $request, ApplicationRound $applicationRound)
     {
         if ($applicationRound->domain !== auth()->user()->domain) {
-            return response()->json(['message' => 'Unauthorized campus access.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น'], 403);
         }
 
         $startTime = $request->date('start_time');
@@ -125,16 +151,16 @@ class ApplicationRoundController extends Controller
             // 1. TIME GATE
             if ($now->lt($startTime) || $now->gt($endTime)) {
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['status' => ["Cannot open: current time must be between the start and end period."]]
+                    'message' => 'ข้อมูลที่ระบุไม่ถูกต้อง',
+                    'errors' => ['status' => ["ไม่สามารถเปิดใช้งาน: เวลาปัจจุบันต้องอยู่ระหว่างช่วงเริ่มและสิ้นสุดการรับสมัคร"]]
                 ], 422);
             }
 
             // 2. CONCURRENCY
             if ($this->roundRepo->anotherRoundIsActive($applicationRound->id)) {
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['status' => ['Another round is already open.']]
+                    'message' => 'ข้อมูลที่ระบุไม่ถูกต้อง',
+                    'errors' => ['status' => ['มีรอบการรับสมัครอื่นเปิดใช้งานอยู่แล้ว']]
                 ], 422);
             }
         }
@@ -142,12 +168,13 @@ class ApplicationRoundController extends Controller
         // 3. NO OVERLAP
         if ($this->roundRepo->isOverlapping($startTime, $endTime, $applicationRound->id)) {
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['start_time' => ['These dates overlap with another existing round.']]
+                'message' => 'ข้อมูลที่ระบุไม่ถูกต้อง',
+                'errors' => ['start_time' => ['ช่วงเวลาที่เลือกทับซ้อนกับรอบการรับสมัครอื่น']]
             ], 422);
         }
 
         $applicationRound->update($request->validated());
+        Cache::forget($this->getActiveRoundCacheKey());
         return new ApplicationRoundResource($applicationRound);
     }
 
@@ -157,21 +184,22 @@ class ApplicationRoundController extends Controller
     public function destroy(ApplicationRound $applicationRound)
     {
         if ($applicationRound->domain !== auth()->user()->domain) {
-            return response()->json(['message' => 'Unauthorized campus access.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น'], 403);
         }
 
         if ($applicationRound->applications()->count() > 0) {
+            $applicationCount = $applicationRound->countApplications();
             $applicationRound->delete();
-
+            Cache::forget($this->getActiveRoundCacheKey());
             return response()->json([
-                'message' => 'Round is soft-deleted. ' . $applicationRound->countApplications() . ' applications is affected.',
+                'message' => "ย้ายรอบการรับสมัครลงถังขยะแล้ว โดยมีใบสมัครที่ได้รับผลกระทบจำนวน $applicationCount รายการ",
                 'type' => 'warning',
                 'soft_deleted' => true
             ], 200);
         }
 
         $applicationRound->forceDelete();
-
+        Cache::forget($this->getActiveRoundCacheKey());
         return response()->json(null, 204);
     }
 }

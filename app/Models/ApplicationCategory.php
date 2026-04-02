@@ -44,4 +44,9 @@ class ApplicationCategory extends Model
         return $this->applications()->count();
     }
 
+    public function isGlobal(): bool
+    {
+        return $this->domain == Domain::ALL;
+    }
+
 }

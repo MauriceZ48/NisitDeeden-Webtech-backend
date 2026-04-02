@@ -44,9 +44,9 @@
 
                 {{-- Approved --}}
                 <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">ผ่านการพิจารณา</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">ดำเนินการพิจารณา</p>
                     <p class="mt-2 text-4xl font-extrabold text-slate-900">{{ $approvedCount }}</p>
-                    <p class="mt-1 text-xs text-slate-400">ใบสมัครที่ได้รับการอนุมัติ</p>
+                    <p class="mt-1 text-xs text-slate-400">ใบสมัครที่ได้ดำเนินการการอนุมัติ</p>
                     <div class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full"
                          style="background: color-mix(in oklab, theme(colors.approved) 18%, transparent);"></div>
                 </div>

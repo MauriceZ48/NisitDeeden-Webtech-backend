@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\RoundStatus;
 use App\Enums\UserPosition;
+use App\Enums\UserRole;
+use App\Events\ApplicationStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
+use App\Jobs\SendApprovalEmailJob;
+use App\Jobs\SendRejectionEmailJob;
 use App\Models\Application;
 use App\Models\ApplicationCategory;
 use App\Repositories\ApplicationCategoryRepository;
@@ -26,9 +31,28 @@ class ApplicationController extends Controller
         private UserRepository $userRepo,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated();
+        $applications = $this->applicationRepo->getFullApplicationsInDomainPaginated(
+            $request->input('category_id'),
+            $request->input('department'),
+            $request->input('faculty'),
+            5
+        );
+
+        return ApplicationResource::collection($applications);
+    }
+
+    public function activeRoundApplications(){
+        $applications = $this->applicationRepo->getFullApplicationsInActiveRoundPaginated();
+
+        if ($applications->isEmpty()) {
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลใบสมัคร หรือไม่มีรอบการรับสมัครที่เปิดใช้งานอยู่ในขณะนี้',
+                'data' => []
+            ], 200);
+        }
+
         return ApplicationResource::collection($applications);
     }
 
@@ -36,40 +60,87 @@ class ApplicationController extends Controller
     {
         if ($application->domain !== auth()->user()->domain) {
             return response()->json([
-                'message' => 'Unauthorized domain access.',
+                'message' => 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของวิทยาเขตอื่น',
             ], 403);
         }
         $application->load('attributeValues.attribute', 'applicationRound', 'attachments', 'user', 'applicationCategory');
         return new ApplicationResource($application);
     }
 
-    public function applicationsByUserId($user_id)
+    public function applicationsOfUser()
     {
 
-        if (!$user_id) {
-            return response()->json(['message' => 'User ID is required'], 400);
-        }
 
-        $targetUser = $this->userRepo->getUserById($user_id);
+        $targetUser = auth()->user();
 
-        if (!$targetUser || $targetUser->domain !== auth()->user()->domain) {
+        if (!$targetUser ) {
             return response()->json(
                 [
-                    'message' => 'Unauthorized or user not found'
+                    'message' => 'ไม่พบข้อมูลผู้ใช้งาน หรือเซสชันหมดอายุ'
                 ],
                 403
             );
         }
 
-        $applications = $this->applicationRepo->getApplicationsByUserId($user_id);
+        $applications = $this->applicationRepo->getApplicationsByUserId($targetUser->id);
 
         if ($applications->isEmpty()) {
             return response()->json([
-                'message' => 'No applications found for user ID: ' . $user_id,
+                'message' => 'ไม่พบข้อมูลใบสมัครของผู้ใช้งานรายนี้',
                 'data' => []
             ], 404);
         }
 
+        return ApplicationResource::collection($applications);
+    }
+
+    public function activeRoundApplicationOfUser()
+    {
+
+        $targetUser = auth()->user();
+
+        if (!$targetUser ) {
+            return response()->json(
+                [
+                    'message' => 'ไม่พบข้อมูลผู้ใช้งาน หรือเซสชันหมดอายุ'
+                ],
+                403
+            );
+        }
+
+        $application = $this->applicationRepo->getApplicationByUserIdActiveRound($targetUser->id);
+
+        if (!$application) {
+            return response()->json([
+                'message' => 'ไม่พบใบสมัครในรอบปัจจุบันสำหรับผู้ใช้งานรายนี้',
+                'data' => []
+            ], 200);
+        }
+        return new ApplicationResource($application);
+    }
+
+    public function inActiveRoundApplicationsOfUser()
+    {
+
+        $targetUser = auth()->user();
+
+        if (!$targetUser ) {
+            return response()->json(
+                [
+                    'message' => 'ไม่พบข้อมูลผู้ใช้งาน หรือเซสชันหมดอายุ'
+                ],
+                403
+            );
+        }
+
+        $applications = $this->applicationRepo->getApplicationsByUserIdInActiveRound($targetUser->id);
+
+        if ($applications->isEmpty()) {
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลใบสมัครในรอบปัจจุบันสำหรับผู้ใช้งานรายนี้',
+                'data' => []
+            ], 200);
+        }
         return ApplicationResource::collection($applications);
     }
 
@@ -79,7 +150,7 @@ class ApplicationController extends Controller
 
         if (!$user) {
             return response()->json([
-                'message' => 'Unauthenticated'
+                'message' => 'กรุณาเข้าสู่ระบบก่อนดำเนินการ'
             ], 401);
         }
 
@@ -97,10 +168,36 @@ class ApplicationController extends Controller
         $faculty = $request->input('faculty');
 
         $applications = match ($user->position) {
-            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment($categoryId),
-            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean($categoryId,  $department),
-            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean($categoryId,  $department),
-            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee($categoryId, $department, $faculty),
+            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo->getPendingForHeadOfDepartment($categoryId, 5),
+            UserPosition::ASSOCIATE_DEAN     => $this->applicationRepo->getPendingForAssociateDean($categoryId,  $department, 5),
+            UserPosition::DEAN               => $this->applicationRepo->getPendingForDean($categoryId,  $department, 5),
+            UserPosition::COMMITTEE_MEMBER   => $this->applicationRepo->getPendingForCommittee($categoryId, $department, $faculty, 5),
+
+            default => collect(),
+        };
+
+        return ApplicationResource::collection($applications);
+    }
+
+    public function applicationsApprovedAndRejectedByPosition(Request $request)
+    {
+        $user = auth()->user();
+        $categoryId = $request->input('category_id');
+        $department = $request->input('department');
+        $faculty = $request->input('faculty');
+
+        $applications = match ($user->position) {
+            UserPosition::HEAD_OF_DEPARTMENT => $this->applicationRepo
+                ->getApprovedAndRejectedForHeadOfDepartment($categoryId, 5),
+
+            UserPosition::ASSOCIATE_DEAN => $this->applicationRepo
+                ->getApprovedAndRejectedForAssociateDean($categoryId, $department, 5),
+
+            UserPosition::DEAN => $this->applicationRepo
+                ->getApprovedAndRejectedForDean($categoryId, $department, 5),
+
+            UserPosition::COMMITTEE_MEMBER => $this->applicationRepo
+                ->getApprovedAndRejectedForCommittee($categoryId, $department, $faculty, 5),
 
             default => collect(),
         };
@@ -127,7 +224,7 @@ class ApplicationController extends Controller
 
         if ($application->domain !== auth()->user()->domain) {
             return response()->json([
-                'message' => 'Cross-domain approval denied.'
+                'message' => 'คุณไม่สามารถข้ามวิทยาเขตเพื่อดำเนินการอนุมัติได้'
             ], 403);
         }
 
@@ -140,7 +237,7 @@ class ApplicationController extends Controller
         };
 
         if (!$canApprove) {
-            return response()->json(['message' => 'Not authorized for this stage.'], 403);
+            return response()->json(['message' => 'คุณไม่มีสิทธิ์ดำเนินการในขั้นตอนการพิจารณานี้'], 403);
         }
 
         if ($action === 'rejected') {
@@ -148,7 +245,17 @@ class ApplicationController extends Controller
                 'status' => ApplicationStatus::REJECTED,
                 'rejection_reason' => $request->rejection_reason,
             ]);
-            return response()->json(['message' => 'Application rejected']);
+
+            $application->load([
+                'attributeValues.attribute',
+                'attachments',
+                'applicationRound',
+                'user',
+                'applicationCategory']);
+            broadcast(new ApplicationStatusUpdated($application))->toOthers();
+            SendRejectionEmailJob::dispatch($application);
+
+            return response()->json(['message' => 'ปฏิเสธใบสมัครเรียบร้อยแล้ว']);
         }
 
         $nextStatus = match ($user->position) {
@@ -161,7 +268,19 @@ class ApplicationController extends Controller
 
         $application->update(['status' => $nextStatus]);
 
-        return response()->json(['message' => 'Status updated to ' . $nextStatus->value]);
+        if ($nextStatus === ApplicationStatus::APPROVED_BY_COMMITTEE) {
+            SendApprovalEmailJob::dispatch($application);
+        }
+
+        $application->load([
+            'attributeValues.attribute',
+            'attachments',
+            'applicationRound',
+            'user',
+            'applicationCategory']);
+        broadcast(new ApplicationStatusUpdated($application))->toOthers();
+
+        return response()->json(['message' => 'อัปเดตสถานะเป็น ' . $nextStatus->label() . ' เรียบร้อยแล้ว']);
     }
 
 
@@ -174,7 +293,7 @@ class ApplicationController extends Controller
         $currentRound = $this->RoundRepo->getActive();
         if (!$currentRound) {
             return response()->json([
-                'message' => 'No active application round found.',
+                'message' => 'ไม่พบรอบการรับสมัครที่เปิดใช้งานอยู่ในขณะนี้',
                 'error_code' => 'NO_ACTIVE_ROUND'
             ], 422);
         }
@@ -229,7 +348,7 @@ class ApplicationController extends Controller
                     ]);
                 } else {
                     throw ValidationException::withMessages([
-                        'error' => 'An active application already exists for this user in this round.'
+                        'error' => 'คุณได้ส่งใบสมัครในรอบการรับสมัครนี้ไปแล้ว'
                     ]);
                 }
             } else {
@@ -262,6 +381,15 @@ class ApplicationController extends Controller
 
     public function update(Request $request, Application $application)
     {
+        if (
+            $application->applicationRound->status !== RoundStatus::OPEN ||
+            $application->status !== ApplicationStatus::PENDING
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถแก้ไขข้อมูลได้ เนื่องจากรอบการรับสมัครไม่ได้เปิดอยู่ หรือใบสมัครของคุณกำลังอยู่ระหว่างการพิจารณา'
+            ], 403);
+        }
 
         $request->validate([
             'status' => ['nullable', new \Illuminate\Validation\Rules\Enum(ApplicationStatus::class)],
@@ -299,12 +427,42 @@ class ApplicationController extends Controller
 
     public function destroy(Application $application)
     {
+        if (
+            $application->applicationRound->status !== RoundStatus::OPEN ||
+            $application->status !== ApplicationStatus::PENDING
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่สามารถลบข้อมูลได้ เนื่องจากรอบการรับสมัครไม่ได้เปิดอยู่ หรือใบสมัครของคุณกำลังอยู่ระหว่างการพิจารณา'
+            ], 403);
+        }
         if ($application->domain !== auth()->user()->domain) {
             return response()->json([
                 'message' => 'Unauthorized domain access.',
             ], 403);
         }
         $application->delete();
+        return response()->json(null, 204);
+    }
+
+    public function adminDestroy(Application $application)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== UserRole::ADMIN) {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        if ($application->domain !== $user->domain) {
+            return response()->json([
+                'message' => 'Unauthorized domain access.',
+            ], 403);
+        }
+
+        $application->delete();
+
         return response()->json(null, 204);
     }
 }

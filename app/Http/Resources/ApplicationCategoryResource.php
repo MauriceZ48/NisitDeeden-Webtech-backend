@@ -33,6 +33,7 @@ class ApplicationCategoryResource extends JsonResource
                     ];
                 });
             }),
+             'applications_count' => $this->applications_count
         ];
     }
 }

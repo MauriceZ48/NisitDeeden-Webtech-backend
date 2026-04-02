@@ -9,6 +9,7 @@ use App\Http\Controllers\API\MetaController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
 
 Route::middleware(['throttle:api'])->as('api.')->group(function () {
@@ -42,9 +43,11 @@ Route::middleware(['throttle:api'])->as('api.')->group(function () {
 
 // 2. Routes that REQUIRE authentication
 Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    })->name('me');
+//    Route::get('/user', function (Request $request) {
+//        return $request->user();
+//    })->name('me');
+
+    Route::get('/me', [UserController::class, 'me']);
 
     Route::get('/my-applications', [ApplicationController::class, 'myApplications']);
     // Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
@@ -52,23 +55,33 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
 
     //User
     Route::apiResource('users', UserController::class);
+    Route::get('/admin/users', [UserController::class, 'showUserForAdmin']);
+
 
     //Application
-    Route::get('applications/user/{id}', [ApplicationController::class, 'applicationsByUserId']);
+    Route::get('applications/active', [ApplicationController::class, 'activeRoundApplications']);
+    Route::get('applications/user/inactive', [ApplicationController::class, 'inActiveRoundApplicationsOfUser']);
+    Route::get('applications/user/active', [ApplicationController::class, 'ActiveRoundApplicationOfUser']);
+    Route::get('applications/user', [ApplicationController::class, 'applicationsOfUser']);
     Route::get('applications/by-position' , [ApplicationController::class, 'applicationsPendingForCommitteePosition']);
     Route::get('applications/approved', [ApplicationController::class, 'applicationsApprovedByCommittee']);
     Route::get('applications/rejected', [ApplicationController::class, 'applicationsRejected']);
     Route::patch('applications/{application}/status', [ApplicationController::class, 'updateStatus']);
+    Route::get('/applications/approved-rejected/by-position', [ApplicationController::class, 'applicationsApprovedAndRejectedByPosition']);
+    Route::delete('/admin/applications/{application}', [ApplicationController::class, 'adminDestroy']);
+
 
     Route::apiResource('applications', ApplicationController::class)->withTrashed();
 
     //Round
     Route::get('/rounds/next-expected', [ApplicationRoundController::class, 'getNextExpectedRound'])
         ->name('rounds.nextExpected');
+    Route::get('rounds/active', [ApplicationRoundController::class, 'getActiveRound']);
     Route::apiResource('rounds', ApplicationRoundController::class)
         ->parameters(['rounds' => 'applicationRound']);
 
     //Category
+    Route::get('categories/for-app', [ApplicationCategoryController::class, 'indexForApplication']);
     Route::patch('/categories/{applicationCategory}/toggle-status', [ApplicationCategoryController::class, 'toggleStatus'])
         ->name('categories.toggleStatus');
     Route::apiResource('categories', ApplicationCategoryController::class)
@@ -81,3 +94,5 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->as('api.')->group(function 
         })->name('dashboard');
     });
 });
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
